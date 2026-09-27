@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // `DOM` only for the Web Crypto and Intl APIs, which Node provides as well.
+    "lib": ["ES2024", "DOM"]
+  },
+  "include": ["src", "vitest.config.ts"]
+}
