@@ -29,7 +29,7 @@
   "devDependencies": {
     "@crystal/shared": "workspace:*",
     "@types/better-sqlite3": "^9.6.0",
-    "@types/node": "^24.19.0",
+    "@types/node": "^26.6.2",
     "drizzle-kit": "^0.31.11",
     "esbuild": "^0.28.2",
     "oauth2-mock-server": "^9.2.0",
