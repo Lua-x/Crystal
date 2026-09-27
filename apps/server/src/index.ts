@@ -48,6 +48,9 @@ function main(): void {
     staticDir: existsSync(join(staticDir, 'index.html')) ? staticDir : undefined,
   })
 
+  if (config.oidc?.issuer.protocol === 'http:') {
+    logger.warn('The OIDC issuer uses plain HTTP. Use HTTPS outside of trusted networks.')
+  }
   if (config.env === 'production' && !config.baseUrl) {
     logger.warn('BASE_URL is not set. Set it to the public URL of this instance.')
   }
