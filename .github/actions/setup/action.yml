@@ -7,6 +7,9 @@ runs:
     - uses: actions/setup-node@v5
       with:
         node-version-file: .node-version
+        # setup-node would try to cache via pnpm before pnpm is installed;
+        # the pnpm store is cached below instead.
+        package-manager-cache: false
 
     - name: Install pnpm
       shell: bash
