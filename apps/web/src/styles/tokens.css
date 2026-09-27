@@ -1,0 +1,199 @@
+/*
+ * Crystal design tokens.
+ *
+ * Every color, radius, shadow, font size and easing used in the app is defined
+ * here. Tailwind's default palette, radii and shadows are switched off
+ * (`--*: initial`), so utilities can only use these tokens.
+ *
+ * Colors adapt to the color scheme with `light-dark(light, dark)`. The scheme
+ * follows the system unless <html data-theme="light|dark"> overrides it.
+ * Contrast pairs are verified in `src/styles/tokens.test.ts` (WCAG 2.1 AA).
+ */
+
+@theme {
+  --color-*: initial;
+  --font-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-*: initial;
+  --ease-*: initial;
+  --animate-*: initial;
+  --blur-*: initial;
+
+  /* ── Surfaces ─────────────────────────────────────────────── */
+  /* Main content area. */
+  --color-canvas: light-dark(#fefefd, #1c1b19);
+  /* Behind the translucent sidebar and toolbars. */
+  --color-window: light-dark(#f3f2ef, #141312);
+  /* Translucent sidebar material (blurred over the window). */
+  --color-sidebar: light-dark(rgb(240 238 234 / 0.82), rgb(34 33 31 / 0.82));
+  /* Opaque variant for the phone drawer, where content must not show through. */
+  --color-sidebar-solid: light-dark(#f0eeea, #22211f);
+  /* Translucent toolbars above scrolling content (plain and grouped pages). */
+  --color-bar: light-dark(rgb(254 254 253 / 0.8), rgb(28 27 25 / 0.8));
+  --color-bar-grouped: light-dark(rgb(245 244 241 / 0.8), rgb(22 21 20 / 0.8));
+  /* Grouped settings background and its cells. */
+  --color-grouped: light-dark(#f5f4f1, #161514);
+  --color-cell: light-dark(#ffffff, #262523);
+  /* Menus, popovers, dialogs. */
+  --color-elevated: light-dark(#ffffff, #2b2a27);
+  --color-overlay: light-dark(rgb(30 26 20 / 0.28), rgb(0 0 0 / 0.55));
+
+  /* ── Text ─────────────────────────────────────────────────── */
+  --color-text: light-dark(#1d1c1a, #f3f1ed);
+  --color-text-secondary: light-dark(#6b6862, #aaa59d);
+  /* Placeholders and disabled content only. */
+  --color-text-tertiary: light-dark(#78746d, #99948d);
+
+  /* ── Fills (control backgrounds and interaction states) ───── */
+  --color-fill-control: light-dark(rgb(118 110 98 / 0.1), rgb(235 225 210 / 0.1));
+  --color-fill-hover: light-dark(rgb(60 50 35 / 0.05), rgb(255 245 230 / 0.06));
+  --color-fill-pressed: light-dark(rgb(60 50 35 / 0.09), rgb(255 245 230 / 0.1));
+  --color-fill-selected: light-dark(rgb(60 50 35 / 0.08), rgb(255 245 230 / 0.1));
+
+  /* ── Lines ────────────────────────────────────────────────── */
+  --color-separator: light-dark(rgb(60 50 35 / 0.12), rgb(255 245 230 / 0.1));
+  /* Borders of inputs and other controls (≥ 3:1 against their background). */
+  --color-border-control: light-dark(#8f8a82, #7a756e);
+
+  /* ── Accent (overridden at runtime from the user's choice) ── */
+  --color-accent: light-dark(#1273e9, #1273e9);
+  --color-on-accent: light-dark(#ffffff, #ffffff);
+  --color-accent-text: light-dark(#006adf, #3e90ff);
+  --color-accent-hover: color-mix(in oklab, var(--color-accent), light-dark(black, white) 10%);
+  --color-accent-pressed: color-mix(in oklab, var(--color-accent), light-dark(black, white) 18%);
+  --color-accent-soft: color-mix(in oklab, var(--color-accent) 14%, transparent);
+  --color-focus-ring: var(--color-accent-text);
+
+  /* ── Status ───────────────────────────────────────────────── */
+  --color-danger: light-dark(#c9302c, #ff7b72);
+  --color-danger-fill: light-dark(#c9302c, #d23f38);
+  --color-on-danger: light-dark(#ffffff, #ffffff);
+  /* The selected segment of a segmented control. */
+  --color-segment: light-dark(#ffffff, #57544f);
+  /* Thumbs of switches and sliders. */
+  --color-knob: light-dark(#ffffff, #f3f1ed);
+  --color-danger-soft: color-mix(in oklab, var(--color-danger) 12%, transparent);
+  --color-success: light-dark(#1f7a4d, #4cc38a);
+  --color-success-soft: color-mix(in oklab, var(--color-success) 12%, transparent);
+  --color-warning: light-dark(#9a5b00, #e8a73a);
+  --color-warning-soft: color-mix(in oklab, var(--color-warning) 14%, transparent);
+
+  /* ── Shadows ──────────────────────────────────────────────── */
+  --color-shadow: light-dark(rgb(40 30 15 / 0.1), rgb(0 0 0 / 0.4));
+  --color-shadow-strong: light-dark(rgb(40 30 15 / 0.16), rgb(0 0 0 / 0.55));
+  --color-shadow-edge: light-dark(rgb(40 30 15 / 0.08), rgb(255 245 230 / 0.09));
+  /* A faint top highlight gives elevated surfaces an edge in dark mode. */
+  --color-highlight: light-dark(transparent, rgb(255 250 240 / 0.05));
+
+  --shadow-xs: 0 1px 2px var(--color-shadow);
+  --shadow-sm: 0 0 0 0.5px var(--color-shadow-edge), 0 1px 3px var(--color-shadow);
+  --shadow-md:
+    0 0 0 0.5px var(--color-shadow-edge), 0 4px 16px var(--color-shadow),
+    inset 0 1px 0 var(--color-highlight);
+  --shadow-lg:
+    0 0 0 0.5px var(--color-shadow-edge), 0 24px 56px -12px var(--color-shadow-strong),
+    0 6px 16px var(--color-shadow), inset 0 1px 0 var(--color-highlight);
+
+  /* ── Radii ────────────────────────────────────────────────── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+  --radius-3xl: 20px;
+
+  /* ── Typography ───────────────────────────────────────────── */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Text styles, modelled after Apple's text styles and scaled for the web. */
+  --text-caption: 11px;
+  --text-caption--line-height: 14px;
+  --text-caption--letter-spacing: 0.01em;
+  --text-footnote: 12px;
+  --text-footnote--line-height: 16px;
+  --text-subhead: 13px;
+  --text-subhead--line-height: 18px;
+  --text-callout: 14px;
+  --text-callout--line-height: 20px;
+  --text-callout--letter-spacing: -0.006em;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-body--letter-spacing: -0.009em;
+  --text-title3: 18px;
+  --text-title3--line-height: 24px;
+  --text-title3--letter-spacing: -0.014em;
+  --text-title2: 22px;
+  --text-title2--line-height: 28px;
+  --text-title2--letter-spacing: -0.019em;
+  --text-title1: 28px;
+  --text-title1--line-height: 34px;
+  --text-title1--letter-spacing: -0.022em;
+  --text-large-title: 34px;
+  --text-large-title--line-height: 41px;
+  --text-large-title--letter-spacing: -0.024em;
+
+  /* ── Motion ───────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --default-transition-duration: 160ms;
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Short, soft entrances for menus and popovers; exits are quicker. */
+  --animate-spin: spin 0.9s linear infinite;
+  --animate-pop-in: pop-in 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-pop-out: pop-out 110ms ease-in forwards;
+  --animate-fade-in: fade-in 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-fade-out: fade-out 110ms ease-in forwards;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97) translateY(-2px);
+    }
+  }
+  @keyframes pop-out {
+    to {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  /* ── Materials ────────────────────────────────────────────── */
+  --blur-material: 24px;
+}
+
+/* Touch devices use larger text (and inputs ≥ 16px, which stops iOS from zooming). */
+@media (pointer: coarse) {
+  :root {
+    --text-subhead: 14px;
+    --text-subhead--line-height: 19px;
+    --text-callout: 15px;
+    --text-callout--line-height: 20px;
+    --text-body: 17px;
+    --text-body--line-height: 24px;
+  }
+}

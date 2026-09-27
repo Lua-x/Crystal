@@ -1,0 +1,103 @@
+@layer base {
+  :root {
+    color-scheme: light dark;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :root[data-theme='light'] {
+    color-scheme: light;
+  }
+
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-window);
+    color: var(--color-text);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    letter-spacing: var(--text-body--letter-spacing);
+    overscroll-behavior: none;
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-fill-pressed) transparent;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 1;
+  }
+}
+
+/* Honour "reduce motion": keep state changes, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Translucent materials. Without backdrop-filter support they stay opaque. */
+@utility material-sidebar {
+  background: var(--color-window);
+  @supports (backdrop-filter: blur(1px)) {
+    background: var(--color-sidebar);
+    backdrop-filter: saturate(1.8) blur(var(--blur-material));
+  }
+}
+
+@utility material-bar {
+  background: var(--color-canvas);
+  @supports (backdrop-filter: blur(1px)) {
+    background: var(--color-bar);
+    backdrop-filter: saturate(1.8) blur(var(--blur-material));
+  }
+}
+
+@utility material-bar-grouped {
+  background: var(--color-grouped);
+  @supports (backdrop-filter: blur(1px)) {
+    background: var(--color-bar-grouped);
+    backdrop-filter: saturate(1.8) blur(var(--blur-material));
+  }
+}
+
+/* A hairline that stays 1 device pixel on high-density screens. */
+@utility hairline-b {
+  box-shadow: inset 0 -0.5px 0 var(--color-separator);
+}
+
+@utility hairline-r {
+  box-shadow: inset -0.5px 0 0 var(--color-separator);
+}
+
+@utility hairline-t {
+  box-shadow: inset 0 0.5px 0 var(--color-separator);
+}
