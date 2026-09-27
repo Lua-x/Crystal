@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Lint, typecheck and test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ghcr.io/lua-x/crystal:latest
+          build-args: VERSION=ci
+          cache-from: type=gha,scope=ci
+          cache-to: type=gha,scope=ci,mode=max
+
+      - name: Start it with docker compose and wait until healthy
+        run: docker compose up --detach --wait --wait-timeout 120
+
+      - name: Health check answers
+        run: curl --fail --silent --show-error http://localhost:3000/api/health
+
+      - name: Web app is served
+        run: curl --fail --silent --show-error http://localhost:3000/ | grep --quiet 'id="root"'
+
+      - name: Runs as an unprivileged user
+        run: |
+          user="$(docker inspect --format '{{.Config.User}}' ghcr.io/lua-x/crystal:latest)"
+          echo "Image user: $user"
+          [[ "$user" == 65532* || "$user" == nonroot* ]]
+
+      - name: Container logs
+        if: always()
+        run: docker compose logs
+
+      - name: Clean up
+        if: always()
+        run: docker compose down --volumes
