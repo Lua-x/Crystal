@@ -1,0 +1,27 @@
+# Crystal – quick start:
+#   1. cp .env.example .env   (and set BASE_URL to the address you open Crystal at)
+#   2. docker compose up -d
+#   3. open the URL and create the first account – it becomes the administrator
+services:
+  crystal:
+    image: ghcr.io/lua-x/crystal:${CRYSTAL_VERSION:-latest}
+    container_name: crystal
+    restart: unless-stopped
+    ports:
+      - '${CRYSTAL_PORT:-3000}:3000'
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - crystal-data:/data
+    # Crystal needs no extra privileges.
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+
+volumes:
+  crystal-data:
