@@ -2,7 +2,7 @@
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 # Same Debian release (glibc) as the runtime image, so native modules match.
-FROM node:24-trixie-slim AS build
+FROM node:26-trixie-slim AS build
 
 ENV CI=true
 WORKDIR /repo
