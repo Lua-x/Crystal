@@ -16,6 +16,11 @@ lists every problem.
 | `SECRET_KEY` | generated | At least 32 characters. Encrypts short-lived sign-in state. If empty, a random key is created on first start and stored in `DATA_DIR/secret.key`. Keep it when restoring backups.                                            |
 | `LOG_LEVEL`  | `info`    | `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent`. Logs are JSON lines on stdout.                                                                                                                               |
 
+> [!TIP]
+> Crystal runs as the unprivileged user `65532`. The named volume in `docker-compose.yml` gets
+> the right ownership automatically. If you use a bind mount (e.g. `./data:/data`) instead, make
+> the directory writable first: `sudo chown -R 65532:65532 ./data`.
+
 ## Reverse proxy and HTTPS
 
 | Variable      | Default | Description                                                                                                                                                               |
