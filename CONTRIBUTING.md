@@ -7,7 +7,7 @@ By participating you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Reporting bugs and suggesting features
 
-- Search [existing issues](https://github.com/Lua-x/crystal/issues) first.
+- Search [existing issues](https://github.com/Lua-x/Crystal/issues) first.
 - Use the issue templates – they ask for the details needed to help.
 - **Security vulnerabilities** must not be reported publicly; see [SECURITY.md](SECURITY.md).
 

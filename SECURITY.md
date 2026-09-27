@@ -15,7 +15,7 @@ release is supported.
 **Please do not open a public issue for security problems.**
 
 Report vulnerabilities privately through
-[GitHub Security Advisories](https://github.com/Lua-x/crystal/security/advisories/new).
+[GitHub Security Advisories](https://github.com/Lua-x/Crystal/security/advisories/new).
 Include the affected version, steps to reproduce and the impact you expect.
 
 What to expect:

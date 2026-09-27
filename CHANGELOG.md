@@ -29,5 +29,5 @@ and tasks follow in 0.2.
 - Security: Argon2id password hashing, hashed session tokens, CSRF protection, rate limiting,
   strict Content Security Policy.
 
-[Unreleased]: https://github.com/Lua-x/crystal/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Lua-x/crystal/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Lua-x/Crystal/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Lua-x/Crystal/releases/tag/v0.1.0

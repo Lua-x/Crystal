@@ -6,8 +6,8 @@ body:
     attributes:
       value: |
         Thanks for taking the time to report a problem! Please search the
-        [existing issues](https://github.com/Lua-x/crystal/issues) first.
-        **Security problems:** do not open an issue – see [SECURITY.md](https://github.com/Lua-x/crystal/blob/main/SECURITY.md).
+        [existing issues](https://github.com/Lua-x/Crystal/issues) first.
+        **Security problems:** do not open an issue – see [SECURITY.md](https://github.com/Lua-x/Crystal/blob/main/SECURITY.md).
 
   - type: textarea
     id: what-happened

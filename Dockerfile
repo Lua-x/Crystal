@@ -38,7 +38,7 @@ FROM gcr.io/distroless/nodejs24-debian13:nonroot
 ARG VERSION=dev
 LABEL org.opencontainers.image.title="Crystal" \
       org.opencontainers.image.description="A calm, self-hosted to-do app" \
-      org.opencontainers.image.source="https://github.com/Lua-x/crystal" \
+      org.opencontainers.image.source="https://github.com/Lua-x/Crystal" \
       org.opencontainers.image.licenses="AGPL-3.0-only" \
       org.opencontainers.image.version="${VERSION}"
 

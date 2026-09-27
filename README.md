@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Lua-x/crystal/actions/workflows/ci.yml"><img src="https://github.com/Lua-x/crystal/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/Lua-x/Crystal/actions/workflows/ci.yml"><img src="https://github.com/Lua-x/Crystal/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License: AGPL-3.0" /></a>
 </p>
 
@@ -49,8 +49,8 @@ You need Docker with the Compose plugin.
 
 ```bash
 mkdir crystal && cd crystal
-curl -fsSLO https://raw.githubusercontent.com/Lua-x/crystal/main/docker-compose.yml
-curl -fsSL https://raw.githubusercontent.com/Lua-x/crystal/main/.env.example -o .env
+curl -fsSLO https://raw.githubusercontent.com/Lua-x/Crystal/main/docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/Lua-x/Crystal/main/.env.example -o .env
 docker compose up -d
 ```
 
