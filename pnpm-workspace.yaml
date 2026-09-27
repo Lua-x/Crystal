@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Dependencies that ship native code. better-sqlite3 bundles prebuilt binaries
+# for all supported platforms, so its node-gyp fallback must never run.
+allowBuilds:
+  better-sqlite3: false
+  esbuild: true
