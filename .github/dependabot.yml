@@ -13,6 +13,13 @@ updates:
       # Minor and patch updates arrive as one pull request; majors stay separate.
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Types follow the Node.js LTS the image runs on; switched together with it.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # typescript-eslint does not support TypeScript 7 yet.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: /
@@ -32,3 +39,7 @@ updates:
       day: monday
     commit-message:
       prefix: build(docker)
+    ignore:
+      # Build and runtime images stay on the same Node.js LTS line; switched deliberately.
+      - dependency-name: node
+        update-types: ['version-update:semver-major']
