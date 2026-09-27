@@ -1,0 +1,55 @@
+import type { ErrorCode } from '@crystal/shared'
+import type { ContentfulStatusCode } from 'hono/utils/http-status'
+
+const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
+  validation_failed: 'The request is invalid.',
+  unauthorized: 'You need to sign in first.',
+  forbidden: 'You are not allowed to do this.',
+  not_found: 'Not found.',
+  rate_limited: 'Too many requests. Please try again later.',
+  csrf_failed: 'The request origin could not be verified.',
+  internal_error: 'Something went wrong on the server.',
+  invalid_credentials: 'Username or password is incorrect.',
+  account_disabled: 'This account has been disabled.',
+  password_login_disabled: 'Signing in with a password is disabled on this instance.',
+  registration_closed: 'Registration is closed.',
+  invite_invalid: 'This invite link is invalid or has expired.',
+  username_taken: 'This username is already taken.',
+  email_taken: 'This email address is already in use.',
+  wrong_password: 'The current password is incorrect.',
+  last_admin: 'At least one active administrator must remain.',
+  cannot_modify_self: 'You cannot change this for your own account.',
+  oidc_not_configured: 'Single sign-on is not configured.',
+  oidc_failed: 'Single sign-on failed.',
+  oidc_already_linked: 'This single sign-on account is linked to another user.',
+  oidc_account_not_found: 'No account is linked to this single sign-on identity.',
+  identity_required: 'Set a password before removing your only sign-in method.',
+}
+
+/** An expected failure that is reported to the client as `{ error: { code, message } }`. */
+export class AppError extends Error {
+  constructor(
+    readonly status: ContentfulStatusCode,
+    readonly code: ErrorCode,
+    message?: string,
+    readonly details?: unknown,
+    readonly headers?: Record<string, string>,
+  ) {
+    super(message ?? DEFAULT_MESSAGES[code])
+    this.name = 'AppError'
+  }
+
+  toBody() {
+    return {
+      error: {
+        code: this.code,
+        message: this.message,
+        ...(this.details === undefined ? {} : { details: this.details }),
+      },
+    }
+  }
+}
+
+export const unauthorized = () => new AppError(401, 'unauthorized')
+export const forbidden = () => new AppError(403, 'forbidden')
+export const notFound = () => new AppError(404, 'not_found')
