@@ -149,11 +149,28 @@ export function findCachedTask(queryClient: QueryClient, id: string): Task | und
   return undefined
 }
 
-function refreshTaskData(queryClient: QueryClient) {
-  void queryClient.invalidateQueries({ queryKey: taskKeys.tasks })
-  void queryClient.invalidateQueries({ queryKey: taskKeys.counts })
-  void queryClient.invalidateQueries({ queryKey: taskKeys.lists })
-  void queryClient.invalidateQueries({ queryKey: taskKeys.tags })
+/**
+ * Refetches after a change was saved. A page that just opened may still be
+ * loading its first data, and that request may have been answered before the
+ * change was saved. TanStack Query would join the refetch to that request and
+ * keep the stale answer, so such first loads are cancelled and started over.
+ */
+export function refresh(queryClient: QueryClient, queryKey: QueryKey) {
+  void queryClient
+    .cancelQueries({
+      queryKey,
+      predicate: (query) =>
+        query.state.data === undefined && query.state.fetchStatus === 'fetching',
+    })
+    .then(() => queryClient.invalidateQueries({ queryKey }))
+}
+
+export function refreshTaskData(queryClient: QueryClient) {
+  refresh(queryClient, taskKeys.tasks)
+  refresh(queryClient, ['task'])
+  refresh(queryClient, taskKeys.counts)
+  refresh(queryClient, taskKeys.lists)
+  refresh(queryClient, taskKeys.tags)
 }
 
 /**
@@ -344,7 +361,7 @@ function useSubtaskMutation<T>(
       toast.error(errorMessage(error))
     },
     onSuccess: (task: Task) => patchCachedTask(queryClient, task.id, () => task),
-    onSettled: () => void queryClient.invalidateQueries({ queryKey: taskKeys.tasks }),
+    onSettled: () => refresh(queryClient, taskKeys.tasks),
   })
 }
 
@@ -422,8 +439,8 @@ function useListMutation<TVariables, TResult>(
       toast.error(errorMessage(error))
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: taskKeys.lists })
-      void queryClient.invalidateQueries({ queryKey: taskKeys.groups })
+      refresh(queryClient, taskKeys.lists)
+      refresh(queryClient, taskKeys.groups)
     },
   })
 }
@@ -477,8 +494,8 @@ export function useDeleteList() {
       client.setQueryData<List[]>(taskKeys.lists, (lists) =>
         lists?.filter((list) => list.id !== id),
       )
-      void queryClient.invalidateQueries({ queryKey: taskKeys.tasks })
-      void queryClient.invalidateQueries({ queryKey: taskKeys.counts })
+      refresh(queryClient, taskKeys.tasks)
+      refresh(queryClient, taskKeys.counts)
     },
   )
 }
