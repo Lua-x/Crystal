@@ -39,3 +39,47 @@ export const PASSWORD_MAX_LENGTH = 256
 export const INVITE_MAX_USES = 100
 export const INVITE_MAX_DAYS = 90
 export const INVITE_NOTE_MAX_LENGTH = 100
+
+/** Colors a list can have; rendered through the `--color-list-*` design tokens. */
+export const LIST_COLORS = [
+  'red',
+  'orange',
+  'yellow',
+  'green',
+  'mint',
+  'teal',
+  'blue',
+  'indigo',
+  'purple',
+  'pink',
+  'brown',
+  'gray',
+] as const
+export type ListColor = (typeof LIST_COLORS)[number]
+
+/** Access to a list. Owners manage the list itself, editors change its tasks. */
+export const LIST_ROLES = ['owner', 'editor', 'viewer'] as const
+export type ListRole = (typeof LIST_ROLES)[number]
+
+/** Automatic lists computed from all lists a user can see. */
+export const SMART_VIEWS = [
+  'my-day',
+  'important',
+  'planned',
+  'overdue',
+  'all',
+  'completed',
+] as const
+export type SmartView = (typeof SMART_VIEWS)[number]
+
+/** 0 = none, 1 = low, 2 = medium, 3 = high. */
+export const PRIORITIES = [0, 1, 2, 3] as const
+export type Priority = (typeof PRIORITIES)[number]
+
+export const LIST_NAME_MAX_LENGTH = 100
+export const LIST_ICON_MAX_LENGTH = 16
+export const GROUP_NAME_MAX_LENGTH = 100
+export const TASK_TITLE_MAX_LENGTH = 500
+export const TASK_NOTES_MAX_LENGTH = 20_000
+export const SUBTASK_TITLE_MAX_LENGTH = 500
+export const SEARCH_QUERY_MAX_LENGTH = 200

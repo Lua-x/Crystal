@@ -27,6 +27,7 @@ export const ERROR_CODES = [
   'oidc_already_linked',
   'oidc_account_not_found',
   'identity_required',
+  'list_is_default',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
