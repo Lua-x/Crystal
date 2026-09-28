@@ -11,8 +11,11 @@ import { sessionMiddleware } from './middleware/session.js'
 import { adminRoutes } from './routes/admin.js'
 import { authRoutes } from './routes/auth.js'
 import { inviteRoutes } from './routes/invites.js'
+import { listGroupRoutes, listRoutes } from './routes/lists.js'
 import { meRoutes } from './routes/me.js'
 import { systemRoutes } from './routes/system.js'
+import { subtaskRoutes, taskRoutes } from './routes/tasks.js'
+import { searchRoutes, viewRoutes } from './routes/views.js'
 import type { Services } from './services/index.js'
 import { mountWebApp } from './static.js'
 
@@ -45,6 +48,12 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.route('/invites', inviteRoutes(services))
   v1.route('/me', meRoutes(services))
   v1.route('/admin', adminRoutes(services))
+  v1.route('/lists', listRoutes(services))
+  v1.route('/list-groups', listGroupRoutes(services))
+  v1.route('/tasks', taskRoutes(services))
+  v1.route('/subtasks', subtaskRoutes(services))
+  v1.route('/views', viewRoutes(services))
+  v1.route('/search', searchRoutes(services))
   app.route('/api/v1', v1)
 
   app.openAPIRegistry.registerComponent('securitySchemes', 'session', {

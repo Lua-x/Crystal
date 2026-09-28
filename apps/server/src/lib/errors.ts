@@ -24,6 +24,7 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   oidc_already_linked: 'This single sign-on account is linked to another user.',
   oidc_account_not_found: 'No account is linked to this single sign-on identity.',
   identity_required: 'Set a password before removing your only sign-in method.',
+  list_is_default: 'The default list cannot be deleted.',
 }
 
 /** An expected failure that is reported to the client as `{ error: { code, message } }`. */

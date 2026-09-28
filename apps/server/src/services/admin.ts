@@ -4,6 +4,7 @@ import { hashPassword } from '../auth/password.js'
 import type { Db } from '../db/client.js'
 import type { UserRow } from '../db/schema.js'
 import { AppError } from '../lib/errors.js'
+import type { ListService } from './lists.js'
 import type { SessionService } from './sessions.js'
 import type { UserService } from './users.js'
 
@@ -13,6 +14,7 @@ export class AdminService {
     private readonly db: Db,
     private readonly users: UserService,
     private readonly sessions: SessionService,
+    private readonly lists: ListService,
   ) {}
 
   async updateUser(actor: UserRow, targetId: string, input: AdminUpdateUserInput): Promise<void> {
@@ -59,7 +61,9 @@ export class AdminService {
       if (isActiveAdmin && !this.users.hasOtherActiveAdmin(target.id, tx)) {
         throw new AppError(409, 'last_admin')
       }
-      // Sessions and linked identities are removed through ON DELETE CASCADE.
+      // Lists the user owns go with the account; sessions, identities, memberships
+      // and groups are removed through ON DELETE CASCADE.
+      this.lists.deleteOwnedBy(target.id, tx)
       this.users.delete(target.id, tx)
     })
   }

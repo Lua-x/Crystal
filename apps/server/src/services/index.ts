@@ -6,9 +6,14 @@ import type { Logger } from '../lib/logger.js'
 import { RateLimiter } from '../lib/rate-limit.js'
 import { AdminService } from './admin.js'
 import { AuthService } from './auth.js'
+import { CleanupService } from './cleanup.js'
 import { InviteService } from './invites.js'
+import { ListService } from './lists.js'
+import { SearchService } from './search.js'
 import { SessionService } from './sessions.js'
+import { TaskService } from './tasks.js'
 import { UserService } from './users.js'
+import { ViewService } from './views.js'
 
 const MINUTE_MS = 60 * 1000
 
@@ -24,6 +29,11 @@ export interface Services {
   auth: AuthService
   admin: AdminService
   oidc: OidcService | undefined
+  search: SearchService
+  lists: ListService
+  tasks: TaskService
+  views: ViewService
+  cleanup: CleanupService
   limits: {
     /** All sign-in attempts from one address. */
     loginPerIp: RateLimiter
@@ -53,7 +63,12 @@ export function createServices(options: ServiceOptions): Services {
   const invites = new InviteService(db, now)
   const sessions = new SessionService(db, config.sessionTtlDays, now)
   const auth = new AuthService({ db, config, logger, users, invites, sessions, now, version })
-  const admin = new AdminService(db, users, sessions)
+  const search = new SearchService(db)
+  const lists = new ListService(db, search, now)
+  const tasks = new TaskService(db, lists, search, now)
+  const views = new ViewService(db, tasks, search)
+  const cleanup = new CleanupService(db, search, sessions, now)
+  const admin = new AdminService(db, users, sessions, lists)
   const oidc =
     config.oidc && config.baseUrl
       ? new OidcService(
@@ -77,6 +92,11 @@ export function createServices(options: ServiceOptions): Services {
     auth,
     admin,
     oidc,
+    search,
+    lists,
+    tasks,
+    views,
+    cleanup,
     limits: {
       loginPerIp: new RateLimiter(50, 15 * MINUTE_MS, clock),
       loginPerAccount: new RateLimiter(10, 15 * MINUTE_MS, clock),

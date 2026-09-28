@@ -60,8 +60,11 @@ function main(): void {
   })
 
   const cleanup = setInterval(() => {
-    const removed = services.sessions.deleteExpired()
-    if (removed > 0) logger.debug({ removed }, 'Removed expired sessions')
+    try {
+      logger.debug(services.cleanup.run(), 'Cleanup finished')
+    } catch (error) {
+      logger.error({ err: error }, 'Cleanup failed')
+    }
   }, HOUR_MS)
   cleanup.unref()
 

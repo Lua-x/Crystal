@@ -8,6 +8,20 @@
       "when": 1790539078705,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790606133448,
+      "tag": "0001_lists_and_tasks",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790606144601,
+      "tag": "0002_search_index",
+      "breakpoints": true
     }
   ]
 }
