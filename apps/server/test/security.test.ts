@@ -165,6 +165,29 @@ describe('rate limiting', () => {
     })
     expect(later.status).toBe(200)
   })
+
+  it('does not count successful sign-ins against the account', async () => {
+    context = createTestContext()
+    await registerUser(context, 'anna')
+    const device = context.client({ ip: '198.51.100.8' })
+
+    for (let round = 0; round < 3; round++) {
+      // Nine typos, then the right password: never limited, because a
+      // successful sign-in starts the count over.
+      for (let attempt = 0; attempt < 9; attempt++) {
+        const typo = await device.post('/api/v1/auth/login', {
+          identifier: 'anna',
+          password: `typo-${attempt}`,
+        })
+        expect(typo.status).toBe(401)
+      }
+      const success = await device.post('/api/v1/auth/login', {
+        identifier: 'anna',
+        password: PASSWORD,
+      })
+      expect(success.status).toBe(200)
+    }
+  })
 })
 
 describe('unknown routes', () => {

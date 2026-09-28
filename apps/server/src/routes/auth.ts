@@ -80,8 +80,11 @@ export function authRoutes(services: Services) {
     async (c) => {
       const input = c.req.valid('json')
       enforceRateLimit(services.limits.loginPerIp, ipKey(c))
-      enforceRateLimit(services.limits.loginPerAccount, `${ipKey(c)}:${input.identifier}`)
+      const accountKey = `${ipKey(c)}:${input.identifier}`
+      enforceRateLimit(services.limits.loginPerAccount, accountKey)
       const user = await services.auth.login(input)
+      // Only failed attempts count against the account.
+      services.limits.loginPerAccount.reset(accountKey)
       startSession(c, services, user)
       return c.json(services.users.toMe(user), 200)
     },
