@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronsUpDown, FolderPlus, LogOut, Plus, Settings } from 'lucide-react'
+import { ChevronsUpDown, FolderPlus, Keyboard, LogOut, Plus, Settings } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -19,6 +19,8 @@ import { useLogout } from '../../lib/queries'
 import { GroupDialog, ListDialog } from '../tasks/list-dialogs'
 import { SearchField } from '../tasks/search'
 import { SidebarLists, SmartTiles } from '../tasks/sidebar-lists'
+import { SidebarTags } from '../tasks/tag-page'
+import { useShell } from './shell-context'
 import { useMe } from './use-me'
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -42,6 +44,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           {t('lists.myLists')}
         </h2>
         <SidebarLists onNavigate={onNavigate} />
+        <SidebarTags onNavigate={onNavigate} />
       </nav>
 
       <div className="flex shrink-0 items-center gap-1 px-2.5 pt-1">
@@ -76,6 +79,7 @@ function AccountMenu({ onNavigate }: { onNavigate: (() => void) | undefined }) {
   const me = useMe()
   const navigate = useNavigate()
   const logout = useLogout()
+  const { isCompact, openShortcuts } = useShell()
 
   const signOut = async () => {
     await logout.mutateAsync().catch(() => undefined)
@@ -110,6 +114,11 @@ function AccountMenu({ onNavigate }: { onNavigate: (() => void) | undefined }) {
         >
           {t('common.settings')}
         </DropdownMenuItem>
+        {!isCompact && (
+          <DropdownMenuItem icon={<Keyboard />} onSelect={openShortcuts}>
+            {t('shortcuts.title')}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem icon={<LogOut />} onSelect={() => void signOut()}>
           {t('common.signOut')}

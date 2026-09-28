@@ -113,11 +113,15 @@ export function formatDue(
     }).format(date)
   }
   if (!task.dueTime) return label
-  const [hours, minutes] = task.dueTime.split(':').map(Number) as [number, number]
-  const time = new Intl.DateTimeFormat(locale, {
+  return `${label}, ${formatTime(task.dueTime, locale)}`
+}
+
+/** `18:30` as the locale writes it ("6:30 PM", "18:30"). */
+export function formatTime(time: string, locale: string): string {
+  const [hours, minutes] = time.split(':').map(Number) as [number, number]
+  return new Intl.DateTimeFormat(locale, {
     hour: 'numeric',
     minute: '2-digit',
     timeZone: 'UTC',
   }).format(new Date(Date.UTC(2000, 0, 1, hours, minutes)))
-  return `${label}, ${time}`
 }

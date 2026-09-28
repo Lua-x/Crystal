@@ -1,12 +1,21 @@
 import type { List, Task } from '@crystal/shared'
-import { CalendarDays, GripVertical, ListChecks, NotebookText, Star, Sun } from 'lucide-react'
-import type { HTMLAttributes, ReactNode, Ref } from 'react'
+import {
+  CalendarDays,
+  GripVertical,
+  ListChecks,
+  NotebookText,
+  Repeat,
+  Star,
+  Sun,
+} from 'lucide-react'
+import type { HTMLAttributes, KeyboardEventHandler, ReactNode, Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { TaskCheckbox } from '../../components/ui/task-checkbox'
 import { cn } from '../../lib/cn'
-import { dueState, formatDue } from './view-logic'
 import { ListIcon } from './list-style'
+import { describeRecurrence } from './recurrence-text'
+import { dueState, formatDue } from './view-logic'
 
 export interface TaskRowProps {
   task: Task
@@ -19,6 +28,8 @@ export interface TaskRowProps {
   onToggleComplete: (task: Task, completed: boolean) => void
   onToggleImportant: (task: Task) => void
   onOpen: (task: Task) => void
+  /** Shortcuts while the task has the focus. */
+  onKeyDown?: KeyboardEventHandler<HTMLButtonElement>
   /** Keyboard drag handle props (from dnd-kit); omitted when not sortable. */
   handleProps?: HTMLAttributes<HTMLButtonElement> & { ref?: Ref<HTMLButtonElement> }
   dragging?: boolean
@@ -39,6 +50,7 @@ export function TaskRow({
   onToggleComplete,
   onToggleImportant,
   onOpen,
+  onKeyDown,
   handleProps,
   dragging = false,
   className,
@@ -83,6 +95,20 @@ export function TaskRow({
         <CalendarDays aria-hidden className="size-3.5" />
         {state === 'overdue' && <span className="sr-only">{t('tasks.overdue')}: </span>}
         {due}
+        {task.recurrence && (
+          <Repeat
+            role="img"
+            aria-label={describeRecurrence(task.recurrence, t, i18n.language)}
+            className="size-3.5"
+          />
+        )}
+      </span>,
+    )
+  }
+  for (const tag of task.tags) {
+    meta.push(
+      <span key={`tag-${tag}`} className="max-w-40 truncate">
+        #{tag}
       </span>,
     )
   }
@@ -136,7 +162,9 @@ export function TaskRow({
       <button
         type="button"
         data-open
+        data-task-id={task.id}
         onClick={() => onOpen(task)}
+        onKeyDown={onKeyDown}
         aria-current={selected ? 'true' : undefined}
         className="min-w-0 flex-1 cursor-default py-2 text-left outline-none before:absolute before:inset-0 before:rounded-xl focus-visible:before:outline-2 focus-visible:before:outline-offset-[-2px] focus-visible:before:outline-focus-ring"
       >

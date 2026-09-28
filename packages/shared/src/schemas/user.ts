@@ -18,12 +18,15 @@ import {
 export const preferencesSchema = z.object({
   theme: themeSchema,
   accentColor: accentColorSchema,
+  /** Recognize dates, repeats, tags and more while typing a new task. */
+  smartEntry: z.boolean(),
 })
 export type Preferences = z.infer<typeof preferencesSchema>
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
   accentColor: 'blue',
+  smartEntry: true,
 }
 
 /**
@@ -38,6 +41,8 @@ export function parsePreferences(raw: unknown): Preferences {
   return {
     theme: theme.success ? theme.data : DEFAULT_PREFERENCES.theme,
     accentColor: accentColor.success ? accentColor.data : DEFAULT_PREFERENCES.accentColor,
+    smartEntry:
+      typeof source.smartEntry === 'boolean' ? source.smartEntry : DEFAULT_PREFERENCES.smartEntry,
   }
 }
 

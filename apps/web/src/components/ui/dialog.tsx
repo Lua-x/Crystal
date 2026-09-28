@@ -16,6 +16,11 @@ interface DialogProps {
   children?: ReactNode
   footer?: ReactNode
   className?: string
+  /**
+   * For content without focusable elements (like a reference list): lets
+   * keyboard users focus the body to scroll it.
+   */
+  focusableBody?: boolean
 }
 
 /**
@@ -30,6 +35,7 @@ export function Dialog({
   children,
   footer,
   className,
+  focusableBody = false,
 }: DialogProps) {
   const { t } = useTranslation()
   return (
@@ -99,7 +105,14 @@ export function Dialog({
                       </IconButton>
                     </DialogPrimitive.Close>
                   </div>
-                  {children && <div className="overflow-y-auto px-5 pb-5">{children}</div>}
+                  {children && (
+                    <div
+                      {...(focusableBody ? { tabIndex: 0 } : {})}
+                      className="overflow-y-auto px-5 pb-5 outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-inset"
+                    >
+                      {children}
+                    </div>
+                  )}
                   {footer && (
                     <div className="flex flex-col-reverse gap-2 px-5 pb-5 sm:flex-row sm:justify-end">
                       {footer}

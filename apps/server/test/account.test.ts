@@ -44,10 +44,14 @@ describe('profile', () => {
 
     const second = await client.patch<Me>('/api/v1/me', {
       email: null,
-      preferences: { accentColor: '#34C759' },
+      preferences: { accentColor: '#34C759', smartEntry: false },
     })
     expect(second.body.email).toBeNull()
-    expect(second.body.preferences).toEqual({ theme: 'dark', accentColor: '#34c759' })
+    expect(second.body.preferences).toEqual({
+      theme: 'dark',
+      accentColor: '#34c759',
+      smartEntry: false,
+    })
   })
 
   it('rejects an unknown time zone and a taken username', async () => {

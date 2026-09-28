@@ -14,7 +14,10 @@ interface CachedAppearance {
  * Applies theme and accent color to the document and caches them, so
  * `public/theme-init.js` can restore them before the first paint next time.
  */
-export function applyAppearance(preferences: Preferences, locale: Locale): void {
+export function applyAppearance(
+  preferences: Pick<Preferences, 'theme' | 'accentColor'>,
+  locale: Locale,
+): void {
   const root = document.documentElement
   if (preferences.theme === 'system') root.removeAttribute('data-theme')
   else root.setAttribute('data-theme', preferences.theme)

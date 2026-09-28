@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -39,6 +39,7 @@ import {
 import { useToday } from './hooks'
 import { ListIcon } from './list-style'
 import { useTaskActions } from './task-actions'
+import { DetailRow, RecurrenceEditor, TagsEditor } from './task-detail-fields'
 
 const NOTES_SAVE_DELAY = 700
 
@@ -163,6 +164,13 @@ function TaskDetailContent({ task, onClose }: { task: Task; onClose: () => void 
             onChange={(input) => actions.update({ id: task.id, input })}
           />
 
+          <RecurrenceEditor
+            task={task}
+            today={today}
+            disabled={!canEdit}
+            onChange={(recurrence) => actions.update({ id: task.id, input: { recurrence } })}
+          />
+
           <DetailRow
             icon={<span className="text-callout font-bold">!</span>}
             label={t('detail.priority')}
@@ -204,6 +212,12 @@ function TaskDetailContent({ task, onClose }: { task: Task; onClose: () => void 
                 ))}
             </Select>
           </DetailRow>
+
+          <TagsEditor
+            task={task}
+            disabled={!canEdit}
+            onChange={(tags) => actions.update({ id: task.id, input: { tags } })}
+          />
         </div>
 
         <NotesEditor
@@ -233,29 +247,6 @@ function TaskDetailContent({ task, onClose }: { task: Task; onClose: () => void 
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function DetailRow({
-  icon,
-  label,
-  children,
-}: {
-  icon: ReactNode
-  label?: string
-  children: ReactNode
-}) {
-  return (
-    <div className="flex min-h-12 items-center gap-3 px-3 py-2">
-      <span
-        aria-hidden
-        className="flex size-5 shrink-0 items-center justify-center text-text-secondary [&_svg]:size-4.5"
-      >
-        {icon}
-      </span>
-      {label && <span className="sr-only">{label}</span>}
-      <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
     </div>
   )
 }

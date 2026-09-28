@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { KeyRound } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useId, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
@@ -22,6 +22,7 @@ import { Field } from '../../components/ui/field'
 import { GroupedRow, GroupedSection } from '../../components/ui/grouped'
 import { Input, PasswordInput } from '../../components/ui/input'
 import { Select } from '../../components/ui/select'
+import { Switch } from '../../components/ui/switch'
 import { toast } from '../../components/ui/toast-store'
 import { ApiError, fieldErrors } from '../../lib/api'
 import { errorCodeMessage, errorMessage } from '../../lib/errors'
@@ -57,10 +58,38 @@ export function AccountSettingsPage() {
       <div className="flex flex-col gap-8">
         <ProfileSection me={me} />
         <RegionSection me={me} />
+        <QuickEntrySection me={me} />
         <PasswordSection me={me} />
         {config?.oidc.enabled && <SsoSection me={me} provider={config.oidc.buttonLabel} />}
       </div>
     </Page>
+  )
+}
+
+function QuickEntrySection({ me }: { me: Me }) {
+  const { t } = useTranslation()
+  const update = useUpdateMe()
+  const switchId = useId()
+  const hintId = useId()
+  return (
+    <GroupedSection title={t('settings.account.quickEntry')}>
+      <GroupedRow
+        label={<label htmlFor={switchId}>{t('settings.account.smartEntry')}</label>}
+        description={<span id={hintId}>{t('settings.account.smartEntryHint')}</span>}
+      >
+        <Switch
+          id={switchId}
+          aria-describedby={hintId}
+          checked={me.preferences.smartEntry}
+          onCheckedChange={(smartEntry) =>
+            update.mutate(
+              { preferences: { smartEntry } },
+              { onError: (error) => toast.error(errorMessage(error)) },
+            )
+          }
+        />
+      </GroupedRow>
+    </GroupedSection>
   )
 }
 

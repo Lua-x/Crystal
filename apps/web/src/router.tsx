@@ -17,6 +17,7 @@ import { AppShell } from './features/shell/app-shell'
 import { ListPage } from './features/tasks/list-page'
 import { SearchPage } from './features/tasks/search'
 import { SmartViewPage } from './features/tasks/smart-view-page'
+import { TagPage } from './features/tasks/tag-page'
 import { authConfigQuery, meQuery } from './lib/queries'
 
 interface RouterContext {
@@ -122,6 +123,12 @@ const listRoute = createRoute({
   component: ListPage,
 })
 
+const tagRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/tags/$tag',
+  component: TagPage,
+})
+
 const searchRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/search',
@@ -223,6 +230,7 @@ const routeTree = rootRoute.addChildren([
     homeRoute,
     ...smartViewRoutes,
     listRoute,
+    tagRoute,
     searchRoute,
     settingsRoute.addChildren([
       settingsIndexRoute,

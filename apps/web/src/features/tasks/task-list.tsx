@@ -3,11 +3,12 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useState, type KeyboardEventHandler, type ReactNode } from 'react'
+import { useState, type KeyboardEvent, type KeyboardEventHandler, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../lib/cn'
 import { springs } from '../../lib/motion'
+import { useDeleteTask } from './data'
 import { useTaskSelection } from './hooks'
 import type { TaskActions } from './task-actions'
 import { TaskContextMenu } from './task-menu'
@@ -41,6 +42,40 @@ export function TaskList({
   sortable = false,
 }: TaskListProps) {
   const { selectedId, open } = useTaskSelection()
+  const deleteTask = useDeleteTask()
+
+  // Keyboard shortcuts on a focused task (see the shortcut overview).
+  const onRowKeyDown = (task: Task) => (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.metaKey || event.ctrlKey || event.altKey) return
+    const completed = task.completedAt !== null || actions.completing.has(task.id)
+    switch (event.key) {
+      case 'ArrowDown':
+      case 'ArrowUp':
+        moveFocus(event.currentTarget, event.key === 'ArrowDown' ? 1 : -1)
+        break
+      case 'x':
+      case 'X':
+        actions.toggleComplete(task, !completed)
+        break
+      case 's':
+      case 'S':
+        actions.toggleImportant(task)
+        break
+      case 'm':
+      case 'M':
+        actions.update({ id: task.id, input: { myDay: !task.inMyDay } })
+        break
+      case 'Delete':
+      case 'Backspace':
+        // Keep the focus in the list: on the next task, or the previous one at the end.
+        if (!moveFocus(event.currentTarget, 1)) moveFocus(event.currentTarget, -1)
+        deleteTask.mutate(task)
+        break
+      default:
+        return
+    }
+    event.preventDefault()
+  }
 
   const renderRow = (task: Task, extra?: Partial<Parameters<typeof TaskRow>[0]>) => (
     <TaskRow
@@ -52,6 +87,7 @@ export function TaskList({
       onToggleComplete={actions.toggleComplete}
       onToggleImportant={actions.toggleImportant}
       onOpen={(item) => open(item.id)}
+      onKeyDown={onRowKeyDown(task)}
       {...extra}
     />
   )
@@ -96,6 +132,14 @@ export function TaskList({
       {items}
     </SortableContext>
   )
+}
+
+/** Moves the focus to the next or previous task on the page; false at either end. */
+function moveFocus(from: HTMLElement, step: 1 | -1): boolean {
+  const rows = [...document.querySelectorAll<HTMLElement>('main button[data-open]')]
+  const next = rows[rows.indexOf(from) + step]
+  next?.focus()
+  return Boolean(next)
 }
 
 /** Rows fade and fold in when added and fold away when completed or deleted. */

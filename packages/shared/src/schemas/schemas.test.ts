@@ -58,7 +58,10 @@ describe('parsePreferences', () => {
     expect(parsePreferences({ theme: 'sepia', accentColor: 'green', extra: true })).toEqual({
       theme: 'system',
       accentColor: 'green',
+      smartEntry: true,
     })
+    expect(parsePreferences({ smartEntry: false }).smartEntry).toBe(false)
+    expect(parsePreferences({ smartEntry: 'no' }).smartEntry).toBe(true)
   })
 })
 

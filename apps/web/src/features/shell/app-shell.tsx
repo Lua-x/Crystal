@@ -8,8 +8,12 @@ import { cn } from '../../lib/cn'
 import { springs } from '../../lib/motion'
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/use-media-query'
 import { DndProvider } from '../tasks/dnd-provider'
+import { GroupDialog, ListDialog } from '../tasks/list-dialogs'
 import { TaskDetailHost } from '../tasks/task-detail-host'
+import { CommandPalette } from './command-palette'
 import { ShellContext, type ShellState } from './shell-context'
+import { useGlobalShortcuts } from './shortcuts'
+import { ShortcutsDialog } from './shortcuts-dialog'
 import { Sidebar } from './sidebar'
 
 const COLLAPSED_KEY = 'crystal.sidebarCollapsed'
@@ -46,17 +50,42 @@ export function AppShell() {
     })
   }, [isDesktop])
 
+  const [overlay, setOverlay] = useState<'palette' | 'shortcuts' | 'list' | 'group' | null>(null)
+  const openPalette = useCallback(() => setOverlay('palette'), [])
+  const openShortcuts = useCallback(() => setOverlay('shortcuts'), [])
+  // ⌘K / Ctrl+K opens the palette and closes it again.
+  const togglePalette = useCallback(
+    () => setOverlay((current) => (current === 'palette' ? null : 'palette')),
+    [],
+  )
+  useGlobalShortcuts({ onPalette: togglePalette, onHelp: openShortcuts })
+  const overlayProps = (name: NonNullable<typeof overlay>) => ({
+    open: overlay === name,
+    onOpenChange: (open: boolean) => setOverlay(open ? name : null),
+  })
+
   const shell = useMemo<ShellState>(
     () => ({
       isCompact: !isDesktop,
       sidebarOpen: isDesktop ? !collapsed : drawerOpen,
       toggleSidebar,
+      openPalette,
+      openShortcuts,
     }),
-    [isDesktop, collapsed, drawerOpen, toggleSidebar],
+    [isDesktop, collapsed, drawerOpen, toggleSidebar, openPalette, openShortcuts],
   )
 
   return (
     <ShellContext.Provider value={shell}>
+      <CommandPalette
+        {...overlayProps('palette')}
+        onShowShortcuts={openShortcuts}
+        onNewList={() => setOverlay('list')}
+        onNewGroup={() => setOverlay('group')}
+      />
+      <ShortcutsDialog {...overlayProps('shortcuts')} />
+      <ListDialog {...overlayProps('list')} />
+      <GroupDialog {...overlayProps('group')} />
       <DndProvider>
         <div className="flex h-dvh overflow-hidden">
           {isDesktop ? (
