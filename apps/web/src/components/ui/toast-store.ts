@@ -2,11 +2,17 @@ import { useSyncExternalStore } from 'react'
 
 export type ToastVariant = 'default' | 'success' | 'error'
 
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 export interface ToastItem {
   id: number
   title: string
   description?: string | undefined
   variant: ToastVariant
+  action?: ToastAction | undefined
   open: boolean
 }
 
@@ -32,11 +38,13 @@ interface ToastInput {
   title: string
   description?: string
   variant?: ToastVariant
+  /** For example "Undo". */
+  action?: ToastAction
 }
 
 /** Shows a short, non-blocking message. At most three are visible at once. */
-export function toast({ title, description, variant = 'default' }: ToastInput) {
-  setItems([...items.slice(-2), { id: nextId++, title, description, variant, open: true }])
+export function toast({ title, description, variant = 'default', action }: ToastInput) {
+  setItems([...items.slice(-2), { id: nextId++, title, description, variant, action, open: true }])
 }
 toast.success = (title: string, description?: string) =>
   toast({ title, variant: 'success', ...(description ? { description } : {}) })

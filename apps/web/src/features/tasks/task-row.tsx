@@ -1,0 +1,188 @@
+import type { List, Task } from '@crystal/shared'
+import { CalendarDays, GripVertical, ListChecks, NotebookText, Star, Sun } from 'lucide-react'
+import type { HTMLAttributes, ReactNode, Ref } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import { TaskCheckbox } from '../../components/ui/task-checkbox'
+import { cn } from '../../lib/cn'
+import { dueState, formatDue } from './view-logic'
+import { ListIcon } from './list-style'
+
+export interface TaskRowProps {
+  task: Task
+  today: string
+  /** Shown in smart lists, where tasks come from different lists. */
+  list?: List | undefined
+  selected?: boolean
+  /** Shown checked while the completion is animating. */
+  completing?: boolean
+  onToggleComplete: (task: Task, completed: boolean) => void
+  onToggleImportant: (task: Task) => void
+  onOpen: (task: Task) => void
+  /** Keyboard drag handle props (from dnd-kit); omitted when not sortable. */
+  handleProps?: HTMLAttributes<HTMLButtonElement> & { ref?: Ref<HTMLButtonElement> }
+  dragging?: boolean
+  className?: string
+}
+
+/**
+ * One task: checkbox, title with details, and the importance star. The title
+ * is a button that opens the details; checkbox and star are separate buttons,
+ * so no interactive element is nested in another.
+ */
+export function TaskRow({
+  task,
+  today,
+  list,
+  selected = false,
+  completing = false,
+  onToggleComplete,
+  onToggleImportant,
+  onOpen,
+  handleProps,
+  dragging = false,
+  className,
+}: TaskRowProps) {
+  const { t, i18n } = useTranslation()
+  const completed = completing || task.completedAt !== null
+  const due = formatDue(task, today, i18n.language, {
+    today: t('tasks.today'),
+    tomorrow: t('tasks.tomorrow'),
+    yesterday: t('tasks.yesterday'),
+  })
+  const state = task.completedAt ? null : dueState(task, today)
+  const stepsDone = task.subtasks.filter((subtask) => subtask.completedAt).length
+
+  const meta: ReactNode[] = []
+  if (task.inMyDay && !list) {
+    meta.push(
+      <span key="myday" className="inline-flex items-center gap-1">
+        <Sun aria-hidden className="size-3.5" />
+        {t('tasks.inMyDay')}
+      </span>,
+    )
+  }
+  if (list) {
+    meta.push(
+      <span key="list" className="inline-flex min-w-0 items-center gap-1">
+        <ListIcon list={list} className="size-3.5 text-caption" />
+        <span className="truncate">{list.name}</span>
+      </span>,
+    )
+  }
+  if (due) {
+    meta.push(
+      <span
+        key="due"
+        className={cn(
+          'inline-flex items-center gap-1',
+          state === 'overdue' && 'font-medium text-danger',
+          state === 'today' && 'font-medium text-accent-text',
+        )}
+      >
+        <CalendarDays aria-hidden className="size-3.5" />
+        {state === 'overdue' && <span className="sr-only">{t('tasks.overdue')}: </span>}
+        {due}
+      </span>,
+    )
+  }
+  if (task.subtasks.length > 0) {
+    meta.push(
+      <span key="steps" className="inline-flex items-center gap-1">
+        <ListChecks aria-hidden className="size-3.5" />
+        {t('tasks.steps', { done: stepsDone, total: task.subtasks.length })}
+      </span>,
+    )
+  }
+  if (task.notes.trim()) {
+    meta.push(
+      <span key="notes" className="inline-flex items-center">
+        <NotebookText aria-label={t('tasks.hasNotes')} className="size-3.5" />
+      </span>,
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        'group/row relative flex min-h-12 items-center gap-1 rounded-xl pr-1.5 pl-1 transition-colors duration-150',
+        'hover:bg-fill-hover has-[button[data-open]:active]:bg-fill-pressed',
+        selected && 'bg-accent-soft hover:bg-accent-soft',
+        dragging && 'bg-elevated shadow-lg',
+        className,
+      )}
+    >
+      {handleProps && (
+        <button
+          type="button"
+          {...handleProps}
+          className="absolute top-1/2 -left-5 hidden h-8 w-5 -translate-y-1/2 cursor-grab items-center justify-center rounded-md text-text-tertiary opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 active:cursor-grabbing md:flex"
+        >
+          <GripVertical aria-hidden className="size-4" />
+        </button>
+      )}
+
+      <TaskCheckbox
+        checked={completed}
+        onCheckedChange={(checked) => onToggleComplete(task, checked)}
+        label={
+          completed
+            ? t('tasks.reopen', { title: task.title })
+            : t('tasks.complete', { title: task.title })
+        }
+        className="relative z-10"
+      />
+
+      <button
+        type="button"
+        data-open
+        onClick={() => onOpen(task)}
+        aria-current={selected ? 'true' : undefined}
+        className="min-w-0 flex-1 cursor-default py-2 text-left outline-none before:absolute before:inset-0 before:rounded-xl focus-visible:before:outline-2 focus-visible:before:outline-offset-[-2px] focus-visible:before:outline-focus-ring"
+      >
+        <span
+          className={cn(
+            'block text-body break-words decoration-text-secondary transition-[color,text-decoration-color] duration-300',
+            completed ? 'text-text-secondary line-through' : 'decoration-transparent',
+          )}
+        >
+          {task.title}
+        </span>
+        {meta.length > 0 && (
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-footnote text-text-secondary">
+            {meta}
+          </span>
+        )}
+      </button>
+
+      {task.priority > 0 && !completed && (
+        <span
+          className="relative z-10 shrink-0 px-1 text-callout font-bold text-accent-text"
+          aria-label={t('tasks.priorityLabel', {
+            level: t(`tasks.priority.${task.priority}` as 'tasks.priority.1'),
+          })}
+          role="img"
+        >
+          {'!'.repeat(task.priority)}
+        </span>
+      )}
+
+      <button
+        type="button"
+        onClick={() => onToggleImportant(task)}
+        aria-pressed={task.important}
+        aria-label={
+          task.important
+            ? t('tasks.unmarkImportant', { title: task.title })
+            : t('tasks.markImportant', { title: task.title })
+        }
+        className={cn(
+          'relative z-10 flex size-8 shrink-0 cursor-default items-center justify-center rounded-lg transition-colors hover:bg-fill-hover pointer-coarse:size-11',
+          task.important ? 'text-important' : 'text-text-tertiary hover:text-text-secondary',
+        )}
+      >
+        <Star aria-hidden className={cn('size-4.5', task.important && 'fill-current')} />
+      </button>
+    </div>
+  )
+}

@@ -1,10 +1,11 @@
-import { Link, useNavigate } from '@tanstack/react-router'
-import { ChevronsUpDown, House, LogOut, Settings } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { ChevronsUpDown, FolderPlus, LogOut, Plus, Settings } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Logo } from '../../components/brand/logo'
 import { Avatar } from '../../components/ui/avatar'
+import { Button } from '../../components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,11 +14,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu'
+import { IconButton } from '../../components/ui/icon-button'
 import { useLogout } from '../../lib/queries'
+import { GroupDialog, ListDialog } from '../tasks/list-dialogs'
+import { SearchField } from '../tasks/search'
+import { SidebarLists, SmartTiles } from '../tasks/sidebar-lists'
 import { useMe } from './use-me'
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useTranslation()
+  const [dialog, setDialog] = useState<'list' | 'group' | null>(null)
 
   return (
     <div className="flex h-full flex-col">
@@ -26,41 +32,42 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <span className="text-callout font-semibold">{t('common.appName')}</span>
       </div>
 
-      <nav aria-label={t('shell.mainNavigation')} className="flex-1 overflow-y-auto px-2.5 py-2">
-        <ul className="flex flex-col gap-0.5">
-          <li>
-            <SidebarLink to="/" icon={<House />} onNavigate={onNavigate}>
-              {t('common.home')}
-            </SidebarLink>
-          </li>
-        </ul>
+      <div className="shrink-0 px-3 pb-3">
+        <SearchField {...(onNavigate ? { onSearch: onNavigate } : {})} />
+      </div>
+
+      <nav aria-label={t('shell.mainNavigation')} className="flex-1 overflow-y-auto px-3 pb-3">
+        <SmartTiles onNavigate={onNavigate} />
+        <h2 className="mt-5 mb-1 px-1.5 text-footnote font-semibold text-text-secondary">
+          {t('lists.myLists')}
+        </h2>
+        <SidebarLists onNavigate={onNavigate} />
       </nav>
+
+      <div className="flex shrink-0 items-center gap-1 px-2.5 pt-1">
+        <Button variant="ghost" className="flex-1 justify-start" onClick={() => setDialog('list')}>
+          <Plus aria-hidden className="text-accent-text" />
+          {t('lists.newList')}
+        </Button>
+        <IconButton label={t('lists.newGroup')} onClick={() => setDialog('group')}>
+          <FolderPlus />
+        </IconButton>
+      </div>
 
       <div className="shrink-0 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))]">
         <AccountMenu onNavigate={onNavigate} />
       </div>
+
+      <ListDialog
+        open={dialog === 'list'}
+        onOpenChange={(open) => setDialog(open ? 'list' : null)}
+        onCreated={onNavigate}
+      />
+      <GroupDialog
+        open={dialog === 'group'}
+        onOpenChange={(open) => setDialog(open ? 'group' : null)}
+      />
     </div>
-  )
-}
-
-interface SidebarLinkProps {
-  to: '/' | '/settings'
-  icon: ReactNode
-  children: ReactNode
-  onNavigate: (() => void) | undefined
-}
-
-function SidebarLink({ to, icon, children, onNavigate }: SidebarLinkProps) {
-  return (
-    <Link
-      to={to}
-      onClick={onNavigate}
-      activeOptions={{ exact: to === '/' }}
-      className="flex h-8 cursor-default items-center gap-2.5 rounded-lg px-2.5 text-callout text-text transition-colors hover:bg-fill-hover data-[status=active]:bg-fill-selected data-[status=active]:font-medium pointer-coarse:h-11 [&_svg]:size-4.5 [&_svg]:text-accent-text"
-    >
-      {icon}
-      {children}
-    </Link>
   )
 }
 

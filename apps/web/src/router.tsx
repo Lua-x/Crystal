@@ -1,3 +1,4 @@
+import { SMART_VIEWS } from '@crystal/shared'
 import type { QueryClient } from '@tanstack/react-query'
 import {
   createRootRouteWithContext,
@@ -13,7 +14,9 @@ import { LoginPage } from './features/auth/login-page'
 import { InvitePage, RegisterPage, SetupPage } from './features/auth/register-pages'
 import { ErrorScreen, NotFoundScreen, PendingScreen, RootLayout } from './features/root/root-layout'
 import { AppShell } from './features/shell/app-shell'
-import { HomePage } from './features/shell/home-page'
+import { ListPage } from './features/tasks/list-page'
+import { SearchPage } from './features/tasks/search'
+import { SmartViewPage } from './features/tasks/smart-view-page'
 import { authConfigQuery, meQuery } from './lib/queries'
 
 interface RouterContext {
@@ -77,8 +80,6 @@ const inviteRoute = createRoute({
   component: InvitePage,
 })
 
-// Settings are loaded on demand to keep the initial bundle small.
-
 /* ── Signed-in area ────────────────────────────────────────── */
 
 const appRoute = createRoute({
@@ -95,13 +96,40 @@ const appRoute = createRoute({
     }
     return { me }
   },
+  // The open task (details panel) is part of every page's URL.
+  validateSearch: z.object({ task: z.string().optional() }),
 })
 
 const homeRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/',
-  component: HomePage,
+  beforeLoad: () => {
+    throw redirect({ to: '/my-day', replace: true })
+  },
 })
+
+const smartViewRoutes = SMART_VIEWS.map((view) =>
+  createRoute({
+    getParentRoute: () => appRoute,
+    path: `/${view}`,
+    component: () => <SmartViewPage view={view} />,
+  }),
+)
+
+const listRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/lists/$listId',
+  component: ListPage,
+})
+
+const searchRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/search',
+  validateSearch: z.object({ q: z.string().optional() }),
+  component: SearchPage,
+})
+
+// Settings are loaded on demand to keep the initial bundle small.
 
 const settingsRoute = createRoute({
   getParentRoute: () => appRoute,
@@ -193,6 +221,9 @@ const routeTree = rootRoute.addChildren([
   authRoute.addChildren([loginRoute, setupRoute, registerRoute, inviteRoute]),
   appRoute.addChildren([
     homeRoute,
+    ...smartViewRoutes,
+    listRoute,
+    searchRoute,
     settingsRoute.addChildren([
       settingsIndexRoute,
       accountSettingsRoute,

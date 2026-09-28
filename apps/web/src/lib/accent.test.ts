@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { accentCssVariables, ACCENT_PRESET_COLORS, computeAccentTokens, SURFACES } from './accent'
+import {
+  accentCssVariables,
+  ACCENT_PRESET_COLORS,
+  computeAccentTokens,
+  softAccentOn,
+  SURFACES,
+} from './accent'
 import { contrastRatio, formatHex, hexToOklch, oklchToHex, parseHex } from './color'
 
 describe('color math', () => {
@@ -46,8 +52,18 @@ describe('computeAccentTokens', () => {
           contrastRatio(tokens.accentText, surface),
           `${scheme} accent text on ${surface}`,
         ).toBeGreaterThanOrEqual(4.5)
+        const tinted = softAccentOn(tokens.accent, surface)
+        expect(
+          contrastRatio(tokens.accentText, tinted),
+          `${scheme} accent text on selected ${surface} (${tinted})`,
+        ).toBeGreaterThanOrEqual(4.5)
       }
     }
+  })
+
+  it('computes the soft accent like the browser composites it', () => {
+    expect(softAccentOn('#000000', '#ffffff')).toBe('#dbdbdb')
+    expect(softAccentOn('#ffffff', '#ffffff')).toBe('#ffffff')
   })
 
   it('keeps light accents like yellow and uses dark text on them', () => {

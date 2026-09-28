@@ -61,7 +61,7 @@
   /* ── Accent (overridden at runtime from the user's choice) ── */
   --color-accent: light-dark(#1273e9, #1273e9);
   --color-on-accent: light-dark(#ffffff, #ffffff);
-  --color-accent-text: light-dark(#006adf, #3e90ff);
+  --color-accent-text: light-dark(#005fc9, #539bff);
   --color-accent-hover: color-mix(in oklab, var(--color-accent), light-dark(black, white) 10%);
   --color-accent-pressed: color-mix(in oklab, var(--color-accent), light-dark(black, white) 18%);
   --color-accent-soft: color-mix(in oklab, var(--color-accent) 14%, transparent);
@@ -80,6 +80,22 @@
   --color-success-soft: color-mix(in oklab, var(--color-success) 12%, transparent);
   --color-warning: light-dark(#9a5b00, #e8a73a);
   --color-warning-soft: color-mix(in oklab, var(--color-warning) 14%, transparent);
+
+  /* ── List colors (icons, titles; ≥ 3:1 on every surface) ───── */
+  --color-list-red: light-dark(#fe392f, #ff3b30);
+  --color-list-orange: light-dark(#c67200, #ff9500);
+  --color-list-yellow: light-dark(#a48300, #ffcc00);
+  --color-list-green: light-dark(#009c3a, #34c759);
+  --color-list-mint: light-dark(#009791, #00c7be);
+  --color-list-teal: light-dark(#0094aa, #30b0c7);
+  --color-list-blue: light-dark(#007aff, #007aff);
+  --color-list-indigo: light-dark(#5856d6, #6465e6);
+  --color-list-purple: light-dark(#af52de, #af52de);
+  --color-list-pink: light-dark(#ff2d55, #ff2d55);
+  --color-list-brown: light-dark(#a0825d, #a2845e);
+  --color-list-gray: light-dark(#87868b, #8e8e93);
+  /* The "important" star. */
+  --color-important: var(--color-list-orange);
 
   /* ── Shadows ──────────────────────────────────────────────── */
   --color-shadow: light-dark(rgb(40 30 15 / 0.1), rgb(0 0 0 / 0.4));

@@ -9,6 +9,10 @@ import { useShell } from './shell-context'
 
 interface PageProps {
   title: string
+  /** Shown before the large title, e.g. a list's emoji. */
+  titleIcon?: ReactNode
+  /** Color class for the large title (lists use their color). */
+  titleClassName?: string
   subtitle?: ReactNode
   /** Shows a back button to this path instead of the sidebar toggle. */
   backTo?: '/settings'
@@ -27,6 +31,8 @@ interface PageProps {
  */
 export function Page({
   title,
+  titleIcon,
+  titleClassName,
   subtitle,
   backTo,
   actions,
@@ -97,8 +103,15 @@ export function Page({
       </header>
 
       <div className={cn('mx-auto w-full max-w-3xl px-5 pt-2 pb-16 sm:px-8', className)}>
-        <h1 ref={titleRef} className="text-large-title font-bold">
-          {title}
+        <h1
+          ref={titleRef}
+          className={cn(
+            'flex items-center gap-2 text-large-title font-bold break-words',
+            titleClassName,
+          )}
+        >
+          {titleIcon}
+          <span className="min-w-0">{title}</span>
         </h1>
         {subtitle && <p className="mt-1 text-body text-text-secondary">{subtitle}</p>}
         <div className="mt-6">{children}</div>

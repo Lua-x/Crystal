@@ -41,6 +41,15 @@ export function Toaster() {
               </ToastPrimitive.Description>
             )}
           </div>
+          {item.action && (
+            <ToastPrimitive.Action
+              altText={item.action.label}
+              onClick={item.action.onClick}
+              className="-my-1 flex h-7 shrink-0 cursor-default items-center rounded-md px-2 text-callout font-semibold text-accent-text hover:bg-fill-hover pointer-coarse:h-11"
+            >
+              {item.action.label}
+            </ToastPrimitive.Action>
+          )}
           <ToastPrimitive.Close
             aria-label={t('common.close')}
             className="-m-1 flex size-7 shrink-0 cursor-default items-center justify-center rounded-md text-text-secondary hover:bg-fill-hover hover:text-text"

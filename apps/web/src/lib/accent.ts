@@ -1,6 +1,6 @@
 import { ACCENT_PRESETS, type AccentPreset } from '@crystal/shared'
 
-import { adjustLightness, contrastRatio, hexToOklch } from './color'
+import { adjustLightness, contrastRatio, formatHex, hexToOklch, parseHex } from './color'
 
 /** Base colors of the accent presets. The final tokens are derived per color scheme. */
 export const ACCENT_PRESET_COLORS: Record<AccentPreset, string> = {
@@ -28,12 +28,29 @@ const WHITE = '#ffffff'
 const INK = '#1d1c1a'
 const AA = 4.5
 
+/** Share of the accent in `--color-accent-soft`. Must match tokens.css – a test keeps them in sync. */
+export const SOFT_ACCENT_SHARE = 0.14
+
+/**
+ * The opaque color `--color-accent-soft` produces on `surface`. It is the accent
+ * at 14 % opacity, and browsers composite translucent colors in sRGB.
+ */
+export function softAccentOn(accent: string, surface: string): string {
+  const top = parseHex(accent)
+  const bottom = parseHex(surface)
+  return formatHex(
+    top.map(
+      (channel, index) => channel * SOFT_ACCENT_SHARE + bottom[index]! * (1 - SOFT_ACCENT_SHARE),
+    ) as [number, number, number],
+  )
+}
+
 export interface AccentTokens {
   /** Fill for primary buttons, checkmarks and switches. */
   accent: string
   /** Text and icons placed on `accent`. */
   onAccent: string
-  /** Accent-colored text and icons on the canvas (links, selected items). */
+  /** Accent-colored text and icons on any surface, also when tinted with the soft accent. */
   accentText: string
 }
 
@@ -60,8 +77,13 @@ export function computeAccentTokens(base: string, scheme: 'light' | 'dark'): Acc
     }
   }
 
+  // Accent text also appears on selected rows, which are tinted with the soft accent.
+  const backgrounds = [
+    ...SURFACES[scheme],
+    ...SURFACES[scheme].map((surface) => softAccentOn(accent, surface)),
+  ]
   const accentText = adjustLightness(base, scheme === 'light' ? 'darker' : 'lighter', (candidate) =>
-    SURFACES[scheme].every((surface) => contrastRatio(candidate, surface) >= AA),
+    backgrounds.every((background) => contrastRatio(candidate, background) >= AA),
   )
 
   return { accent, onAccent, accentText }

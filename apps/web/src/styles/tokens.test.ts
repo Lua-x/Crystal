@@ -1,9 +1,15 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs'
 
+import { LIST_COLORS } from '@crystal/shared'
 import { describe, expect, it } from 'vitest'
 
-import { ACCENT_PRESET_COLORS, computeAccentTokens, SURFACES } from '../lib/accent'
+import {
+  ACCENT_PRESET_COLORS,
+  computeAccentTokens,
+  SOFT_ACCENT_SHARE,
+  SURFACES,
+} from '../lib/accent'
 import { contrastRatio, formatHex, parseHex } from '../lib/color'
 
 /*
@@ -46,6 +52,15 @@ describe('design tokens', () => {
     }
   })
 
+  it.each(SCHEMES)('%s: list colors reach 3:1 on every surface (icons, large titles)', (scheme) => {
+    for (const color of LIST_COLORS) {
+      for (const background of [...backgrounds, 'grouped', 'window', 'sidebar-solid']) {
+        const ratio = contrastRatio(token(`list-${color}`)[scheme], token(background)[scheme])
+        expect(ratio, `list-${color} on ${background}`).toBeGreaterThanOrEqual(3)
+      }
+    }
+  })
+
   it.each(SCHEMES)('%s: placeholder text reaches 4.5:1 inside inputs', (scheme) => {
     for (const background of backgrounds) {
       const ratio = contrastRatio(token('text-tertiary')[scheme], token(background)[scheme])
@@ -73,7 +88,7 @@ describe('design tokens', () => {
       ['danger', token('danger')[scheme], 0.12],
       ['success', token('success')[scheme], 0.12],
       ['warning', token('warning')[scheme], 0.14],
-      ['accent', computeAccentTokens(ACCENT_PRESET_COLORS.blue, scheme).accent, 0.14],
+      ['accent', computeAccentTokens(ACCENT_PRESET_COLORS.blue, scheme).accent, SOFT_ACCENT_SHARE],
     ]
     for (const [name, color, alpha] of tints) {
       const background = blend(color, alpha, cell)
@@ -85,6 +100,15 @@ describe('design tokens', () => {
     const names = ['canvas', 'window', 'grouped', 'cell', 'elevated']
     expect(names.map((name) => token(name).light)).toEqual(SURFACES.light)
     expect(names.map((name) => token(name).dark)).toEqual(SURFACES.dark)
+  })
+
+  it('keeps the soft accent used for accent calculations in sync', () => {
+    const match =
+      /--color-accent-soft:\s*color-mix\(in oklab, var\(--color-accent\) (\d+)%, transparent\)/.exec(
+        css,
+      )
+    expect(match, '--color-accent-soft is a color-mix() of the accent').not.toBeNull()
+    expect(Number(match![1]) / 100).toBe(SOFT_ACCENT_SHARE)
   })
 
   it('uses the computed blue accent as the default', () => {
