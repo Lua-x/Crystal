@@ -28,6 +28,32 @@ export async function signOut(page: Page) {
   await expect(page).toHaveURL(/\/login$/)
 }
 
+export const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main' })
+
+/** The rows of a task list, by the list's label (a list, a smart list or a section). */
+export const rows = (page: Page, label: string) =>
+  page.getByRole('list', { name: label, exact: true }).getByRole('listitem')
+
+/** The button on a task row that opens its details (its name starts with the title). */
+export const task = (page: Page, title: string) =>
+  page.getByRole('button', { name: new RegExp(`^${title}`) })
+
+export async function openList(page: Page, name: string) {
+  await sidebar(page)
+    .getByRole('link', { name: new RegExp(`^${name}`) })
+    .click()
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+}
+
+export async function addTasks(page: Page, ...titles: string[]) {
+  const field = page.getByLabel('Add task')
+  for (const title of titles) {
+    await field.fill(title)
+    await field.press('Enter')
+    await expect(task(page, title)).toBeVisible()
+  }
+}
+
 /** Fails on any WCAG 2.1 A/AA violation, in light and in dark mode. */
 export async function expectAccessible(page: Page) {
   for (const colorScheme of ['light', 'dark'] as const) {

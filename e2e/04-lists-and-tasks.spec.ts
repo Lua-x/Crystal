@@ -1,34 +1,8 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-import { ADMIN, expectAccessible, signIn } from './helpers'
+import { addTasks, ADMIN, expectAccessible, openList, rows, sidebar, signIn, task } from './helpers'
 
 test.describe.configure({ mode: 'serial' })
-
-const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main' })
-
-/** The open tasks of a list or view, as rows. */
-const rows = (page: Page, label: string) =>
-  page.getByRole('list', { name: label, exact: true }).getByRole('listitem')
-
-/** The button on a task row that opens its details (its name starts with the title). */
-const task = (page: Page, title: string) =>
-  page.getByRole('button', { name: new RegExp(`^${title}`) })
-
-async function openList(page: Page, name: string) {
-  await sidebar(page)
-    .getByRole('link', { name: new RegExp(`^${name}`) })
-    .click()
-  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
-}
-
-async function addTasks(page: Page, ...titles: string[]) {
-  const field = page.getByLabel('Add task')
-  for (const title of titles) {
-    await field.fill(title)
-    await field.press('Enter')
-    await expect(task(page, title)).toBeVisible()
-  }
-}
 
 test('creating a list', async ({ page }) => {
   await signIn(page, ADMIN)
