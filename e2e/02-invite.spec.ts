@@ -43,8 +43,8 @@ test('the invited person creates an account', async ({ page }) => {
   await page.getByLabel('Password', { exact: true }).fill(MEMBER.password)
   await page.getByRole('button', { name: 'Create account' }).click()
 
-  await expect(page).toHaveURL('/')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Ben')
+  await expect(page).toHaveURL('/my-day')
+  await expect(page.getByRole('button', { name: 'Account menu' })).toContainText(MEMBER.name)
 })
 
 test('a used invite link no longer works', async ({ page }) => {

@@ -18,9 +18,8 @@ export async function signIn(page: Page, user: { username: string; password: str
   await page.getByLabel('Username or email').fill(user.username)
   await page.getByLabel('Password', { exact: true }).fill(user.password)
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('heading', { level: 1 })).toContainText(
-    /Good (morning|afternoon|evening)/,
-  )
+  await expect(page).toHaveURL('/my-day')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('My Day')
 }
 
 export async function signOut(page: Page) {

@@ -20,8 +20,11 @@ test('a fresh instance asks to create the administrator account', async ({ page 
   await page.getByLabel('Password', { exact: true }).fill(ADMIN.password)
   await page.getByRole('button', { name: 'Create account' }).click()
 
-  await expect(page).toHaveURL('/')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Anna')
+  // New accounts start in My Day with an empty default list.
+  await expect(page).toHaveURL('/my-day')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('My Day')
+  await expect(page.getByRole('button', { name: 'Account menu' })).toContainText(ADMIN.name)
+  await expect(page.getByRole('list', { name: 'My lists' }).getByRole('link')).toHaveText(['Tasks'])
   await expectAccessible(page)
 })
 
