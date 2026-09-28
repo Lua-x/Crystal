@@ -33,7 +33,7 @@ Conventions:
 - Timestamps are milliseconds since the epoch (UTC).
 - Secrets (session and invite tokens, later API tokens) are stored only as **SHA-256 hashes**.
 
-Tables in 0.1:
+Tables:
 
 | Table             | Purpose                                                                                                                                                 |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -41,22 +41,43 @@ Tables in 0.1:
 | `user_identities` | Linked OpenID Connect identities (issuer + subject)                                                                                                     |
 | `sessions`        | Server-side sessions: token hash, device, last activity, expiry                                                                                         |
 | `invites`         | Invite links: token hash, role, usage limit, expiry, revocation                                                                                         |
+| `lists`           | Name, color, emoji, owner; one default list per account                                                                                                 |
+| `list_members`    | Who can see a list with which role (`owner`, `editor`, `viewer`), and each person's own group and position for it in the sidebar                        |
+| `list_groups`     | Per-person folders in the sidebar, collapsible                                                                                                          |
+| `tasks`           | Title, notes, due date and time, priority, important flag, position, completion, soft deletion                                                          |
+| `subtasks`        | Steps of a task, with their own order and completion                                                                                                    |
+| `my_day`          | Which tasks a person added to My Day, and for which date                                                                                                |
+| `task_search`     | SQLite FTS5 index over titles, notes and steps                                                                                                          |
 
 Planned additions, each with its own migration when the feature arrives:
 
-| Phase | Tables                                                                                                                                |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 2     | `lists`, `list_members` (role and each person's own sidebar placement), `list_groups`, `tasks`, `subtasks`, `my_day`, full-text index |
-| 3     | `task_tags`                                                                                                                           |
-| 5     | `push_subscriptions`, `notification_channels`                                                                                         |
-| 6     | `api_tokens`, `calendar_feeds`, `attachments`                                                                                         |
+| Phase | Tables                                        |
+| ----- | --------------------------------------------- |
+| 3     | `task_tags`                                   |
+| 5     | `push_subscriptions`, `notification_channels` |
+| 6     | `api_tokens`, `calendar_feeds`, `attachments` |
 
-Design decisions for tasks (phase 2 onwards):
+Design decisions for lists and tasks:
 
+- **Access** always goes through `list_members`. A list that does not exist and one you may
+  not see both answer `404`, so IDs reveal nothing. Sharing (0.4) only adds rows there.
 - **Order** uses fractional indexing (string keys), so moving a task changes a single row.
+  If two neighbors ever end up with the same key (for example after concurrent moves), the
+  list is renumbered in the same transaction.
 - **Due dates** are stored as a local date and optional time without a time zone (`2026-10-01`,
   `18:00`) and interpreted in the user's time zone; **reminders** are absolute UTC instants.
+  “Today” is always computed in the user's time zone, on the server and in the app.
+- **My Day** entries belong to a date, so the list starts empty every day without a
+  scheduled job; old entries are cleaned up hourly.
 - **Deletions** are recorded with `deleted_at` first, so offline clients learn about them.
+  Deleted tasks can be restored (the app offers “Undo”) and are removed for good after 30
+  days.
+- **Search** uses an FTS5 index with prefix matching and accent folding (`cafe` finds
+  “Café”, `muller` finds “Müller”); the index is updated in the same transaction as the task.
+
+On the client, TanStack Query caches lists, tasks and the smart lists. Changes are applied
+optimistically and rolled back with an error message when the server rejects them; the
+affected queries are refetched afterwards, so counts and smart lists stay consistent.
 
 ## Authentication and security
 
@@ -71,8 +92,9 @@ Design decisions for tasks (phase 2 onwards):
 - **OpenID Connect:** authorization code flow with PKCE, `state` and `nonce` via
   `openid-client`. The per-attempt secrets travel in an AES-GCM encrypted, short-lived cookie.
   Identities are linked by issuer and subject, never by email.
-- **Rate limits:** sign-in attempts per address and per address + account, registrations per
-  address, and an overall API budget per user.
+- **Rate limits:** sign-in attempts per address, failed sign-in attempts per address +
+  account (a successful sign-in resets the count), registrations per address, and an
+  overall API budget per user.
 - **Headers:** strict Content Security Policy (no inline scripts, no third-party origins),
   `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, optional HSTS. API
   responses are `Cache-Control: no-store`.

@@ -15,13 +15,47 @@
 </p>
 
 > [!NOTE]
-> **Crystal is in early development.** Version 0.1 lays the foundation – accounts,
-> sign-in (including single sign-on), design system, settings, Docker image. Lists and
-> tasks arrive with 0.2. See the [roadmap](ROADMAP.md) for what comes next.
+> **Crystal is in early development.** Lists, tasks, My Day and the smart lists are
+> ready to use; natural-language entry, recurring tasks, sharing and reminders follow.
+> See the [roadmap](ROADMAP.md) for what comes next.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-dark.png" />
+    <img src="docs/screenshots/desktop-light.png" width="860" alt="Crystal on a desktop: the sidebar with smart lists and list groups, a work list, and a task open in the detail panel with steps, due date, priority and a Markdown note." />
+  </picture>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/phone-my-day-dark.png" />
+    <img src="docs/screenshots/phone-my-day-light.png" width="260" alt="My Day on a phone: today's tasks from several lists." />
+  </picture>
+  &nbsp;
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/phone-details-dark.png" />
+    <img src="docs/screenshots/phone-details-light.png" width="260" alt="Task details as a bottom sheet on a phone, with steps and a note." />
+  </picture>
+</p>
 
 ## Features
 
-**Available now (0.1)**
+**Lists and tasks**
+
+- **Lists with color and emoji**, grouped into folders, sorted by drag and drop.
+- **Tasks with everything you need:** steps (a checklist), due date and time, priority,
+  an “important” star and notes with Markdown.
+- **My Day** – plan today with suggestions for overdue, soon due and recently added
+  tasks. It starts empty again every morning.
+- **Smart lists:** Important, Planned (overdue, today, tomorrow, this week, later),
+  Overdue, All and Completed – with live counts in the sidebar.
+- **Drag and drop** with mouse, touch or keyboard: reorder tasks, drop them onto another
+  list, rearrange lists and groups.
+- **Fast search** through titles, notes and steps.
+- **Undo** for deleted tasks; completed tasks stay tucked away until you need them.
+- **Details beside the list** on large screens, as a sheet on phones and tablets.
+
+**For the whole household**
 
 - **Accounts for everyone in the household.** The first account becomes the administrator.
   Others join with invite links, or registration can be opened or closed entirely.
@@ -37,11 +71,10 @@
 - **Secure defaults.** Argon2id passwords, HttpOnly session cookies, CSRF protection,
   rate limiting, strict Content Security Policy, a non-root container without a shell.
 
-**Coming next** – lists and folders, tasks with subtasks and notes, My Day, smart lists,
-natural-language quick entry (“Take out the trash tomorrow 6pm every Tuesday !important”),
-recurring tasks, tags, sharing and real-time sync, reminders (Web Push, ntfy, Gotify),
-offline support, import from Microsoft To Do and Todoist, an iCal feed and a REST API.
-Details in the [roadmap](ROADMAP.md).
+**Coming next** – natural-language quick entry (“Take out the trash tomorrow 6pm every
+Tuesday !important”), recurring tasks, tags, sharing and real-time sync, reminders (Web
+Push, ntfy, Gotify), offline support, import from Microsoft To Do and Todoist, an iCal
+feed and a REST API. Details in the [roadmap](ROADMAP.md).
 
 ## Quick start
 

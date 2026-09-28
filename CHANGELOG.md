@@ -6,6 +6,32 @@ All notable changes to Crystal are documented in this file. The format follows
 
 ## [Unreleased]
 
+Lists and tasks.
+
+### Added
+
+- Lists with twelve colors and an optional emoji, list groups (folders) that can be
+  collapsed, and a default list for every account.
+- Tasks with steps, due date and optional time, priority, an “important” star and Markdown
+  notes; completed tasks are collected in a collapsible section per list.
+- My Day with suggestions (overdue, due soon, recently added); it starts empty every day.
+- Smart lists Important, Planned (grouped into overdue, today, tomorrow, this week and
+  later), Overdue, All and Completed, with counts in the sidebar.
+- Drag and drop with mouse, touch and keyboard: sort tasks, move them onto another list,
+  and sort lists and groups in the sidebar.
+- Full-text search in titles, notes and steps.
+- Task details as a side panel on large screens and as a sheet on phones and tablets;
+  context menu with the most common actions; undo for deleted tasks.
+- Deleted tasks are kept for 30 days before they are removed for good.
+- API endpoints for lists, groups, tasks, steps, smart lists and search (see
+  `/api/openapi.json`).
+
+### Changed
+
+- My Day is the new start page.
+- Only failed sign-in attempts count toward the per-account limit, so signing in often
+  from the same device no longer locks you out for a while.
+
 ## [0.1.0] - 2026-09-27
 
 The foundation: accounts, sign-in, design system and a production-ready container. Lists

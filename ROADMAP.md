@@ -7,16 +7,11 @@ Crystal is built in phases. Each phase ends with a release; 0.7 becomes 1.0.
 Accounts, sign-in with password or single sign-on, invite links, settings, design system,
 Docker image, CI.
 
-## 0.2 – Lists and tasks
+## ✅ 0.2 – Lists and tasks
 
-- Lists with color and emoji/icon, list groups (folders), sorting
-- Tasks with title, Markdown notes, due date and time, priority and “important” flag
-- Subtasks (checklist), completed tasks collapsible, restore or delete for good
-- Smart lists: My Day (with suggestions), Important, Planned (Today, Tomorrow, This week,
-  Later), Overdue, All, Completed
-- Drag and drop, also between lists
-- Full-text search in titles, notes and subtasks
-- Task detail panel (desktop) and bottom sheet (phone)
+Lists with colors and emoji, list groups, tasks with steps, due dates, priority and
+Markdown notes, My Day with suggestions, smart lists, drag and drop (mouse, touch,
+keyboard), full-text search, task details as panel or sheet.
 
 ## 0.3 – Comfort
 
@@ -63,4 +58,6 @@ Ideas that were deliberately postponed:
   databases doubles schemas, migrations and tests).
 - **Serving from a sub-path** (e.g. `https://example.com/todo/`); currently Crystal needs the
   root of a domain or subdomain.
+- **A “Recently deleted” view.** Deleted tasks are kept for 30 days, but can only be
+  restored right away with “Undo” so far.
 - More languages – contributions welcome, see [CONTRIBUTING.md](CONTRIBUTING.md#translations).
