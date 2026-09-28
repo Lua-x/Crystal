@@ -12,6 +12,15 @@ import {
 let context: TestContext
 afterEach(() => context.close())
 
+interface OpenApiSchema {
+  type?: string
+  items?: OpenApiSchema
+  properties?: Record<string, OpenApiSchema>
+}
+interface OpenApiOperation {
+  requestBody?: { content: Record<string, { schema: OpenApiSchema }> }
+}
+
 describe('CSRF protection', () => {
   it('rejects state-changing requests from other origins or without an origin', async () => {
     context = createTestContext()
@@ -203,9 +212,22 @@ describe('unknown routes', () => {
     const health = await context.client().get('/api/health')
     expect(health.body).toEqual({ status: 'ok', version: 'test', database: 'ok' })
 
-    const spec = await context.client().get<{ paths: Record<string, unknown> }>('/api/openapi.json')
+    const spec = await context.client().get<{
+      paths: Record<string, Record<string, OpenApiOperation>>
+    }>('/api/openapi.json')
     expect(Object.keys(spec.body.paths)).toEqual(
-      expect.arrayContaining(['/api/health', '/api/v1/auth/login', '/api/v1/admin/users/{id}']),
+      expect.arrayContaining([
+        '/api/health',
+        '/api/v1/auth/login',
+        '/api/v1/admin/users/{id}',
+        '/api/v1/tags',
+        '/api/v1/tags/{tag}/tasks',
+      ]),
     )
+    // Normalizing schemas (tags, recurrence) still document plain input types.
+    const createTask =
+      spec.body.paths['/api/v1/tasks']!.post!.requestBody!.content['application/json']!.schema
+    expect(createTask.properties?.tags).toMatchObject({ type: 'array', items: { type: 'string' } })
+    expect(createTask.properties?.recurrence).toBeDefined()
   })
 })

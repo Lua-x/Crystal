@@ -76,6 +76,18 @@ export type SmartView = (typeof SMART_VIEWS)[number]
 export const PRIORITIES = [0, 1, 2, 3] as const
 export type Priority = (typeof PRIORITIES)[number]
 
+export const RECURRENCE_FREQUENCIES = ['daily', 'weekly', 'monthly', 'yearly'] as const
+export type RecurrenceFrequency = (typeof RECURRENCE_FREQUENCIES)[number]
+
+/** Whether the next occurrence is counted from the due date or from the day of completion. */
+export const RECURRENCE_BASES = ['due', 'completion'] as const
+export type RecurrenceBase = (typeof RECURRENCE_BASES)[number]
+
+export const RECURRENCE_MAX_INTERVAL = 999
+
+export const TAG_MAX_LENGTH = 40
+export const TAGS_PER_TASK_MAX = 20
+
 export const LIST_NAME_MAX_LENGTH = 100
 export const LIST_ICON_MAX_LENGTH = 16
 export const GROUP_NAME_MAX_LENGTH = 100

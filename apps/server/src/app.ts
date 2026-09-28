@@ -15,7 +15,7 @@ import { listGroupRoutes, listRoutes } from './routes/lists.js'
 import { meRoutes } from './routes/me.js'
 import { systemRoutes } from './routes/system.js'
 import { subtaskRoutes, taskRoutes } from './routes/tasks.js'
-import { searchRoutes, viewRoutes } from './routes/views.js'
+import { searchRoutes, tagRoutes, viewRoutes } from './routes/views.js'
 import type { Services } from './services/index.js'
 import { mountWebApp } from './static.js'
 
@@ -54,6 +54,7 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.route('/subtasks', subtaskRoutes(services))
   v1.route('/views', viewRoutes(services))
   v1.route('/search', searchRoutes(services))
+  v1.route('/tags', tagRoutes(services))
   app.route('/api/v1', v1)
 
   app.openAPIRegistry.registerComponent('securitySchemes', 'session', {

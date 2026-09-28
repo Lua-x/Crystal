@@ -1,13 +1,13 @@
 import { eq, sql } from 'drizzle-orm'
 
 import type { Db } from '../db/client.js'
-import { subtasks, tasks } from '../db/schema.js'
+import { subtasks, tasks, taskTags } from '../db/schema.js'
 import type { Executor } from '../db/types.js'
 
 /**
- * Maintains and queries the FTS5 index `task_search` (see migration 0002).
- * Every write path that changes a task's title, notes or subtasks calls
- * `reindex` inside its transaction.
+ * Maintains and queries the FTS5 index `task_search` (see migrations 0002 and
+ * 0004). Every write path that changes a task's title, notes, subtasks or tags
+ * calls `reindex` inside its transaction.
  */
 export class SearchService {
   constructor(private readonly db: Db) {}
@@ -27,9 +27,16 @@ export class SearchService {
       .all()
       .map((row) => row.title)
       .join('\n')
+    const tags = executor
+      .select({ tag: taskTags.tag })
+      .from(taskTags)
+      .where(eq(taskTags.taskId, taskId))
+      .all()
+      .map((row) => row.tag)
+      .join(' ')
     executor.run(
-      sql`insert into task_search (task_id, title, notes, subtasks)
-          values (${taskId}, ${task.title}, ${task.notes}, ${subtaskTitles})`,
+      sql`insert into task_search (task_id, title, notes, subtasks, tags)
+          values (${taskId}, ${task.title}, ${task.notes}, ${subtaskTitles}, ${tags})`,
     )
   }
 

@@ -2,13 +2,65 @@ import { z } from 'zod'
 
 import {
   PRIORITIES,
+  RECURRENCE_BASES,
+  RECURRENCE_FREQUENCIES,
+  RECURRENCE_MAX_INTERVAL,
   SEARCH_QUERY_MAX_LENGTH,
   SMART_VIEWS,
   SUBTASK_TITLE_MAX_LENGTH,
+  TAG_MAX_LENGTH,
+  TAGS_PER_TASK_MAX,
   TASK_NOTES_MAX_LENGTH,
   TASK_TITLE_MAX_LENGTH,
 } from '../constants.js'
 import { idSchema, timestampSchema } from './common.js'
+
+/**
+ * A tag: letters, digits, `_`, `-` and `/`, stored in lower case without the
+ * leading `#` (which is accepted and removed).
+ */
+export const tagSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .overwrite((value) => value.replace(/^#/, ''))
+  .min(1)
+  .max(TAG_MAX_LENGTH)
+  .regex(/^[\p{L}\p{N}_\-/]+$/u, { error: 'validation.tag_format' })
+
+/** Tags of a task: duplicates are removed, the rest is sorted. */
+export const tagsSchema = z
+  .array(tagSchema)
+  .overwrite((tags) => [...new Set(tags)].sort())
+  .max(TAGS_PER_TASK_MAX)
+
+const weekdaysSchema = z.array(z.int().min(0).max(6)).max(7)
+
+/**
+ * How a task repeats. Weekly rules may name weekdays (0 = Monday … 6 =
+ * Sunday); without them, the task repeats on the weekday of its due date.
+ */
+export const recurrenceSchema = z.object({
+  frequency: z.enum(RECURRENCE_FREQUENCIES),
+  /** Every `interval` days, weeks, months or years. */
+  interval: z.int().min(1).max(RECURRENCE_MAX_INTERVAL),
+  weekdays: weekdaysSchema,
+  from: z.enum(RECURRENCE_BASES),
+})
+export type Recurrence = z.infer<typeof recurrenceSchema>
+
+/** Input form of a recurrence: everything but the frequency is optional. */
+export const recurrenceInputSchema = z
+  .object({
+    frequency: z.enum(RECURRENCE_FREQUENCIES),
+    interval: z.int().min(1).max(RECURRENCE_MAX_INTERVAL).default(1),
+    weekdays: weekdaysSchema.default([]),
+    from: z.enum(RECURRENCE_BASES).default('due'),
+  })
+  .overwrite((rule) => ({
+    ...rule,
+    weekdays: rule.frequency === 'weekly' ? [...new Set(rule.weekdays)].sort((a, b) => a - b) : [],
+  }))
 
 /** A calendar day, `YYYY-MM-DD`, in the user's time zone. */
 export const dueDateSchema = z.iso.date()
@@ -45,6 +97,9 @@ export const taskSchema = z.object({
   completedAt: timestampSchema.nullable(),
   /** Whether the task is in the signed-in user's "My Day" for today. */
   inMyDay: z.boolean(),
+  /** Completing a repeating task creates its next occurrence. */
+  recurrence: recurrenceSchema.nullable(),
+  tags: z.array(z.string()),
   subtasks: z.array(subtaskSchema),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
@@ -74,12 +129,18 @@ export const createTaskSchema = z
     important: z.boolean().optional(),
     priority: prioritySchema.optional(),
     myDay: z.boolean().optional(),
+    /** Without a due date, the task becomes due on the first matching day from today. */
+    recurrence: recurrenceInputSchema.nullable().optional(),
+    tags: tagsSchema.optional(),
   })
   .refine((input) => !input.dueTime || input.dueDate, {
     error: 'validation.time_requires_date',
     path: ['dueTime'],
   })
-export type CreateTaskInput = z.infer<typeof createTaskSchema>
+/** What clients send. */
+export type CreateTaskInput = z.input<typeof createTaskSchema>
+/** What the server works with after validation (defaults applied). */
+export type CreateTaskData = z.output<typeof createTaskSchema>
 
 export const updateTaskSchema = z
   .object({
@@ -93,9 +154,14 @@ export const updateTaskSchema = z
     /** Adds the task to (or removes it from) the signed-in user's My Day. */
     myDay: z.boolean(),
     placement: taskPlacementSchema,
+    /** Replaces the rule; `null` stops repeating. */
+    recurrence: recurrenceInputSchema.nullable(),
+    /** Replaces all tags of the task. */
+    tags: tagsSchema,
   })
   .partial()
-export type UpdateTaskInput = z.infer<typeof updateTaskSchema>
+export type UpdateTaskInput = z.input<typeof updateTaskSchema>
+export type UpdateTaskData = z.output<typeof updateTaskSchema>
 
 export const createSubtaskSchema = z.object({
   id: idSchema.optional(),
@@ -121,6 +187,13 @@ export const viewCountsSchema = z.object({
   completed: z.int(),
 })
 export type ViewCounts = z.infer<typeof viewCountsSchema>
+
+export const tagSummarySchema = z.object({
+  name: z.string(),
+  /** Open tasks with this tag in the lists the user can see. */
+  openCount: z.int(),
+})
+export type TagSummary = z.infer<typeof tagSummarySchema>
 
 export const searchQuerySchema = z.object({
   q: z.string().trim().min(1).max(SEARCH_QUERY_MAX_LENGTH),

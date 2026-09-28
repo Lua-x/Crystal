@@ -1,4 +1,10 @@
-import { addDays, type SmartView, type Task, type ViewCounts } from '@crystal/shared'
+import {
+  addDays,
+  type SmartView,
+  type TagSummary,
+  type Task,
+  type ViewCounts,
+} from '@crystal/shared'
 import {
   and,
   asc,
@@ -16,7 +22,15 @@ import {
 } from 'drizzle-orm'
 
 import type { Db } from '../db/client.js'
-import { listMembers, lists, myDay, tasks, type TaskRow, type UserRow } from '../db/schema.js'
+import {
+  listMembers,
+  lists,
+  myDay,
+  tasks,
+  taskTags,
+  type TaskRow,
+  type UserRow,
+} from '../db/schema.js'
 import type { SearchService } from './search.js'
 import type { TaskService } from './tasks.js'
 
@@ -128,7 +142,39 @@ export class ViewService {
     return this.taskService.toDtos(user, [...due, ...recent])
   }
 
-  /** Full-text search in titles, notes and subtasks of all visible tasks. */
+  /** Tags on the user's visible tasks, alphabetically, with their number of open tasks. */
+  tags(user: UserRow): TagSummary[] {
+    return this.db
+      .select({
+        name: taskTags.tag,
+        openCount: sql<number>`sum(case when ${tasks.completedAt} is null then 1 else 0 end)`,
+      })
+      .from(taskTags)
+      .innerJoin(tasks, eq(tasks.id, taskTags.taskId))
+      .innerJoin(lists, eq(lists.id, tasks.listId))
+      .innerJoin(listMembers, this.memberJoin(user))
+      .where(this.visibleWhere())
+      .groupBy(taskTags.tag)
+      .orderBy(asc(taskTags.tag))
+      .all()
+  }
+
+  /** Visible tasks with `tag`: open ones by due date, then completed ones. */
+  taggedTasks(user: UserRow, tag: string): Task[] {
+    const tagged = this.db
+      .select({ taskId: taskTags.taskId })
+      .from(taskTags)
+      .where(eq(taskTags.tag, tag))
+    const rows = this.visibleTasks(user, inArray(tasks.id, tagged), [
+      asc(sql`${tasks.completedAt} is not null`),
+      ...dueDateOrder(),
+      desc(tasks.completedAt),
+      desc(tasks.createdAt),
+    ])
+    return this.taskService.toDtos(user, rows)
+  }
+
+  /** Full-text search in titles, notes, subtasks and tags of all visible tasks. */
   searchTasks(user: UserRow, query: string): Task[] {
     const ids = this.search.match(query)
     if (ids.length === 0) return []

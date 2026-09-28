@@ -1,13 +1,16 @@
 import {
+  firstOccurrence,
+  nextOccurrence,
   todayIn,
   uuidv7,
   type CreateSubtaskInput,
-  type CreateTaskInput,
+  type CreateTaskData,
   type Priority,
+  type Recurrence,
   type Subtask,
   type Task,
   type UpdateSubtaskInput,
-  type UpdateTaskInput,
+  type UpdateTaskData,
 } from '@crystal/shared'
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 
@@ -16,6 +19,7 @@ import {
   myDay,
   subtasks,
   tasks,
+  taskTags,
   type SubtaskRow,
   type TaskRow,
   type UserRow,
@@ -42,6 +46,8 @@ const SHARED_FIELDS = [
   'priority',
   'completed',
   'placement',
+  'recurrence',
+  'tags',
 ] as const
 
 export class TaskService {
@@ -87,6 +93,15 @@ export class TaskService {
         .all()
         .map((row) => row.taskId),
     )
+    const tagsByTask = new Map<string, string[]>()
+    for (const row of executor
+      .select()
+      .from(taskTags)
+      .where(inArray(taskTags.taskId, ids))
+      .orderBy(asc(taskTags.tag))
+      .all()) {
+      tagsByTask.set(row.taskId, [...(tagsByTask.get(row.taskId) ?? []), row.tag])
+    }
     return rows.map((row) => ({
       id: row.id,
       listId: row.listId,
@@ -99,6 +114,8 @@ export class TaskService {
       position: row.position,
       completedAt: row.completedAt?.toISOString() ?? null,
       inMyDay: inMyDay.has(row.id),
+      recurrence: row.recurrence ?? null,
+      tags: tagsByTask.get(row.id) ?? [],
       subtasks: byTask.get(row.id) ?? [],
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -122,9 +139,13 @@ export class TaskService {
     return this.toDtos(user, [task])[0]!
   }
 
-  create(user: UserRow, input: CreateTaskInput): Task {
+  create(user: UserRow, input: CreateTaskData): Task {
     const listId = input.listId ?? this.lists.ensureDefaultList(user)
     const id = input.id ?? uuidv7(this.now().getTime())
+    const recurrence = input.recurrence ?? null
+    // A repeating task always has a due date.
+    const dueDate =
+      input.dueDate ?? (recurrence ? firstOccurrence(recurrence, this.today(user)) : null)
 
     this.db.transaction((tx) => {
       this.lists.requireRole(user.id, listId, 'editor', tx)
@@ -139,23 +160,25 @@ export class TaskService {
           listId,
           title: input.title,
           notes: input.notes ?? '',
-          dueDate: input.dueDate ?? null,
-          dueTime: input.dueDate ? (input.dueTime ?? null) : null,
+          dueDate,
+          dueTime: dueDate ? (input.dueTime ?? null) : null,
           important: input.important ?? false,
           priority: input.priority ?? 0,
           position: positionAtStart(this.orderedTasks(listId, tx)),
+          recurrence,
           createdBy: user.id,
           createdAt: now,
           updatedAt: now,
         })
         .run()
+      if (input.tags) this.setTags(id, input.tags, tx)
       if (input.myDay) this.setMyDay(user, id, true, tx)
       this.search.reindex(id, tx)
     })
     return this.get(user, id)
   }
 
-  update(user: UserRow, taskId: string, input: UpdateTaskInput): Task {
+  update(user: UserRow, taskId: string, input: UpdateTaskData): Task {
     this.db.transaction((tx) => {
       const task = this.findTask(taskId, tx)
       const changesTask = SHARED_FIELDS.some((field) => input[field] !== undefined)
@@ -169,8 +192,18 @@ export class TaskService {
         if (input.important !== undefined) changes.important = input.important
         if (input.priority !== undefined) changes.priority = input.priority
 
-        if (input.dueDate !== undefined || input.dueTime !== undefined) {
-          const dueDate = input.dueDate !== undefined ? input.dueDate : task.dueDate
+        // Due date, time and repetition depend on each other.
+        if (
+          input.dueDate !== undefined ||
+          input.dueTime !== undefined ||
+          input.recurrence !== undefined
+        ) {
+          let recurrence = input.recurrence !== undefined ? input.recurrence : task.recurrence
+          // Removing the date ends the repetition, unless a new rule comes with it.
+          if (input.dueDate === null && input.recurrence === undefined) recurrence = null
+          let dueDate = input.dueDate !== undefined ? input.dueDate : task.dueDate
+          if (recurrence && dueDate === null)
+            dueDate = firstOccurrence(recurrence, this.today(user))
           let dueTime = input.dueTime !== undefined ? input.dueTime : task.dueTime
           if (dueDate === null) {
             // A time on its own is meaningless; removing the date also removes the time.
@@ -183,14 +216,11 @@ export class TaskService {
           }
           changes.dueDate = dueDate
           changes.dueTime = dueTime
-        }
-
-        if (input.completed === true && !task.completedAt) {
-          changes.completedAt = this.now()
-          changes.completedBy = user.id
-        } else if (input.completed === false) {
-          changes.completedAt = null
-          changes.completedBy = null
+          changes.recurrence = recurrence
+          // A new date or rule starts the series anew.
+          if (input.dueDate !== undefined || input.recurrence !== undefined) {
+            changes.recurrenceAnchor = null
+          }
         }
 
         if (input.placement) {
@@ -206,7 +236,13 @@ export class TaskService {
         }
 
         tx.update(tasks).set(changes).where(eq(tasks.id, taskId)).run()
-        if (input.title !== undefined || input.notes !== undefined) this.search.reindex(taskId, tx)
+        if (input.tags !== undefined) this.setTags(taskId, input.tags, tx)
+        // After the other changes, so the next occurrence inherits them.
+        if (input.completed === true && !task.completedAt) this.complete(user, taskId, tx)
+        else if (input.completed === false && task.completedAt) this.reopen(taskId, tx)
+        if (input.title !== undefined || input.notes !== undefined || input.tags !== undefined) {
+          this.search.reindex(taskId, tx)
+        }
       }
 
       if (input.myDay !== undefined) this.setMyDay(user, taskId, input.myDay, tx)
@@ -299,6 +335,118 @@ export class TaskService {
   }
 
   /* ── Internals ──────────────────────────────────────────────── */
+
+  /**
+   * Completes a task. A repeating task hands its rule on to a new task for the
+   * next occurrence, so each series has exactly one open task.
+   */
+  private complete(user: UserRow, taskId: string, tx: Executor): void {
+    const task = this.findTask(taskId, tx)
+    const changes: Partial<TaskRow> = { completedAt: this.now(), completedBy: user.id }
+    if (task.recurrence) {
+      changes.nextTaskId = this.createNextOccurrence(user, task, task.recurrence, tx)
+      changes.recurrence = null
+      changes.recurrenceAnchor = null
+    }
+    tx.update(tasks).set(changes).where(eq(tasks.id, taskId)).run()
+  }
+
+  /**
+   * Reopens a task. If completing it created a next occurrence that nobody has
+   * touched since, that one is removed again and the rule returns – so undoing
+   * an accidental tick leaves no duplicate behind.
+   */
+  private reopen(taskId: string, tx: Executor): void {
+    const task = this.findTask(taskId, tx)
+    const changes: Partial<TaskRow> = { completedAt: null, completedBy: null, nextTaskId: null }
+    const next = task.nextTaskId
+      ? tx.select().from(tasks).where(eq(tasks.id, task.nextTaskId)).get()
+      : undefined
+    if (
+      next &&
+      !next.deletedAt &&
+      !next.completedAt &&
+      next.updatedAt.getTime() === next.createdAt.getTime()
+    ) {
+      changes.recurrence = next.recurrence
+      changes.recurrenceAnchor = next.recurrenceAnchor
+      tx.delete(tasks).where(eq(tasks.id, next.id)).run()
+      this.search.remove(next.id, tx)
+    }
+    tx.update(tasks).set(changes).where(eq(tasks.id, taskId)).run()
+  }
+
+  /** Creates the task for the next occurrence right after `task`; returns its id. */
+  private createNextOccurrence(
+    user: UserRow,
+    task: TaskRow,
+    rule: Recurrence,
+    tx: Executor,
+  ): string {
+    const id = uuidv7(this.now().getTime())
+    const now = this.now()
+    const dueDate = nextOccurrence(
+      rule,
+      { dueDate: task.dueDate, anchor: task.recurrenceAnchor },
+      this.today(user),
+    )
+    tx.insert(tasks)
+      .values({
+        id,
+        listId: task.listId,
+        title: task.title,
+        notes: task.notes,
+        dueDate,
+        dueTime: task.dueTime,
+        important: task.important,
+        priority: task.priority,
+        position: positionAfter(this.orderedTasks(task.listId, tx), task.id, (stale) =>
+          this.rebalanceTasks(stale, tx),
+        ),
+        recurrence: rule,
+        recurrenceAnchor: rule.from === 'due' ? (task.recurrenceAnchor ?? task.dueDate) : null,
+        createdBy: user.id,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run()
+    // Steps start over; tags carry over.
+    for (const subtask of tx
+      .select()
+      .from(subtasks)
+      .where(eq(subtasks.taskId, task.id))
+      .orderBy(asc(subtasks.position), asc(subtasks.id))
+      .all()) {
+      tx.insert(subtasks)
+        .values({
+          id: uuidv7(now.getTime()),
+          taskId: id,
+          title: subtask.title,
+          position: subtask.position,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .run()
+    }
+    const tags = tx
+      .select({ tag: taskTags.tag })
+      .from(taskTags)
+      .where(eq(taskTags.taskId, task.id))
+      .all()
+      .map((row) => row.tag)
+    this.setTags(id, tags, tx)
+    this.search.reindex(id, tx)
+    return id
+  }
+
+  private setTags(taskId: string, tags: readonly string[], tx: Executor): void {
+    tx.delete(taskTags).where(eq(taskTags.taskId, taskId)).run()
+    if (tags.length > 0) {
+      tx.insert(taskTags)
+        .values(tags.map((tag) => ({ taskId, tag })))
+        .run()
+    }
+  }
 
   private findTask(taskId: string, executor: Executor = this.db): TaskRow {
     const task = executor

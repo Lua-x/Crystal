@@ -6,6 +6,7 @@ import {
   type ListGroup,
   type SmartView,
   type Subtask,
+  type TagSummary,
   type Task,
   type UpdateListGroupInput,
   type UpdateListInput,
@@ -13,6 +14,8 @@ import {
   type UpdateTaskInput,
   type ViewCounts,
   keyBetween,
+  recurrenceInputSchema,
+  tagsSchema,
   uuidv7,
 } from '@crystal/shared'
 import {
@@ -38,8 +41,21 @@ export const taskKeys = {
   view: (view: SmartView) => ['tasks', 'view', view] as const,
   search: (query: string) => ['tasks', 'search', query] as const,
   suggestions: ['tasks', 'suggestions'] as const,
+  tagTasks: (tag: string) => ['tasks', 'tag', tag] as const,
   task: (id: string) => ['task', id] as const,
+  tags: ['tags'] as const,
 }
+
+export const tagsQuery = queryOptions({
+  queryKey: taskKeys.tags,
+  queryFn: () => api<TagSummary[]>('/tags'),
+})
+
+export const tagTasksQuery = (tag: string) =>
+  queryOptions({
+    queryKey: taskKeys.tagTasks(tag),
+    queryFn: () => api<Task[]>(`/tags/${encodeURIComponent(tag)}/tasks`),
+  })
 
 export const listsQuery = queryOptions({
   queryKey: taskKeys.lists,
@@ -137,9 +153,14 @@ function refreshTaskData(queryClient: QueryClient) {
   void queryClient.invalidateQueries({ queryKey: taskKeys.tasks })
   void queryClient.invalidateQueries({ queryKey: taskKeys.counts })
   void queryClient.invalidateQueries({ queryKey: taskKeys.lists })
+  void queryClient.invalidateQueries({ queryKey: taskKeys.tags })
 }
 
-/** Local preview of an update, until the server answers. */
+/**
+ * Local preview of an update, until the server answers. Server-side effects –
+ * a due date for a new repeating task, the next occurrence of a completed
+ * one – arrive with the refetch.
+ */
 function applyUpdate(task: Task, input: UpdateTaskInput, position?: string): Task {
   const next: Task = { ...task, updatedAt: new Date().toISOString() }
   if (input.title !== undefined) next.title = input.title
@@ -148,9 +169,16 @@ function applyUpdate(task: Task, input: UpdateTaskInput, position?: string): Tas
   if (input.priority !== undefined) next.priority = input.priority
   if (input.dueDate !== undefined) {
     next.dueDate = input.dueDate
-    if (input.dueDate === null) next.dueTime = null
+    if (input.dueDate === null) {
+      next.dueTime = null
+      if (input.recurrence === undefined) next.recurrence = null
+    }
   }
   if (input.dueTime !== undefined && next.dueDate) next.dueTime = input.dueTime
+  if (input.recurrence !== undefined) {
+    next.recurrence = input.recurrence && recurrenceInputSchema.parse(input.recurrence)
+  }
+  if (input.tags !== undefined) next.tags = tagsSchema.parse(input.tags)
   if (input.completed !== undefined) {
     next.completedAt = input.completed ? (task.completedAt ?? new Date().toISOString()) : null
   }
@@ -238,6 +266,8 @@ export function useCreateTask(optimisticKeys: QueryKey[] = []) {
               position: keyBetween(null, first?.position ?? null),
               completedAt: null,
               inMyDay: input.myDay ?? false,
+              recurrence: input.recurrence ? recurrenceInputSchema.parse(input.recurrence) : null,
+              tags: input.tags ? tagsSchema.parse(input.tags) : [],
               subtasks: [],
               createdAt: now,
               updatedAt: now,

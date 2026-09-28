@@ -1,6 +1,14 @@
-import { LIST_COLORS, LIST_ROLES, ROLES, SUPPORTED_LOCALES } from '@crystal/shared'
+import { LIST_COLORS, LIST_ROLES, ROLES, SUPPORTED_LOCALES, type Recurrence } from '@crystal/shared'
 import { sql } from 'drizzle-orm'
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+  type AnySQLiteColumn,
+} from 'drizzle-orm/sqlite-core'
 
 /*
  * Conventions:
@@ -168,6 +176,14 @@ export const tasks = sqliteTable(
     important: integer('important', { mode: 'boolean' }).notNull().default(false),
     priority: integer('priority').notNull().default(0),
     position: text('position').notNull(),
+    /** Repeat rule; only the open task of a series carries it. */
+    recurrence: text('recurrence', { mode: 'json' }).$type<Recurrence>(),
+    /** The due date the series started with, so monthly series keep their day. */
+    recurrenceAnchor: text('recurrence_anchor'),
+    /** The next occurrence created when this task was completed. */
+    nextTaskId: text('next_task_id').references((): AnySQLiteColumn => tasks.id, {
+      onDelete: 'set null',
+    }),
     completedAt: timestamp('completed_at'),
     completedBy: text('completed_by').references(() => users.id, { onDelete: 'set null' }),
     createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
@@ -179,6 +195,21 @@ export const tasks = sqliteTable(
     index('tasks_list_position_idx').on(table.listId, table.position),
     index('tasks_due_date_idx').on(table.dueDate),
     index('tasks_completed_at_idx').on(table.completedAt),
+  ],
+)
+
+/** Tags, stored in lower case without `#`. */
+export const taskTags = sqliteTable(
+  'task_tags',
+  {
+    taskId: text('task_id')
+      .notNull()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    tag: text('tag').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.taskId, table.tag] }),
+    index('task_tags_tag_idx').on(table.tag),
   ],
 )
 
@@ -226,3 +257,4 @@ export type ListMemberRow = typeof listMembers.$inferSelect
 export type ListGroupRow = typeof listGroups.$inferSelect
 export type TaskRow = typeof tasks.$inferSelect
 export type SubtaskRow = typeof subtasks.$inferSelect
+export type TaskTagRow = typeof taskTags.$inferSelect

@@ -25,6 +25,8 @@ function task(overrides: Partial<Task> = {}): Task {
     position: 'a0',
     completedAt: null,
     inMyDay: false,
+    recurrence: null,
+    tags: [],
     subtasks: [],
     createdAt: '2026-09-30T08:00:00.000Z',
     updatedAt: '2026-09-30T08:00:00.000Z',

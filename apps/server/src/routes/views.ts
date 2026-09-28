@@ -1,4 +1,11 @@
-import { searchQuerySchema, smartViewSchema, taskSchema, viewCountsSchema } from '@crystal/shared'
+import {
+  searchQuerySchema,
+  smartViewSchema,
+  tagSchema,
+  tagSummarySchema,
+  taskSchema,
+  viewCountsSchema,
+} from '@crystal/shared'
 import { createRoute, z } from '@hono/zod-openapi'
 
 import { requireAuthState } from '../context.js'
@@ -73,7 +80,7 @@ export function searchRoutes(services: Services) {
       security,
       summary: 'Search tasks',
       description:
-        'Finds tasks whose title, notes or subtasks contain every word (as a prefix). ' +
+        'Finds tasks whose title, notes, subtasks or tags contain every word (as a prefix). ' +
         'Accents are ignored. Completed tasks are included.',
       request: { query: searchQuerySchema },
       responses: {
@@ -84,6 +91,45 @@ export function searchRoutes(services: Services) {
     }),
     (c) =>
       c.json(services.views.searchTasks(requireAuthState(c).user, c.req.valid('query').q), 200),
+  )
+
+  return router
+}
+
+export function tagRoutes(services: Services) {
+  const router = createRouter()
+  router.use('*', requireAuth)
+
+  router.openapi(
+    createRoute({
+      method: 'get',
+      path: '/',
+      tags: ['Tags'],
+      security,
+      summary: 'Tags in use',
+      description: 'Tags on tasks in the lists you can see, alphabetically.',
+      responses: { 200: jsonResponse(z.array(tagSummarySchema), 'Tags'), ...authErrors },
+    }),
+    (c) => c.json(services.views.tags(requireAuthState(c).user), 200),
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'get',
+      path: '/{tag}/tasks',
+      tags: ['Tags'],
+      security,
+      summary: 'Tasks with a tag',
+      description: 'Open tasks by due date first, then completed ones.',
+      request: { params: z.object({ tag: tagSchema }) },
+      responses: {
+        200: jsonResponse(z.array(taskSchema), 'Tasks'),
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    (c) =>
+      c.json(services.views.taggedTasks(requireAuthState(c).user, c.req.valid('param').tag), 200),
   )
 
   return router
