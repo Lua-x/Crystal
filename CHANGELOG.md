@@ -6,6 +6,25 @@ All notable changes to Crystal are documented in this file. The format follows
 
 ## [Unreleased]
 
+Comfort: quick entry, repeats, tags, keyboard.
+
+### Added
+
+- Quick entry understands dates, times, repeats, importance, priority, tags and lists in
+  English and German (“Take out the trash tomorrow 6pm every Tuesday !important
+  #household”) and shows them as chips that can be dismissed; it can be turned off in the
+  account settings. See [docs/quick-entry.md](docs/quick-entry.md).
+- Repeating tasks: daily, weekly (optionally on chosen weekdays), monthly or yearly, every n
+  periods, counted from the due date or from completion. Completing one creates the next
+  occurrence; undoing the tick right away takes it back.
+- Tags, with a view per tag, a section in the sidebar and an editor in the task details.
+  Search finds tags, too.
+- Keyboard shortcuts: `N` new task, `/` search, `G` then a letter to go to a smart list, and
+  on a focused task `↑`/`↓`, `X`, `S`, `M` and `Delete`. `?` shows an overview.
+- Command palette (⌘K / Ctrl+K) to go to lists, tags and smart lists, find tasks, add a
+  task with quick entry and run actions such as switching the appearance.
+- API: `recurrence` and `tags` on tasks, `GET /tags` and `GET /tags/{tag}/tasks`.
+
 ## [0.2.0] - 2026-09-28
 
 Lists and tasks.

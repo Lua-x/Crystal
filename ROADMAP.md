@@ -13,14 +13,11 @@ Lists with colors and emoji, list groups, tasks with steps, due dates, priority 
 Markdown notes, My Day with suggestions, smart lists, drag and drop (mouse, touch,
 keyboard), full-text search, task details as panel or sheet.
 
-## 0.3 – Comfort
+## ✅ 0.3 – Comfort
 
-- Quick entry with natural language in English and German, e.g.
-  `Take out the trash tomorrow 6pm every Tuesday !important #household`, shown as chips
-- Recurring tasks (daily, weekly on chosen days, monthly, yearly, custom; from due date or
-  from completion)
-- Tags and filters
-- Keyboard shortcuts, command palette (Cmd/Ctrl+K), shortcut overview (`?`)
+Quick entry with natural language in English and German shown as chips, repeating tasks
+(from the due date or from completion), tags with their own views, keyboard shortcuts with
+an overview (`?`), command palette (⌘K / Ctrl+K).
 
 ## 0.4 – Together
 
@@ -60,4 +57,6 @@ Ideas that were deliberately postponed:
   root of a domain or subdomain.
 - **A “Recently deleted” view.** Deleted tasks are kept for 30 days, but can only be
   restored right away with “Undo” so far.
+- **Saved filters** that combine conditions (e.g. `#work` and due this week). Tags have
+  their own views, and search finds tags, too.
 - More languages – contributions welcome, see [CONTRIBUTING.md](CONTRIBUTING.md#translations).

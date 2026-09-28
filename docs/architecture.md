@@ -44,16 +44,16 @@ Tables:
 | `lists`           | Name, color, emoji, owner; one default list per account                                                                                                 |
 | `list_members`    | Who can see a list with which role (`owner`, `editor`, `viewer`), and each person's own group and position for it in the sidebar                        |
 | `list_groups`     | Per-person folders in the sidebar, collapsible                                                                                                          |
-| `tasks`           | Title, notes, due date and time, priority, important flag, position, completion, soft deletion                                                          |
+| `tasks`           | Title, notes, due date and time, priority, important flag, position, repeat rule (JSON), completion, soft deletion                                      |
 | `subtasks`        | Steps of a task, with their own order and completion                                                                                                    |
+| `task_tags`       | Tags of a task, in lower case                                                                                                                           |
 | `my_day`          | Which tasks a person added to My Day, and for which date                                                                                                |
-| `task_search`     | SQLite FTS5 index over titles, notes and steps                                                                                                          |
+| `task_search`     | SQLite FTS5 index over titles, notes, steps and tags                                                                                                    |
 
 Planned additions, each with its own migration when the feature arrives:
 
 | Phase | Tables                                        |
 | ----- | --------------------------------------------- |
-| 3     | `task_tags`                                   |
 | 5     | `push_subscriptions`, `notification_channels` |
 | 6     | `api_tokens`, `calendar_feeds`, `attachments` |
 
@@ -74,6 +74,14 @@ Design decisions for lists and tasks:
   days.
 - **Search** uses an FTS5 index with prefix matching and accent folding (`cafe` finds
   “Café”, `muller` finds “Müller”); the index is updated in the same transaction as the task.
+- **Repeating tasks** are a series of separate tasks. Completing one creates the next
+  occurrence and hands the rule on (`next_task_id` links them), so history stays intact and
+  each series has exactly one open task. Reopening takes the next occurrence back if nobody
+  has touched it yet. Monthly and yearly series remember their first due date
+  (`recurrence_anchor`) to keep their day across short months. The date arithmetic lives in
+  `packages/shared` and is covered by unit tests.
+- **Quick entry** is parsed in the browser (`parseQuickEntry` in `packages/shared`); the API
+  only receives structured fields, so other clients can create tasks without it.
 
 On the client, TanStack Query caches lists, tasks and the smart lists. Changes are applied
 optimistically and rolled back with an error message when the server rejects them; the

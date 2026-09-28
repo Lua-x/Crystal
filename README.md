@@ -15,9 +15,9 @@
 </p>
 
 > [!NOTE]
-> **Crystal is in early development.** Lists, tasks, My Day and the smart lists are
-> ready to use; natural-language entry, recurring tasks, sharing and reminders follow.
-> See the [roadmap](ROADMAP.md) for what comes next.
+> **Crystal is in early development.** Lists, tasks, repeats, tags and quick entry are
+> ready to use; sharing, reminders and offline use follow. See the [roadmap](ROADMAP.md)
+> for what comes next.
 
 <p align="center">
   <picture>
@@ -55,6 +55,18 @@
 - **Undo** for deleted tasks; completed tasks stay tucked away until you need them.
 - **Details beside the list** on large screens, as a sheet on phones and tablets.
 
+**Fast to use**
+
+- **Quick entry that understands you**, in English and German: type “Take out the trash
+  tomorrow 6pm every Tuesday !important #household” and Crystal sets the date, time, repeat,
+  importance and tag. Recognized parts show as chips you can dismiss.
+  [What is recognized](docs/quick-entry.md)
+- **Repeating tasks** – daily, on chosen weekdays, every n weeks, months or years, counted
+  from the due date or from completion. The next one appears when you tick one off.
+- **Tags** to cut across lists, each with its own view.
+- **Keyboard shortcuts** for everything frequent, and a **command palette** (⌘K / Ctrl+K) to
+  jump to any list, find tasks or add one from anywhere. Press `?` for an overview.
+
 **For the whole household**
 
 - **Accounts for everyone in the household.** The first account becomes the administrator.
@@ -71,10 +83,9 @@
 - **Secure defaults.** Argon2id passwords, HttpOnly session cookies, CSRF protection,
   rate limiting, strict Content Security Policy, a non-root container without a shell.
 
-**Coming next** – natural-language quick entry (“Take out the trash tomorrow 6pm every
-Tuesday !important”), recurring tasks, tags, sharing and real-time sync, reminders (Web
-Push, ntfy, Gotify), offline support, import from Microsoft To Do and Todoist, an iCal
-feed and a REST API. Details in the [roadmap](ROADMAP.md).
+**Coming next** – sharing lists and real-time sync, assigning tasks, reminders (Web Push,
+ntfy, Gotify), offline support, import from Microsoft To Do and Todoist, an iCal feed and
+API tokens. Details in the [roadmap](ROADMAP.md).
 
 ## Quick start
 
