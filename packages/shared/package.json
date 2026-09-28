@@ -1,6 +1,6 @@
 {
   "name": "@crystal/shared",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Schemas, types and pure logic shared between the Crystal server and web app.",
   "license": "AGPL-3.0-only",

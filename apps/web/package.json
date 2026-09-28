@@ -1,6 +1,6 @@
 {
   "name": "@crystal/web",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Crystal web app (React + Vite).",
   "license": "AGPL-3.0-only",
