@@ -40,6 +40,8 @@ export default defineConfig({
       STATIC_DIR: 'apps/web/dist',
       REGISTRATION: 'invite',
       LOG_LEVEL: 'warn',
+      // Reminders go out within a second, so tests do not wait long.
+      REMINDER_INTERVAL_SECONDS: '1',
     },
   },
 })
