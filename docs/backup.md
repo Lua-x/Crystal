@@ -8,6 +8,7 @@ the `crystal-data` volume with Docker Compose).
 | `crystal.db`             | The SQLite database with all accounts and data                  |
 | `crystal.db-wal`, `-shm` | SQLite's write-ahead log; part of the database while it is open |
 | `secret.key`             | Generated secret (only if `SECRET_KEY` is not set)              |
+| `attachments/`           | Files attached to tasks                                         |
 | `backups/`               | Automatic backups of the database                               |
 
 ## Automatic backups
@@ -38,9 +39,13 @@ makes a consistent copy) and keeps the newest seven. Administrators see the back
 >
 > The directory must be writable by user `65532` (`sudo chown -R 65532:65532 /mnt/nas/crystal`).
 
-Backups contain the database only. The secret key (`secret.key`, or `SECRET_KEY` if you set it)
-encrypts notification settings and calendar links, and Web Push is tied to it – keep a copy of
-it, too.
+Backups contain the database only. Two more things are worth keeping a copy of:
+
+- the `attachments/` directory with the files attached to tasks, and
+- the secret key (`secret.key`, or `SECRET_KEY` if you set it). It encrypts notification
+  settings and calendar links, and Web Push is tied to it.
+
+The full backup of the data directory below covers everything.
 
 ## Restore a backup
 

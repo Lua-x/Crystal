@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import {
+  ATTACHMENT_TYPES,
   PRIORITIES,
   RECURRENCE_BASES,
   RECURRENCE_FREQUENCIES,
@@ -83,6 +84,16 @@ export const subtaskSchema = z.object({
 })
 export type Subtask = z.infer<typeof subtaskSchema>
 
+/** A file attached to a task (an image or a PDF). */
+export const attachmentSchema = z.object({
+  id: idSchema,
+  fileName: z.string(),
+  mimeType: z.enum(ATTACHMENT_TYPES),
+  size: z.int(),
+  createdAt: timestampSchema,
+})
+export type Attachment = z.infer<typeof attachmentSchema>
+
 export const taskSchema = z.object({
   id: idSchema,
   listId: idSchema,
@@ -108,6 +119,8 @@ export const taskSchema = z.object({
    */
   remindAt: timestampSchema.nullable(),
   subtasks: z.array(subtaskSchema),
+  /** Oldest first. */
+  attachments: z.array(attachmentSchema),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 })

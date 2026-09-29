@@ -65,6 +65,11 @@ function main(): void {
     } catch (error) {
       logger.error({ err: error }, 'Cleanup failed')
     }
+    // Files of attachments whose task was deleted for good.
+    services.attachments.removeOrphans().then(
+      (removed) => logger.debug({ removed }, 'Attachment cleanup finished'),
+      (error: unknown) => logger.error({ err: error }, 'Attachment cleanup failed'),
+    )
   }, HOUR_MS)
   cleanup.unref()
 

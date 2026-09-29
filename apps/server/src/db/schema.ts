@@ -1,5 +1,6 @@
 import {
   API_TOKEN_SCOPES,
+  ATTACHMENT_TYPES,
   LIST_COLORS,
   LIST_ROLES,
   NOTIFICATION_CHANNEL_TYPES,
@@ -285,6 +286,27 @@ export const subtasks = sqliteTable(
   (table) => [index('subtasks_task_position_idx').on(table.taskId, table.position)],
 )
 
+/**
+ * Files attached to tasks. The content lives in `DATA_DIR/attachments/<id>`;
+ * the name the uploader chose is only ever used for display and downloads.
+ */
+export const attachments = sqliteTable(
+  'attachments',
+  {
+    id: text('id').primaryKey(),
+    taskId: text('task_id')
+      .notNull()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    fileName: text('file_name').notNull(),
+    /** Detected from the content, never taken from the upload. */
+    mimeType: text('mime_type', { enum: ATTACHMENT_TYPES }).notNull(),
+    size: integer('size').notNull(),
+    uploadedBy: text('uploaded_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').notNull(),
+  },
+  (table) => [index('attachments_task_idx').on(table.taskId)],
+)
+
 /** Tasks a user picked for a day. Entries for past days are simply ignored. */
 export const myDay = sqliteTable(
   'my_day',
@@ -376,5 +398,6 @@ export type ListGroupRow = typeof listGroups.$inferSelect
 export type TaskRow = typeof tasks.$inferSelect
 export type SubtaskRow = typeof subtasks.$inferSelect
 export type TaskTagRow = typeof taskTags.$inferSelect
+export type AttachmentRow = typeof attachments.$inferSelect
 export type NotificationChannelRow = typeof notificationChannels.$inferSelect
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect

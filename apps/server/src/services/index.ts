@@ -8,6 +8,7 @@ import { createMailer, type Mailer } from '../notifications/mailer.js'
 import { createWebPushSender, deriveVapidKeys, type PushSender } from '../notifications/push.js'
 import { AdminService } from './admin.js'
 import { ApiTokenService } from './api-tokens.js'
+import { AttachmentService } from './attachments.js'
 import { AuthService } from './auth.js'
 import { BackupService } from './backups.js'
 import { CalendarService } from './calendar.js'
@@ -54,6 +55,8 @@ export interface Services {
   transfer: TransferService
   /** Automatic and manual database backups. */
   backups: BackupService
+  /** Images and PDFs attached to tasks. */
+  attachments: AttachmentService
   lists: ListService
   tasks: TaskService
   views: ViewService
@@ -137,7 +140,8 @@ export function createServices(options: ServiceOptions): Services {
   const search = new SearchService(db)
   const events = new EventHub(db)
   const lists = new ListService(db, search, events, now)
-  const tasks = new TaskService(db, lists, search, events, notifications, now)
+  const attachments = new AttachmentService(db, lists, events, config.attachments, now)
+  const tasks = new TaskService(db, lists, search, events, notifications, attachments, now)
   const views = new ViewService(db, tasks, search)
   const reminders = new ReminderService(db, notifications, logger, now)
   const calendar = new CalendarService(db, config, secretKey, version, now)
@@ -177,6 +181,7 @@ export function createServices(options: ServiceOptions): Services {
     calendar,
     transfer,
     backups,
+    attachments,
     lists,
     tasks,
     views,

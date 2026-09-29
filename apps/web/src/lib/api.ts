@@ -62,6 +62,32 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   return payload as T
 }
 
+/** Uploads `multipart/form-data` (files) to `/api/v1{path}`. */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(`/api/v1${path}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-Crystal-Client': CLIENT_ID },
+      body: form,
+    })
+  } catch {
+    throw new ApiError(0, 'network', 'Network request failed')
+  }
+  const payload: unknown = await response.json().catch(() => undefined)
+  if (!response.ok) {
+    const error = (payload as { error?: { code?: string; message?: string } })?.error
+    throw new ApiError(
+      response.status,
+      (error?.code as ErrorCode | undefined) ??
+        (response.status === 413 ? 'payload_too_large' : 'internal_error'),
+      error?.message ?? response.statusText,
+    )
+  }
+  return payload as T
+}
+
 /** Field-level validation problems reported by the server. */
 export function fieldErrors(error: unknown): Record<string, string> {
   if (!(error instanceof ApiError) || error.code !== 'validation_failed') return {}

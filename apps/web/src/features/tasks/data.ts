@@ -1,4 +1,5 @@
 import {
+  type Attachment,
   type CreateListGroupInput,
   type CreateListInput,
   type CreateTaskInput,
@@ -31,7 +32,7 @@ import {
 import i18next from 'i18next'
 
 import { toast } from '../../components/ui/toast-store'
-import { api } from '../../lib/api'
+import { api, apiUpload } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 
 export const taskKeys = {
@@ -317,6 +318,7 @@ export function useCreateTask(optimisticKeys: QueryKey[] = []) {
               assignee: null,
               remindAt: input.remindAt ?? null,
               subtasks: [],
+              attachments: [],
               createdAt: now,
               updatedAt: now,
             }
@@ -442,6 +444,47 @@ export function useDeleteSubtask() {
     (task, { id }) => ({ ...task, subtasks: task.subtasks.filter((subtask) => subtask.id !== id) }),
     ({ taskId }) => taskId,
   )
+}
+
+/* ── Attachments ───────────────────────────────────────────────── */
+
+/** Uploads one file; the task is added to the cache with it. */
+export function useUploadAttachment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ taskId, file }: { taskId: string; file: File }) => {
+      const form = new FormData()
+      form.append('file', file, file.name)
+      return apiUpload<Attachment>(`/tasks/${taskId}/attachments`, form)
+    },
+    onSuccess: (attachment, { taskId }) =>
+      patchCachedTask(queryClient, taskId, (task) => ({
+        ...task,
+        attachments: [...task.attachments, attachment],
+      })),
+    onSettled: () => refresh(queryClient, taskKeys.tasks),
+  })
+}
+
+export function useDeleteAttachment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id }: { taskId: string; id: string }) =>
+      api<void>(`/attachments/${id}`, { method: 'DELETE' }),
+    onMutate: async ({ taskId, id }) => {
+      const snapshot = await snapshotTasks(queryClient)
+      patchCachedTask(queryClient, taskId, (task) => ({
+        ...task,
+        attachments: task.attachments.filter((attachment) => attachment.id !== id),
+      }))
+      return { snapshot }
+    },
+    onError: (error, _variables, context) => {
+      restore(queryClient, context?.snapshot)
+      toast.error(errorMessage(error))
+    },
+    onSettled: () => refresh(queryClient, taskKeys.tasks),
+  })
 }
 
 /* ── List and group mutations ──────────────────────────────────── */

@@ -38,6 +38,8 @@ export const ERROR_CODES = [
   'token_not_allowed',
   'import_invalid',
   'payload_too_large',
+  'unsupported_file',
+  'too_many_attachments',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]

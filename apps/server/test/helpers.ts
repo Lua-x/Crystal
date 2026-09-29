@@ -192,6 +192,30 @@ export class TestClient {
     return this.request<T>('DELETE', path, undefined, headers)
   }
 
+  /** Posts `multipart/form-data`, like a file upload from the browser. */
+  upload<T = unknown>(path: string, fields: Record<string, Blob | string>, fileName = 'file') {
+    const form = new FormData()
+    for (const [name, value] of Object.entries(fields)) {
+      if (typeof value === 'string') form.append(name, value)
+      else form.append(name, value, fileName)
+    }
+    return this.request<T>('POST', path, form)
+  }
+
+  /** Downloads raw bytes. */
+  async download(path: string): Promise<{ status: number; bytes: Uint8Array; headers: Headers }> {
+    const headers = new Headers({ 'x-forwarded-for': this.options.ip ?? '203.0.113.10' })
+    if (this.cookies.size > 0) {
+      headers.set('cookie', [...this.cookies].map(([name, value]) => `${name}=${value}`).join('; '))
+    }
+    const response = await this.app.request(`${BASE_URL}${path}`, { headers })
+    return {
+      status: response.status,
+      bytes: new Uint8Array(await response.arrayBuffer()),
+      headers: response.headers,
+    }
+  }
+
   /** Opens a Server-Sent Events stream; `next()` resolves with the next event or `null`. */
   async openStream(path: string) {
     const controller = new AbortController()
@@ -258,12 +282,14 @@ export class TestClient {
     if (this.cookies.size > 0) {
       headers.set('cookie', [...this.cookies].map(([name, value]) => `${name}=${value}`).join('; '))
     }
-    if (body !== undefined) headers.set('content-type', 'application/json')
+    // Form data sets its own multipart content type (with the boundary).
+    const isForm = body instanceof FormData
+    if (body !== undefined && !isForm) headers.set('content-type', 'application/json')
 
     const response = await this.app.request(`${BASE_URL}${path}`, {
       method,
       headers,
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      ...(body !== undefined ? { body: isForm ? body : JSON.stringify(body) } : {}),
     })
     this.storeCookies(response.headers)
 

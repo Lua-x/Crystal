@@ -68,6 +68,8 @@ export const de: Translation = {
     token_not_allowed: 'Mit API-Tokens geht das nicht. Melde dich stattdessen an.',
     import_invalid: 'Diese Datei kann nicht importiert werden.',
     payload_too_large: 'Das ist zu groß.',
+    unsupported_file: 'Anhängen kannst du nur Bilder und PDF-Dateien.',
+    too_many_attachments: 'Diese Aufgabe hat schon 20 Dateien.',
   },
   validation: {
     required: 'Pflichtfeld',
@@ -316,6 +318,16 @@ export const de: Translation = {
     completed: 'Erledigt {{date}}',
     delete: 'Aufgabe löschen',
     notFound: 'Diese Aufgabe gibt es nicht mehr.',
+  },
+  attachments: {
+    title: 'Dateien',
+    add: 'Datei hinzufügen',
+    dropHint: 'oder Bilder und PDFs hierher ziehen',
+    uploading: 'Wird hochgeladen …',
+    remove: '{{name}} entfernen',
+    failed: '{{name}} konnte nicht hinzugefügt werden: {{reason}}',
+    count_one: '{{count}} Datei',
+    count_other: '{{count}} Dateien',
   },
   reminder: {
     label: 'Erinnerung',

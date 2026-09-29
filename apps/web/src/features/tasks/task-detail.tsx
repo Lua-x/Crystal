@@ -39,6 +39,7 @@ import {
 import { useToday } from './hooks'
 import { ListIcon } from './list-style'
 import { useTaskActions } from './task-actions'
+import { TaskAttachments } from './task-attachments'
 import {
   AssigneeEditor,
   DetailRow,
@@ -246,6 +247,8 @@ function TaskDetailContent({ task, onClose }: { task: Task; onClose: () => void 
           disabled={!canEdit}
           onSave={(notes) => actions.update({ id: task.id, input: { notes } })}
         />
+
+        <TaskAttachments task={task} disabled={!canEdit} />
 
         <div className="mt-6 flex items-center justify-between gap-3 text-footnote text-text-secondary">
           <span>

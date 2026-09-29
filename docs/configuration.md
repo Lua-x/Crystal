@@ -116,6 +116,15 @@ out on every device after the password is changed.
 
 See [backup.md](backup.md) for restoring.
 
+## Attachments
+
+| Variable            | Default | Description                                                 |
+| ------------------- | ------- | ----------------------------------------------------------- |
+| `ATTACHMENT_MAX_MB` | `10`    | Largest file that can be attached to a task, in MiB (1–100) |
+
+Images (PNG, JPEG, GIF, WebP, AVIF, HEIC) and PDFs can be attached, up to 20 per task. They are
+stored in `DATA_DIR/attachments`.
+
 ## Docker Compose only
 
 | Variable          | Default  | Description                                                      |

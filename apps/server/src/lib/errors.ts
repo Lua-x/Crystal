@@ -35,6 +35,8 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   token_not_allowed: 'API tokens cannot be used for this; sign in instead.',
   import_invalid: 'The file cannot be imported.',
   payload_too_large: 'The request is too large.',
+  unsupported_file: 'Only images and PDF files can be attached.',
+  too_many_attachments: 'This task already has as many attachments as it can have.',
 }
 
 /** An expected failure that is reported to the client as `{ error: { code, message } }`. */

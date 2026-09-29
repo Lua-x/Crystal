@@ -78,6 +78,7 @@ const envSchema = z
     BACKUP_INTERVAL_HOURS: z.coerce.number().int().min(0).max(720).default(24),
     BACKUP_RETENTION: z.coerce.number().int().min(1).max(365).default(7),
     BACKUP_DIR: optionalString,
+    ATTACHMENT_MAX_MB: z.coerce.number().int().min(1).max(100).default(10),
   })
   .superRefine((env, ctx) => {
     if (env.BASE_URL && (env.BASE_URL.pathname !== '/' || env.BASE_URL.search)) {
@@ -152,6 +153,10 @@ export interface Config {
   reminderIntervalMs: number
   /** Whether notification channels may point to loopback and private network addresses. */
   notifyPrivateNetworks: boolean
+  attachments: {
+    directory: string
+    maxBytes: number
+  }
   backups: {
     /** 0 when automatic backups are off. */
     intervalHours: number
@@ -233,6 +238,10 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
         : undefined,
     reminderIntervalMs: parsed.REMINDER_INTERVAL_SECONDS * 1000,
     notifyPrivateNetworks: parsed.NOTIFY_PRIVATE_NETWORKS,
+    attachments: {
+      directory: join(parsed.DATA_DIR, 'attachments'),
+      maxBytes: parsed.ATTACHMENT_MAX_MB * 1024 * 1024,
+    },
     backups: {
       intervalHours: parsed.BACKUP_INTERVAL_HOURS,
       retention: parsed.BACKUP_RETENTION,

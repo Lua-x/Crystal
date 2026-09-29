@@ -21,11 +21,16 @@ All notable changes to Crystal are documented in this file. The format follows
 - Automatic database backups every 24 hours while Crystal keeps running, keeping the newest
   seven (`BACKUP_INTERVAL_HOURS`, `BACKUP_RETENTION`, `BACKUP_DIR`). Administrators can make and
   download backups under **Settings → Backups**. See [docs/backup.md](docs/backup.md).
+- Attach images and PDFs to tasks – with the button or by dropping them on the details – up to
+  `ATTACHMENT_MAX_MB` (10 MiB) each and 20 per task. Images show as thumbnails; rows show a
+  paperclip.
 
 ### Security
 
 - Invite and calendar links no longer appear in the request log.
 - Request bodies are limited to 1 MiB (12 MiB for imports).
+- Attachments are recognized by their content, stored under random names and served with a
+  sandboxing Content Security Policy, so an uploaded file can never run code.
 
 ## [0.5.0] - 2026-09-29
 

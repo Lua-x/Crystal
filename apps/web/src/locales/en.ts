@@ -65,6 +65,8 @@ export const en = {
     token_not_allowed: 'API tokens cannot do this. Sign in instead.',
     import_invalid: 'This file cannot be imported.',
     payload_too_large: 'This is too large.',
+    unsupported_file: 'Only images and PDF files can be attached.',
+    too_many_attachments: 'This task already has 20 files.',
   },
   validation: {
     required: 'Required',
@@ -311,6 +313,16 @@ export const en = {
     completed: 'Completed {{date}}',
     delete: 'Delete task',
     notFound: 'This task no longer exists.',
+  },
+  attachments: {
+    title: 'Files',
+    add: 'Add file',
+    dropHint: 'or drop images and PDFs here',
+    uploading: 'Uploading…',
+    remove: 'Remove {{name}}',
+    failed: '{{name}} could not be added: {{reason}}',
+    count_one: '{{count}} file',
+    count_other: '{{count}} files',
   },
   reminder: {
     label: 'Reminder',

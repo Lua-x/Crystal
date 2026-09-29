@@ -5,6 +5,7 @@ import {
   GripVertical,
   ListChecks,
   NotebookText,
+  Paperclip,
   Repeat,
   Star,
   Sun,
@@ -139,6 +140,19 @@ export function TaskRow({
     meta.push(
       <span key="reminder" className="inline-flex items-center">
         <Bell role="img" aria-label={t('reminder.row', { time: reminder })} className="size-3.5" />
+      </span>,
+    )
+  }
+  if (task.attachments.length > 0) {
+    meta.push(
+      <span
+        key="attachments"
+        role="img"
+        aria-label={t('attachments.count', { count: task.attachments.length })}
+        className="inline-flex items-center gap-0.5"
+      >
+        <Paperclip aria-hidden className="size-3.5" />
+        {task.attachments.length}
       </span>,
     )
   }

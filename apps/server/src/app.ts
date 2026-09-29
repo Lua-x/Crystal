@@ -10,6 +10,7 @@ import { requestContext } from './middleware/request-context.js'
 import { securityHeaders } from './middleware/security-headers.js'
 import { sessionMiddleware, tokenPolicy } from './middleware/session.js'
 import { adminRoutes } from './routes/admin.js'
+import { attachmentRoutes, taskAttachmentRoutes } from './routes/attachments.js'
 import { authRoutes } from './routes/auth.js'
 import { calendarRoutes } from './routes/calendar.js'
 import { docsRoutes } from './routes/docs.js'
@@ -49,9 +50,17 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.use('*', async (c, next) => {
     await next()
     // API responses contain personal data and must not end up in shared caches.
-    c.header('Cache-Control', 'no-store')
+    // (Attachments set `private` caching themselves.)
+    if (!c.res.headers.has('Cache-Control')) c.header('Cache-Control', 'no-store')
   })
-  v1.use('*', requestBodyLimits({ '/api/v1/import': 12 * MB }))
+  v1.use(
+    '*',
+    requestBodyLimits([
+      [/^\/api\/v1\/import$/, 12 * MB],
+      // The file plus room for the multipart framing.
+      [/^\/api\/v1\/tasks\/[^/]+\/attachments$/, config.attachments.maxBytes + 64 * 1024],
+    ]),
+  )
   v1.use('*', csrfProtection(config))
   v1.use('*', sessionMiddleware(services))
   v1.use('*', tokenPolicy)
@@ -68,6 +77,8 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.route('/lists', listRoutes(services))
   v1.route('/list-groups', listGroupRoutes(services))
   v1.route('/tasks', taskRoutes(services))
+  v1.route('/tasks', taskAttachmentRoutes(services))
+  v1.route('/attachments', attachmentRoutes(services))
   v1.route('/subtasks', subtaskRoutes(services))
   v1.route('/views', viewRoutes(services))
   v1.route('/search', searchRoutes(services))

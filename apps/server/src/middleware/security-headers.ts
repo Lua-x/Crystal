@@ -44,15 +44,33 @@ const BASE_OPTIONS: SecureHeadersOptions = {
 }
 
 export function securityHeaders(config: Config): MiddlewareHandler<AppEnv> {
-  const withHsts = secureHeaders({
-    ...BASE_OPTIONS,
-    strictTransportSecurity: 'max-age=31536000; includeSubDomains',
-  })
-  const withoutHsts = secureHeaders({ ...BASE_OPTIONS, strictTransportSecurity: false })
+  const hsts = 'max-age=31536000; includeSubDomains'
+  const page = {
+    withHsts: secureHeaders({ ...BASE_OPTIONS, strictTransportSecurity: hsts }),
+    withoutHsts: secureHeaders({ ...BASE_OPTIONS, strictTransportSecurity: false }),
+  }
+  const upload = {
+    withHsts: secureHeaders({ ...UPLOAD_OPTIONS, strictTransportSecurity: hsts }),
+    withoutHsts: secureHeaders({ ...UPLOAD_OPTIONS, strictTransportSecurity: false }),
+  }
 
   return async (c, next) => {
+    const set = UPLOADED_CONTENT.test(c.req.path) ? upload : page
     // HSTS is only meaningful (and only honoured by browsers) over HTTPS.
-    const handler = config.hsts && isSecureRequest(c, config) ? withHsts : withoutHsts
+    const handler = config.hsts && isSecureRequest(c, config) ? set.withHsts : set.withoutHsts
     return handler(c, next)
   }
+}
+
+/** Files people uploaded: they must never run anything, even when opened directly. */
+const UPLOADED_CONTENT = /^\/api\/v1\/attachments\/[^/]+$/
+const UPLOAD_OPTIONS: SecureHeadersOptions = {
+  ...BASE_OPTIONS,
+  contentSecurityPolicy: {
+    defaultSrc: [NONE],
+    imgSrc: [SELF],
+    styleSrc: ["'unsafe-inline'"],
+    frameAncestors: [NONE],
+    sandbox: [],
+  },
 }

@@ -102,6 +102,31 @@ export const API_TOKEN_NAME_MAX_LENGTH = 60
 export const API_TOKEN_MAX_DAYS = 365
 export const API_TOKENS_PER_USER_MAX = 25
 
+/**
+ * Files that can be attached to tasks, recognized by their content (not their
+ * name): common image formats and PDF.
+ */
+export const ATTACHMENT_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'image/heic',
+  'application/pdf',
+] as const
+export type AttachmentType = (typeof ATTACHMENT_TYPES)[number]
+/** Images browsers can show; HEIC photos from iPhones are offered as downloads. */
+export const PREVIEWABLE_IMAGE_TYPES: readonly AttachmentType[] = [
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+]
+export const ATTACHMENTS_PER_TASK_MAX = 20
+export const ATTACHMENT_NAME_MAX_LENGTH = 200
+
 export const LIST_NAME_MAX_LENGTH = 100
 export const LIST_ICON_MAX_LENGTH = 16
 export const GROUP_NAME_MAX_LENGTH = 100

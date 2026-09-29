@@ -120,6 +120,49 @@ test('exporting everything and importing a Todoist project', async ({ page }) =>
   await expect(task(page, 'Mow the lawn')).toBeVisible()
 })
 
+test('attaching images and PDFs to a task', async ({ page }) => {
+  await signIn(page, ADMIN)
+  await openList(page, 'Tasks')
+  await task(page, 'Call the plumber').click()
+  const details = page.getByRole('complementary', { name: 'Task details' })
+  const files = details.getByRole('region', { name: 'Files' })
+
+  await files.locator('input[type=file]').setInputFiles([
+    {
+      name: 'Leak.png',
+      mimeType: 'image/png',
+      // A 1×1 pixel PNG.
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    },
+    { name: 'Quote.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7\n%%EOF\n') },
+  ])
+  await expect(files.getByRole('listitem')).toHaveCount(2)
+  await expect(files.getByRole('link', { name: /Leak\.png/ })).toHaveAttribute(
+    'href',
+    /^\/api\/v1\/attachments\/[\w-]+$/,
+  )
+  await expect(files.getByRole('link', { name: /Quote\.pdf/ })).toHaveAttribute(
+    'href',
+    /\?download=1$/,
+  )
+  await expect(page.getByRole('img', { name: '2 files' })).toBeVisible()
+  await expectAccessible(page)
+
+  // Something that is not an image or PDF is refused.
+  await files.locator('input[type=file]').setInputFiles({
+    name: 'notes.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('just text'),
+  })
+  await expect(page.getByText(/notes\.txt could not be added/)).toBeVisible()
+
+  await files.getByRole('button', { name: 'Remove Quote.pdf' }).click()
+  await expect(files.getByRole('listitem')).toHaveCount(1)
+})
+
 test('administrators back up the database', async ({ page }) => {
   await signIn(page, ADMIN)
   await page.goto('/settings/backups')

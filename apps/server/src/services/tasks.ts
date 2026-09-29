@@ -40,6 +40,7 @@ import {
 } from '../lib/ordering.js'
 import type { EventHub } from './events.js'
 import type { ListService } from './lists.js'
+import type { AttachmentService } from './attachments.js'
 import type { NotificationService } from './notifications.js'
 import type { SearchService } from './search.js'
 
@@ -66,6 +67,7 @@ export class TaskService {
     private readonly search: SearchService,
     private readonly events: EventHub,
     private readonly notifications: NotificationService,
+    private readonly attachments: AttachmentService,
     private readonly now: () => Date,
   ) {}
 
@@ -126,6 +128,7 @@ export class TaskService {
             .map((person) => [person.id, person])
         : [],
     )
+    const files = this.attachments.forTasks(ids, executor)
     return rows.map((row) => ({
       id: row.id,
       listId: row.listId,
@@ -143,6 +146,7 @@ export class TaskService {
       assignee: (row.assigneeId && assignees.get(row.assigneeId)) || null,
       remindAt: row.remindAt?.toISOString() ?? null,
       subtasks: byTask.get(row.id) ?? [],
+      attachments: files.get(row.id) ?? [],
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     }))
