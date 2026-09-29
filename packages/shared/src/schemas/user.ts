@@ -15,11 +15,20 @@ import {
   usernameSchema,
 } from './common.js'
 
+const timeOfDaySchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { error: 'validation.time_invalid' })
+
 export const preferencesSchema = z.object({
   theme: themeSchema,
   accentColor: accentColorSchema,
   /** Recognize dates, repeats, tags and more while typing a new task. */
   smartEntry: z.boolean(),
+  /** Notify when someone else assigns a task to you. */
+  notifyAssigned: z.boolean(),
+  /** A daily overview of what is due, at `dailySummaryTime` (local time). */
+  dailySummary: z.boolean(),
+  dailySummaryTime: timeOfDaySchema,
 })
 export type Preferences = z.infer<typeof preferencesSchema>
 
@@ -27,6 +36,9 @@ export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
   accentColor: 'blue',
   smartEntry: true,
+  notifyAssigned: true,
+  dailySummary: false,
+  dailySummaryTime: '07:00',
 }
 
 /**
@@ -38,11 +50,18 @@ export function parsePreferences(raw: unknown): Preferences {
   const source = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {}
   const theme = themeSchema.safeParse(source.theme)
   const accentColor = accentColorSchema.safeParse(source.accentColor)
+  const summaryTime = timeOfDaySchema.safeParse(source.dailySummaryTime)
+  const flag = (key: 'smartEntry' | 'notifyAssigned' | 'dailySummary'): boolean => {
+    const value = source[key]
+    return typeof value === 'boolean' ? value : DEFAULT_PREFERENCES[key]
+  }
   return {
     theme: theme.success ? theme.data : DEFAULT_PREFERENCES.theme,
     accentColor: accentColor.success ? accentColor.data : DEFAULT_PREFERENCES.accentColor,
-    smartEntry:
-      typeof source.smartEntry === 'boolean' ? source.smartEntry : DEFAULT_PREFERENCES.smartEntry,
+    smartEntry: flag('smartEntry'),
+    notifyAssigned: flag('notifyAssigned'),
+    dailySummary: flag('dailySummary'),
+    dailySummaryTime: summaryTime.success ? summaryTime.data : DEFAULT_PREFERENCES.dailySummaryTime,
   }
 }
 

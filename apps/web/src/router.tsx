@@ -11,6 +11,7 @@ import { z } from 'zod'
 
 import { AuthLayout } from './features/auth/auth-layout'
 import { LoginPage } from './features/auth/login-page'
+import { ForgotPasswordPage, ResetPasswordPage } from './features/auth/password-reset-pages'
 import { InvitePage, RegisterPage, SetupPage } from './features/auth/register-pages'
 import { ErrorScreen, NotFoundScreen, PendingScreen, RootLayout } from './features/root/root-layout'
 import { AppShell } from './features/shell/app-shell'
@@ -79,6 +80,22 @@ const inviteRoute = createRoute({
   getParentRoute: () => authRoute,
   path: '/invite/$token',
   component: InvitePage,
+})
+
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => authRoute,
+  path: '/forgot-password',
+  beforeLoad: ({ context }) => {
+    if (!context.authConfig.passwordReset) throw redirect({ to: '/login' })
+  },
+  component: ForgotPasswordPage,
+})
+
+const resetPasswordRoute = createRoute({
+  getParentRoute: () => authRoute,
+  path: '/reset-password',
+  validateSearch: z.object({ token: z.string().optional() }),
+  component: ResetPasswordPage,
 })
 
 /* ── Signed-in area ────────────────────────────────────────── */
@@ -178,6 +195,15 @@ const appearanceSettingsRoute = createRoute({
   ),
 })
 
+const notificationsSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: '/notifications',
+  component: lazyRouteComponent(
+    () => import('./features/settings/notifications-settings'),
+    'NotificationsSettingsPage',
+  ),
+})
+
 const sessionsSettingsRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/sessions',
@@ -225,7 +251,14 @@ const devRoutes = import.meta.env.DEV
   : []
 
 const routeTree = rootRoute.addChildren([
-  authRoute.addChildren([loginRoute, setupRoute, registerRoute, inviteRoute]),
+  authRoute.addChildren([
+    loginRoute,
+    setupRoute,
+    registerRoute,
+    inviteRoute,
+    forgotPasswordRoute,
+    resetPasswordRoute,
+  ]),
   appRoute.addChildren([
     homeRoute,
     ...smartViewRoutes,
@@ -236,6 +269,7 @@ const routeTree = rootRoute.addChildren([
       settingsIndexRoute,
       accountSettingsRoute,
       appearanceSettingsRoute,
+      notificationsSettingsRoute,
       sessionsSettingsRoute,
       usersSettingsRoute,
       invitesSettingsRoute,

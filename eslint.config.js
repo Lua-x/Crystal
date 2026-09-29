@@ -78,6 +78,10 @@ export default defineConfig(
     files: ['apps/web/public/**/*.js'],
     languageOptions: { globals: globals.browser },
   },
+  {
+    files: ['apps/web/public/sw.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
 
   // Tests may use non-null assertions and looser typing for fixtures.
   {

@@ -83,6 +83,7 @@ export class UserService {
       updatedAt: now,
       lastLoginAt: null,
       disabledAt: null,
+      summarySentOn: null,
     }
     executor.insert(users).values(row).run()
     return row

@@ -1,8 +1,12 @@
 import {
+  addDays,
+  daysBetween,
   firstOccurrence,
+  instantToZonedTime,
   nextOccurrence,
   todayIn,
   uuidv7,
+  zonedTimeToInstant,
   type CreateSubtaskInput,
   type CreateTaskData,
   type Priority,
@@ -36,6 +40,7 @@ import {
 } from '../lib/ordering.js'
 import type { EventHub } from './events.js'
 import type { ListService } from './lists.js'
+import type { NotificationService } from './notifications.js'
 import type { SearchService } from './search.js'
 
 /** Fields that change the task for everyone (as opposed to the personal My Day). */
@@ -51,6 +56,7 @@ const SHARED_FIELDS = [
   'recurrence',
   'tags',
   'assigneeId',
+  'remindAt',
 ] as const
 
 export class TaskService {
@@ -59,6 +65,7 @@ export class TaskService {
     private readonly lists: ListService,
     private readonly search: SearchService,
     private readonly events: EventHub,
+    private readonly notifications: NotificationService,
     private readonly now: () => Date,
   ) {}
 
@@ -134,6 +141,7 @@ export class TaskService {
       recurrence: row.recurrence ?? null,
       tags: tagsByTask.get(row.id) ?? [],
       assignee: (row.assigneeId && assignees.get(row.assigneeId)) || null,
+      remindAt: row.remindAt?.toISOString() ?? null,
       subtasks: byTask.get(row.id) ?? [],
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -186,6 +194,8 @@ export class TaskService {
           position: positionAtStart(this.orderedTasks(listId, tx)),
           recurrence,
           assigneeId: input.assigneeId ?? null,
+          remindAt: input.remindAt ? new Date(input.remindAt) : null,
+          reminderBy: input.remindAt ? user.id : null,
           createdBy: user.id,
           createdAt: now,
           updatedAt: now,
@@ -196,6 +206,9 @@ export class TaskService {
       this.search.reindex(id, tx)
     })
     this.events.listsChanged([listId])
+    if (input.assigneeId && input.assigneeId !== user.id) {
+      this.notifications.taskAssigned(user, id, input.assigneeId)
+    }
     return this.get(user, id)
   }
 
@@ -269,6 +282,13 @@ export class TaskService {
           changes.assigneeId = null
         }
 
+        if (input.remindAt !== undefined) {
+          // A new reminder time rings again, for whoever set it.
+          changes.remindAt = input.remindAt ? new Date(input.remindAt) : null
+          changes.remindedAt = null
+          changes.reminderBy = input.remindAt ? user.id : null
+        }
+
         tx.update(tasks).set(changes).where(eq(tasks.id, taskId)).run()
         if (input.tags !== undefined) this.setTags(taskId, input.tags, tx)
         // After the other changes, so the next occurrence inherits them.
@@ -283,11 +303,16 @@ export class TaskService {
       return {
         shared: changesTask,
         lists: [task.listId, input.placement?.listId ?? task.listId],
+        newAssignee:
+          input.assigneeId && input.assigneeId !== task.assigneeId ? input.assigneeId : undefined,
       }
     })
     // My Day is personal; everything else concerns everyone on the list(s).
     if (touched.shared) this.events.listsChanged(touched.lists)
     else this.events.personalChange(user.id)
+    if (touched.newAssignee && touched.newAssignee !== user.id) {
+      this.notifications.taskAssigned(user, taskId, touched.newAssignee)
+    }
     return this.get(user, taskId)
   }
 
@@ -455,6 +480,8 @@ export class TaskService {
         recurrence: rule,
         recurrenceAnchor: rule.from === 'due' ? (task.recurrenceAnchor ?? task.dueDate) : null,
         assigneeId: task.assigneeId,
+        remindAt: this.shiftReminder(user, task, dueDate, tx),
+        reminderBy: task.remindAt ? task.reminderBy : null,
         createdBy: user.id,
         createdAt: now,
         updatedAt: now,
@@ -487,6 +514,27 @@ export class TaskService {
     this.setTags(id, tags, tx)
     this.search.reindex(id, tx)
     return id
+  }
+
+  /**
+   * The reminder of the next occurrence: as many days later as the due date,
+   * at the same local time for the person who gets it (also across DST).
+   */
+  private shiftReminder(
+    user: UserRow,
+    task: TaskRow,
+    nextDueDate: string,
+    tx: Executor,
+  ): Date | null {
+    if (!task.remindAt || !task.dueDate) return null
+    const recipientId = task.assigneeId ?? task.reminderBy
+    const recipient = recipientId
+      ? tx.select({ timezone: users.timezone }).from(users).where(eq(users.id, recipientId)).get()
+      : undefined
+    const timezone = recipient?.timezone ?? user.timezone
+    const local = instantToZonedTime(task.remindAt, timezone)
+    const date = addDays(local.date, daysBetween(task.dueDate, nextDueDate))
+    return zonedTimeToInstant(date, local.time, timezone)
   }
 
   private setTags(taskId: string, tags: readonly string[], tx: Executor): void {

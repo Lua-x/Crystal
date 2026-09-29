@@ -20,6 +20,7 @@ import type { Executor } from '../db/types.js'
 import { AppError } from '../lib/errors.js'
 import type { Logger } from '../lib/logger.js'
 import type { InviteService } from './invites.js'
+import type { PasswordResetService } from './password-resets.js'
 import type { SessionService } from './sessions.js'
 import type { UserService } from './users.js'
 
@@ -30,6 +31,7 @@ export interface AuthServiceDeps {
   users: UserService
   invites: InviteService
   sessions: SessionService
+  passwordResets: PasswordResetService
   now: () => Date
   version: string
 }
@@ -39,7 +41,7 @@ export class AuthService {
   constructor(private readonly deps: AuthServiceDeps) {}
 
   getConfig(): AuthConfig {
-    const { config, users, version } = this.deps
+    const { config, users, passwordResets, version } = this.deps
     return {
       needsSetup: users.count() === 0,
       registration: config.registration,
@@ -48,6 +50,7 @@ export class AuthService {
         enabled: config.oidc !== undefined,
         buttonLabel: config.oidc?.buttonLabel ?? '',
       },
+      passwordReset: passwordResets.available,
       version,
     }
   }

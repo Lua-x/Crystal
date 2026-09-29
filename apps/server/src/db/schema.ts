@@ -1,4 +1,11 @@
-import { LIST_COLORS, LIST_ROLES, ROLES, SUPPORTED_LOCALES, type Recurrence } from '@crystal/shared'
+import {
+  LIST_COLORS,
+  LIST_ROLES,
+  NOTIFICATION_CHANNEL_TYPES,
+  ROLES,
+  SUPPORTED_LOCALES,
+  type Recurrence,
+} from '@crystal/shared'
 import { sql } from 'drizzle-orm'
 import {
   index,
@@ -40,6 +47,8 @@ export const users = sqliteTable('users', {
   updatedAt: timestamp('updated_at').notNull(),
   lastLoginAt: timestamp('last_login_at'),
   disabledAt: timestamp('disabled_at'),
+  /** The local day (`YYYY-MM-DD`) the last daily summary was sent for. */
+  summarySentOn: text('summary_sent_on'),
 })
 
 export const userIdentities = sqliteTable(
@@ -186,6 +195,12 @@ export const tasks = sqliteTable(
     }),
     /** Who takes care of the task; always a member of its list. */
     assigneeId: text('assignee_id').references(() => users.id, { onDelete: 'set null' }),
+    /** When to remind; an instant, independent of the floating due date. */
+    remindAt: timestamp('remind_at'),
+    /** Set once the reminder went out, so it is sent only once. */
+    remindedAt: timestamp('reminded_at'),
+    /** Who set the reminder; reminded when nobody is assigned. */
+    reminderBy: text('reminder_by').references(() => users.id, { onDelete: 'set null' }),
     completedAt: timestamp('completed_at'),
     completedBy: text('completed_by').references(() => users.id, { onDelete: 'set null' }),
     createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
@@ -198,6 +213,9 @@ export const tasks = sqliteTable(
     index('tasks_due_date_idx').on(table.dueDate),
     index('tasks_completed_at_idx').on(table.completedAt),
     index('tasks_assignee_idx').on(table.assigneeId),
+    index('tasks_pending_reminder_idx')
+      .on(table.remindAt)
+      .where(sql`${table.remindedAt} IS NULL`),
   ],
 )
 
@@ -251,6 +269,67 @@ export const myDay = sqliteTable(
   ],
 )
 
+/* ── Notifications ───────────────────────────────────────────── */
+
+/**
+ * Services a user gets notifications on (ntfy, Gotify, Apprise, email). The
+ * configuration may hold access tokens, so it is stored encrypted (`seal`).
+ */
+export const notificationChannels = sqliteTable(
+  'notification_channels',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: text('type', { enum: NOTIFICATION_CHANNEL_TYPES }).notNull(),
+    name: text('name').notNull(),
+    /** Sealed JSON with the type's settings. */
+    config: text('config').notNull(),
+    /** A display string without secrets, e.g. `ntfy.sh/crystal-anna`. */
+    target: text('target').notNull(),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    lastSentAt: timestamp('last_sent_at'),
+    lastError: text('last_error'),
+    createdAt: timestamp('created_at').notNull(),
+    updatedAt: timestamp('updated_at').notNull(),
+  },
+  (table) => [index('notification_channels_user_idx').on(table.userId)],
+)
+
+/** Browsers that receive Web Push notifications. */
+export const pushSubscriptions = sqliteTable(
+  'push_subscriptions',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    userAgent: text('user_agent'),
+    createdAt: timestamp('created_at').notNull(),
+  },
+  (table) => [index('push_subscriptions_user_idx').on(table.userId)],
+)
+
+/** Single-use links to set a new password, sent by email. */
+export const passwordResets = sqliteTable(
+  'password_resets',
+  {
+    id: text('id').primaryKey(),
+    tokenHash: text('token_hash').notNull().unique(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    usedAt: timestamp('used_at'),
+  },
+  (table) => [index('password_resets_user_idx').on(table.userId)],
+)
+
 export type UserRow = typeof users.$inferSelect
 export type SessionRow = typeof sessions.$inferSelect
 export type InviteRow = typeof invites.$inferSelect
@@ -261,3 +340,5 @@ export type ListGroupRow = typeof listGroups.$inferSelect
 export type TaskRow = typeof tasks.$inferSelect
 export type SubtaskRow = typeof subtasks.$inferSelect
 export type TaskTagRow = typeof taskTags.$inferSelect
+export type NotificationChannelRow = typeof notificationChannels.$inferSelect
+export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect

@@ -78,6 +78,14 @@ export function LoginPage() {
               />
             )}
           </Field>
+          {config.passwordReset && (
+            <Link
+              to="/forgot-password"
+              className="-mt-2 self-end text-footnote font-medium text-accent-text hover:underline"
+            >
+              {t('auth.login.forgot')}
+            </Link>
+          )}
           <Button
             type="submit"
             variant="primary"

@@ -1,5 +1,6 @@
 import type { List, Task } from '@crystal/shared'
 import {
+  Bell,
   CalendarDays,
   GripVertical,
   ListChecks,
@@ -14,8 +15,11 @@ import { useTranslation } from 'react-i18next'
 import { Avatar } from '../../components/ui/avatar'
 import { TaskCheckbox } from '../../components/ui/task-checkbox'
 import { cn } from '../../lib/cn'
+import { useClock } from '../../lib/use-clock'
+import { useMe } from '../shell/use-me'
 import { ListIcon } from './list-style'
 import { describeRecurrence } from './recurrence-text'
+import { reminderParts } from './reminder'
 import { dueState, formatDue } from './view-logic'
 
 export interface TaskRowProps {
@@ -60,6 +64,8 @@ export function TaskRow({
   className,
 }: TaskRowProps) {
   const { t, i18n } = useTranslation()
+  const me = useMe()
+  const now = useClock()
   const completed = completing || task.completedAt !== null
   const due = formatDue(task, today, i18n.language, {
     today: t('tasks.today'),
@@ -121,6 +127,18 @@ export function TaskRow({
       <span key="steps" className="inline-flex items-center gap-1">
         <ListChecks aria-hidden className="size-3.5" />
         {t('tasks.steps', { done: stepsDone, total: task.subtasks.length })}
+      </span>,
+    )
+  }
+  if (task.remindAt && !completed && Date.parse(task.remindAt) > now) {
+    const reminder = formatDue(reminderParts(task.remindAt, me.timezone), today, i18n.language, {
+      today: t('tasks.today'),
+      tomorrow: t('tasks.tomorrow'),
+      yesterday: t('tasks.yesterday'),
+    })
+    meta.push(
+      <span key="reminder" className="inline-flex items-center">
+        <Bell role="img" aria-label={t('reminder.row', { time: reminder })} className="size-3.5" />
       </span>,
     )
   }

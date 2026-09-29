@@ -87,6 +87,39 @@ describe('loadConfig', () => {
     })
   })
 
+  it('builds the SMTP configuration and needs a sender address', () => {
+    expect(loadConfig({}).smtp).toBeUndefined()
+    expect(() => loadConfig({ SMTP_HOST: 'smtp.example.org' })).toThrow(/SMTP_FROM/)
+    expect(
+      loadConfig({
+        SMTP_HOST: 'smtp.example.org',
+        SMTP_PORT: '465',
+        SMTP_USER: 'crystal',
+        SMTP_PASSWORD: 's3cret',
+        SMTP_FROM: 'Crystal <crystal@example.org>',
+      }).smtp,
+    ).toEqual({
+      host: 'smtp.example.org',
+      port: 465,
+      secure: true,
+      user: 'crystal',
+      password: 's3cret',
+      from: 'Crystal <crystal@example.org>',
+    })
+    const starttls = loadConfig({ SMTP_HOST: 'mail', SMTP_FROM: 'crystal@example.org' })
+    expect(starttls.smtp).toMatchObject({ port: 587, secure: false, user: undefined })
+  })
+
+  it('reads notification settings', () => {
+    expect(loadConfig({})).toMatchObject({
+      reminderIntervalMs: 30_000,
+      notifyPrivateNetworks: true,
+    })
+    expect(
+      loadConfig({ REMINDER_INTERVAL_SECONDS: '5', NOTIFY_PRIVATE_NETWORKS: 'false' }),
+    ).toMatchObject({ reminderIntervalMs: 5000, notifyPrivateNetworks: false })
+  })
+
   it('refuses to disable password login without another way to sign in', () => {
     expect(() => loadConfig({ PASSWORD_LOGIN: 'false' })).toThrow(/PASSWORD_LOGIN/)
   })

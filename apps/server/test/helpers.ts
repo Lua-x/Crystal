@@ -1,3 +1,5 @@
+import { createServer, type IncomingHttpHeaders } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { fileURLToPath } from 'node:url'
 
 import type { Me } from '@crystal/shared'
@@ -6,6 +8,10 @@ import { createApp, type App } from '../src/app.js'
 import { loadConfig } from '../src/config.js'
 import { openDatabase, runMigrations } from '../src/db/client.js'
 import { createLogger } from '../src/lib/logger.js'
+import type { Mail, Mailer } from '../src/notifications/mailer.js'
+import type { Notification } from '../src/notifications/messages.js'
+import { DeliveryError, type DeliveryFailure } from '../src/notifications/network.js'
+import type { PushSender, PushTarget } from '../src/notifications/push.js'
 import { createServices, type Services } from '../src/services/index.js'
 
 export const BASE_URL = 'http://crystal.test'
@@ -14,13 +20,24 @@ const MIGRATIONS_DIR = fileURLToPath(new URL('../drizzle', import.meta.url))
 export interface TestContext {
   app: App
   services: Services
-  clock: { now: () => Date; advance: (ms: number) => void }
+  clock: { now: () => Date; advance: (ms: number) => void; set: (iso: string) => void }
   client: (options?: ClientOptions) => TestClient
-  close: () => void
+  /** Captures Web Push messages instead of sending them. */
+  push: FakePush
+  /** Captures email; only set up with `{ mailer: true }` (as if SMTP were configured). */
+  mailer: FakeMailer | undefined
+  close: () => Promise<void>
+}
+
+export interface TestContextOptions {
+  mailer?: boolean
 }
 
 /** A fresh in-memory instance with its own database and a controllable clock. */
-export function createTestContext(env: Record<string, string> = {}): TestContext {
+export function createTestContext(
+  env: Record<string, string> = {},
+  options: TestContextOptions = {},
+): TestContext {
   const config = loadConfig({
     NODE_ENV: 'test',
     LOG_LEVEL: 'silent',
@@ -38,15 +55,22 @@ export function createTestContext(env: Record<string, string> = {}): TestContext
     advance: (ms: number) => {
       current = new Date(current.getTime() + ms)
     },
+    set: (iso: string) => {
+      current = new Date(iso)
+    },
   }
 
+  const push = new FakePush()
+  const mailer = options.mailer ? new FakeMailer() : undefined
   const services = createServices({
     config,
     logger: createLogger(config),
     db: database.db,
-    secretKey: 'test-secret-key-that-is-long-enough-for-hkdf',
+    secretKey: TEST_SECRET_KEY,
     version: 'test',
     now: clock.now,
+    pushSender: push,
+    ...(mailer ? { mailer } : {}),
   })
   const app = createApp(services, { heartbeatMs: 50 })
 
@@ -54,12 +78,80 @@ export function createTestContext(env: Record<string, string> = {}): TestContext
     app,
     services,
     clock,
-    client: (options) => new TestClient(app, options),
-    close: () => {
+    client: (clientOptions) => new TestClient(app, clientOptions),
+    push,
+    mailer,
+    close: async () => {
       // Open event streams would otherwise keep polling a closed database.
       services.events.closeAll()
+      await services.notifications.idle()
       database.close()
     },
+  }
+}
+
+export const TEST_SECRET_KEY = 'test-secret-key-that-is-long-enough-for-hkdf'
+
+export class FakePush implements PushSender {
+  readonly sent: Array<{ endpoint: string; notification: Notification }> = []
+  /** Makes every delivery fail with this reason. */
+  failWith: DeliveryFailure | undefined
+
+  send(target: PushTarget, payload: string): Promise<void> {
+    if (this.failWith) return Promise.reject(new DeliveryError(this.failWith))
+    this.sent.push({ endpoint: target.endpoint, notification: JSON.parse(payload) as Notification })
+    return Promise.resolve()
+  }
+}
+
+export class FakeMailer implements Mailer {
+  readonly sent: Mail[] = []
+  fail = false
+
+  send(mail: Mail): Promise<void> {
+    if (this.fail) return Promise.reject(new DeliveryError('smtp'))
+    this.sent.push(mail)
+    return Promise.resolve()
+  }
+}
+
+export interface CapturedRequest {
+  method: string
+  path: string
+  headers: IncomingHttpHeaders
+  body: unknown
+}
+
+/** A local HTTP server standing in for ntfy, Gotify or Apprise. */
+export async function startCaptureServer() {
+  const requests: CapturedRequest[] = []
+  let status = 200
+  let location: string | undefined
+  const server = createServer((request, response) => {
+    let raw = ''
+    request.setEncoding('utf8')
+    request.on('data', (chunk: string) => (raw += chunk))
+    request.on('end', () => {
+      requests.push({
+        method: request.method ?? '',
+        path: request.url ?? '',
+        headers: request.headers,
+        body: raw ? (JSON.parse(raw) as unknown) : undefined,
+      })
+      response.writeHead(status, location ? { location } : {})
+      response.end('{"secret":"never shown"}')
+    })
+  })
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+  const { port } = server.address() as AddressInfo
+  return {
+    url: `http://127.0.0.1:${port}`,
+    requests,
+    respondWith(nextStatus: number, nextLocation?: string) {
+      status = nextStatus
+      location = nextLocation
+    },
+    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
   }
 }
 

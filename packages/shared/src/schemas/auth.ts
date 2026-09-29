@@ -21,9 +21,23 @@ export const authConfigSchema = z.object({
     enabled: z.boolean(),
     buttonLabel: z.string(),
   }),
+  /** Forgotten passwords can be reset by email (needs SMTP and `BASE_URL`). */
+  passwordReset: z.boolean(),
   version: z.string(),
 })
 export type AuthConfig = z.infer<typeof authConfigSchema>
+
+export const forgotPasswordSchema = z.object({
+  /** Username or email address. */
+  identifier: z.string().trim().toLowerCase().min(1).max(EMAIL_MAX_LENGTH),
+})
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1).max(128),
+  password: passwordSchema,
+})
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
 
 export const loginSchema = z.object({
   /** Username or email address. */

@@ -213,6 +213,7 @@ function applyUpdate(task: Task, input: UpdateTaskInput, position?: string): Tas
     next.recurrence = input.recurrence && recurrenceInputSchema.parse(input.recurrence)
   }
   if (input.tags !== undefined) next.tags = tagsSchema.parse(input.tags)
+  if (input.remindAt !== undefined) next.remindAt = input.remindAt
   if (input.completed !== undefined) {
     next.completedAt = input.completed ? (task.completedAt ?? new Date().toISOString()) : null
   }
@@ -314,6 +315,7 @@ export function useCreateTask(optimisticKeys: QueryKey[] = []) {
               recurrence: input.recurrence ? recurrenceInputSchema.parse(input.recurrence) : null,
               tags: input.tags ? tagsSchema.parse(input.tags) : [],
               assignee: null,
+              remindAt: input.remindAt ?? null,
               subtasks: [],
               createdAt: now,
               updatedAt: now,

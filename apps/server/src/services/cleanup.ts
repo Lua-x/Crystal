@@ -2,6 +2,7 @@ import { isNotNull, and, lt } from 'drizzle-orm'
 
 import type { Db } from '../db/client.js'
 import { lists, myDay, tasks } from '../db/schema.js'
+import type { PasswordResetService } from './password-resets.js'
 import type { SearchService } from './search.js'
 import type { SessionService } from './sessions.js'
 
@@ -15,10 +16,11 @@ export class CleanupService {
     private readonly db: Db,
     private readonly search: SearchService,
     private readonly sessions: SessionService,
+    private readonly passwordResets: PasswordResetService,
     private readonly now: () => Date,
   ) {}
 
-  run(): { sessions: number; tasks: number; lists: number } {
+  run(): { sessions: number; passwordResets: number; tasks: number; lists: number } {
     const cutoff = new Date(this.now().getTime() - TRASH_RETENTION_DAYS * DAY_MS)
     return this.db.transaction((tx) => {
       const removedTasks = tx
@@ -36,6 +38,7 @@ export class CleanupService {
       this.search.removeOrphans(tx)
       return {
         sessions: this.sessions.deleteExpired(),
+        passwordResets: this.passwordResets.deleteExpired(),
         tasks: removedTasks,
         lists: removedLists,
       }

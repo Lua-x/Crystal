@@ -1,5 +1,13 @@
 import { Link, Navigate, Outlet, useRouterState } from '@tanstack/react-router'
-import { ChevronRight, MonitorSmartphone, Palette, Ticket, UserRound, Users } from 'lucide-react'
+import {
+  Bell,
+  ChevronRight,
+  MonitorSmartphone,
+  Palette,
+  Ticket,
+  UserRound,
+  Users,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,6 +19,7 @@ import { useMe } from '../shell/use-me'
 type SettingsPath =
   | '/settings/account'
   | '/settings/appearance'
+  | '/settings/notifications'
   | '/settings/sessions'
   | '/settings/users'
   | '/settings/invites'
@@ -29,6 +38,11 @@ function useNavGroups(): { label?: string; items: NavItem[] }[] {
       items: [
         { to: '/settings/account', icon: <UserRound />, label: t('settings.sections.account') },
         { to: '/settings/appearance', icon: <Palette />, label: t('settings.sections.appearance') },
+        {
+          to: '/settings/notifications',
+          icon: <Bell />,
+          label: t('settings.sections.notifications'),
+        },
         {
           to: '/settings/sessions',
           icon: <MonitorSmartphone />,

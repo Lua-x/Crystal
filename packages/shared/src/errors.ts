@@ -31,6 +31,10 @@ export const ERROR_CODES = [
   'already_member',
   'owner_cannot_leave',
   'not_a_member',
+  'reset_invalid',
+  'email_required',
+  'email_not_configured',
+  'delivery_failed',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]

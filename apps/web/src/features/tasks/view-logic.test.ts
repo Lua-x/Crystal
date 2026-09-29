@@ -29,6 +29,7 @@ function task(overrides: Partial<Task> = {}): Task {
     recurrence: null,
     tags: [],
     assignee: null,
+    remindAt: null,
     subtasks: [],
     createdAt: '2026-09-30T08:00:00.000Z',
     updatedAt: '2026-09-30T08:00:00.000Z',

@@ -68,14 +68,23 @@ function main(): void {
   }, HOUR_MS)
   cleanup.unref()
 
+  services.reminders.start(config.reminderIntervalMs)
+  if (!config.smtp) logger.info('SMTP is not configured; email notifications are off.')
+
   const shutdown = (signal: string) => {
     logger.info({ signal }, 'Shutting down')
     clearInterval(cleanup)
+    const remindersStopped = services.reminders.stop()
     // Open event streams would keep the server from closing.
     services.events.closeAll()
     server.close(() => {
-      database.close()
-      process.exit(0)
+      // Let notifications that are on their way finish before closing the database.
+      void remindersStopped
+        .then(() => services.notifications.idle())
+        .finally(() => {
+          database.close()
+          process.exit(0)
+        })
     })
     // Do not hang forever on open keep-alive connections.
     setTimeout(() => process.exit(0), 10_000).unref()

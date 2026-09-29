@@ -56,12 +56,18 @@ describe('parsePreferences', () => {
   it('falls back to defaults for missing or invalid values', () => {
     expect(parsePreferences(null)).toEqual(DEFAULT_PREFERENCES)
     expect(parsePreferences({ theme: 'sepia', accentColor: 'green', extra: true })).toEqual({
-      theme: 'system',
+      ...DEFAULT_PREFERENCES,
       accentColor: 'green',
-      smartEntry: true,
     })
     expect(parsePreferences({ smartEntry: false }).smartEntry).toBe(false)
     expect(parsePreferences({ smartEntry: 'no' }).smartEntry).toBe(true)
+  })
+
+  it('reads the notification settings', () => {
+    expect(
+      parsePreferences({ notifyAssigned: false, dailySummary: true, dailySummaryTime: '06:30' }),
+    ).toMatchObject({ notifyAssigned: false, dailySummary: true, dailySummaryTime: '06:30' })
+    expect(parsePreferences({ dailySummaryTime: '25:00' }).dailySummaryTime).toBe('07:00')
   })
 })
 

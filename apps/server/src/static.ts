@@ -28,7 +28,9 @@ export function mountWebApp(app: Hono<AppEnv>, root: string): void {
     serveStatic({
       root,
       onFound: (path, c) => {
-        c.header('Cache-Control', path.endsWith('.html') ? 'no-cache' : 'public, max-age=3600')
+        // The service worker must update together with the app.
+        const revalidate = path.endsWith('.html') || path.endsWith('/sw.js')
+        c.header('Cache-Control', revalidate ? 'no-cache' : 'public, max-age=3600')
       },
     }),
   )

@@ -28,6 +28,10 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   already_member: 'This person already has access to the list.',
   owner_cannot_leave: 'The owner cannot leave the list; delete it instead.',
   not_a_member: 'Only people who can edit the list can be assigned.',
+  reset_invalid: 'This reset link is invalid or has expired.',
+  email_required: 'Add an email address to your account first.',
+  email_not_configured: 'Sending email is not configured on this instance.',
+  delivery_failed: 'The notification could not be delivered.',
 }
 
 /** An expected failure that is reported to the client as `{ error: { code, message } }`. */

@@ -63,6 +63,15 @@ const envSchema = z
     OIDC_AUTO_REGISTER: booleanFromEnv.default(true),
     OIDC_ADMIN_GROUP: optionalString,
     OIDC_GROUPS_CLAIM: z.string().trim().min(1).default('groups'),
+    SMTP_HOST: optionalString,
+    SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+    /** Implicit TLS; defaults to true on port 465 (STARTTLS is used otherwise when offered). */
+    SMTP_SECURE: booleanFromEnv.optional(),
+    SMTP_USER: optionalString,
+    SMTP_PASSWORD: optionalString,
+    SMTP_FROM: optionalString,
+    REMINDER_INTERVAL_SECONDS: z.coerce.number().int().min(1).max(3600).default(30),
+    NOTIFY_PRIVATE_NETWORKS: booleanFromEnv.default(true),
   })
   .superRefine((env, ctx) => {
     if (env.BASE_URL && (env.BASE_URL.pathname !== '/' || env.BASE_URL.search)) {
@@ -85,6 +94,13 @@ const envSchema = z
         code: 'custom',
         path: ['BASE_URL'],
         message: 'is required when OIDC is enabled (it is used to build the redirect URL)',
+      })
+    }
+    if (env.SMTP_HOST && !env.SMTP_FROM) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SMTP_FROM'],
+        message: 'is required when SMTP_HOST is set, e.g. "Crystal <crystal@example.com>"',
       })
     }
     if (!env.PASSWORD_LOGIN && !env.OIDC_ISSUER) {
@@ -124,6 +140,21 @@ export interface Config {
   passwordLogin: boolean
   sessionTtlDays: number
   oidc: OidcConfig | undefined
+  /** Outgoing email for notifications and password resets. */
+  smtp: SmtpConfig | undefined
+  /** How often due reminders and daily summaries are checked. */
+  reminderIntervalMs: number
+  /** Whether notification channels may point to loopback and private network addresses. */
+  notifyPrivateNetworks: boolean
+}
+
+export interface SmtpConfig {
+  host: string
+  port: number
+  secure: boolean
+  user: string | undefined
+  password: string | undefined
+  from: string
 }
 
 export class ConfigError extends Error {
@@ -176,5 +207,18 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
             groupsClaim: parsed.OIDC_GROUPS_CLAIM,
           }
         : undefined,
+    smtp:
+      parsed.SMTP_HOST && parsed.SMTP_FROM
+        ? {
+            host: parsed.SMTP_HOST,
+            port: parsed.SMTP_PORT,
+            secure: parsed.SMTP_SECURE ?? parsed.SMTP_PORT === 465,
+            user: parsed.SMTP_USER,
+            password: parsed.SMTP_PASSWORD,
+            from: parsed.SMTP_FROM,
+          }
+        : undefined,
+    reminderIntervalMs: parsed.REMINDER_INTERVAL_SECONDS * 1000,
+    notifyPrivateNetworks: parsed.NOTIFY_PRIVATE_NETWORKS,
   }
 }

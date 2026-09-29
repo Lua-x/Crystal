@@ -9,15 +9,19 @@ import {
   type Task,
 } from '@crystal/shared'
 import { useQuery } from '@tanstack/react-query'
-import { Hash, Repeat, UserRound, X } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { Bell, Hash, Repeat, UserRound, X } from 'lucide-react'
 import { useId, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { IconButton } from '../../components/ui/icon-button'
 import { SegmentedControl } from '../../components/ui/segmented-control'
 import { Select } from '../../components/ui/select'
 import { inputClassName } from '../../components/ui/styles'
 import { cn } from '../../lib/cn'
 import { translateMessage } from '../../lib/i18n'
+import { useClock } from '../../lib/use-clock'
+import { useCanBeNotified } from '../notifications/data'
 import { useMe } from '../shell/use-me'
 import { membersQuery, tagsQuery } from './data'
 import {
@@ -27,6 +31,7 @@ import {
   weekdayNames,
   type RecurrencePreset,
 } from './recurrence-text'
+import { fromLocalInput, reminderOptions, toLocalInput } from './reminder'
 
 export function DetailRow({
   icon,
@@ -290,6 +295,111 @@ export function AssigneeEditor({ task, list, disabled, onChange }: AssigneeEdito
           <option value={task.assignee.id}>{task.assignee.displayName}</option>
         )}
       </Select>
+    </DetailRow>
+  )
+}
+
+/* ── Reminder ───────────────────────────────────────────────────── */
+
+interface ReminderEditorProps {
+  task: Task
+  disabled: boolean
+  onChange: (remindAt: string | null) => void
+}
+
+/**
+ * When to be reminded: a date and time in the user's time zone, with quick
+ * choices. The time is saved when the field is left, so half-typed times
+ * never go off by accident.
+ */
+export function ReminderEditor({ task, disabled, onChange }: ReminderEditorProps) {
+  const { t } = useTranslation()
+  const me = useMe()
+  const hintId = useId()
+  const saved = task.remindAt ? toLocalInput(task.remindAt, me.timezone) : ''
+  const [draft, setDraft] = useState(saved)
+  const [lastSaved, setLastSaved] = useState(saved)
+  if (saved !== lastSaved) {
+    // Changed elsewhere (quick choice, another device): show the new value.
+    setLastSaved(saved)
+    setDraft(saved)
+  }
+
+  const now = useClock()
+  const forSomeoneElse = task.assignee !== null && task.assignee.id !== me.id
+  const pending = task.remindAt !== null && Date.parse(task.remindAt) > now
+  const canBeNotified = useCanBeNotified(pending && !forSomeoneElse)
+  const options = task.remindAt ? [] : reminderOptions(new Date(now), me.timezone, task)
+
+  const commit = () => {
+    if (draft === saved) return
+    const remindAt = fromLocalInput(draft, me.timezone)
+    if (remindAt || draft === '') onChange(remindAt)
+    else setDraft(saved)
+  }
+
+  let hint: ReactNode = null
+  if (task.remindAt && !pending && !task.completedAt) hint = t('reminder.sent')
+  else if (pending && forSomeoneElse) {
+    hint = t('reminder.forAssignee', { name: task.assignee?.displayName })
+  } else if (pending && canBeNotified === false) {
+    hint = (
+      <>
+        {t('reminder.notSetUp')}{' '}
+        <Link to="/settings/notifications" className="font-medium text-accent-text hover:underline">
+          {t('reminder.setUp')}
+        </Link>
+      </>
+    )
+  }
+
+  return (
+    <DetailRow icon={<Bell />} label={t('reminder.label')}>
+      <div className="flex min-w-0 flex-1 flex-col gap-2 py-1">
+        <div className="flex items-center gap-2">
+          <input
+            type="datetime-local"
+            aria-label={t('reminder.label')}
+            aria-describedby={hint ? hintId : undefined}
+            value={draft}
+            disabled={disabled}
+            onChange={(event) => setDraft(event.target.value)}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') commit()
+            }}
+            className={cn(
+              inputClassName,
+              'h-8 min-w-0 flex-1 text-callout',
+              task.remindAt && !pending && 'text-text-secondary',
+            )}
+          />
+          {task.remindAt && !disabled && (
+            <IconButton label={t('reminder.remove')} onClick={() => onChange(null)}>
+              <X />
+            </IconButton>
+          )}
+        </div>
+        {!disabled && options.length > 0 && (
+          <div role="group" aria-label={t('reminder.quick')} className="flex flex-wrap gap-1.5">
+            {options.map((option) => (
+              <button
+                key={option.preset}
+                type="button"
+                onClick={() => onChange(option.at)}
+                className="h-7 cursor-default rounded-full bg-fill-control px-3 text-footnote font-medium text-text transition-colors hover:bg-fill-pressed pointer-coarse:h-9"
+              >
+                {t(`reminder.${option.preset}`)}
+              </button>
+            ))}
+          </div>
+        )}
+        {hint && (
+          <p id={hintId} className="px-1 text-footnote text-text-secondary">
+            {hint}
+          </p>
+        )}
+      </div>
     </DetailRow>
   )
 }

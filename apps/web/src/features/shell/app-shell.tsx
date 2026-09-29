@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '../../lib/cn'
 import { springs } from '../../lib/motion'
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/use-media-query'
+import { useNotificationClicks } from '../notifications/use-notification-clicks'
 import { DndProvider } from '../tasks/dnd-provider'
 import { GroupDialog, ListDialog } from '../tasks/list-dialogs'
 import { TaskDetailHost } from '../tasks/task-detail-host'
@@ -61,6 +62,7 @@ export function AppShell() {
   )
   useGlobalShortcuts({ onPalette: togglePalette, onHelp: openShortcuts })
   useLiveUpdates()
+  useNotificationClicks()
   const overlayProps = (name: NonNullable<typeof overlay>) => ({
     open: overlay === name,
     onOpenChange: (open: boolean) => setOverlay(open ? name : null),

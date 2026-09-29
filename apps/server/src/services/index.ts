@@ -4,12 +4,17 @@ import type { Db } from '../db/client.js'
 import { deriveKey } from '../lib/crypto.js'
 import type { Logger } from '../lib/logger.js'
 import { RateLimiter } from '../lib/rate-limit.js'
+import { createMailer, type Mailer } from '../notifications/mailer.js'
+import { createWebPushSender, deriveVapidKeys, type PushSender } from '../notifications/push.js'
 import { AdminService } from './admin.js'
 import { AuthService } from './auth.js'
 import { CleanupService } from './cleanup.js'
 import { EventHub } from './events.js'
 import { InviteService } from './invites.js'
 import { ListService } from './lists.js'
+import { NotificationService } from './notifications.js'
+import { PasswordResetService } from './password-resets.js'
+import { ReminderService } from './reminders.js'
 import { SearchService } from './search.js'
 import { SessionService } from './sessions.js'
 import { TaskService } from './tasks.js'
@@ -17,6 +22,7 @@ import { UserService } from './users.js'
 import { ViewService } from './views.js'
 
 const MINUTE_MS = 60 * 1000
+const PROJECT_URL = 'https://github.com/Lua-x/Crystal'
 
 export interface Services {
   config: Config
@@ -28,11 +34,14 @@ export interface Services {
   sessions: SessionService
   invites: InviteService
   auth: AuthService
+  passwordResets: PasswordResetService
   admin: AdminService
   oidc: OidcService | undefined
   search: SearchService
   /** Live updates for open apps. */
   events: EventHub
+  notifications: NotificationService
+  reminders: ReminderService
   lists: ListService
   tasks: TaskService
   views: ViewService
@@ -43,6 +52,8 @@ export interface Services {
     /** Sign-in attempts for one account from one address. */
     loginPerAccount: RateLimiter
     register: RateLimiter
+    /** "Forgot password" requests from one address. */
+    passwordReset: RateLimiter
     /** Overall API budget per user (or address when signed out). */
     api: RateLimiter
   }
@@ -55,6 +66,10 @@ export interface ServiceOptions {
   secretKey: string
   version: string
   now?: () => Date
+  /** Replaces SMTP (tests); `undefined` uses the configuration. */
+  mailer?: Mailer
+  /** Replaces the real Web Push delivery (tests). */
+  pushSender?: PushSender
 }
 
 export function createServices(options: ServiceOptions): Services {
@@ -62,16 +77,55 @@ export function createServices(options: ServiceOptions): Services {
   const now = options.now ?? (() => new Date())
   const clock = () => now().getTime()
 
+  const vapidKeys = deriveVapidKeys(secretKey)
+  const notifications = new NotificationService({
+    db,
+    config,
+    logger,
+    now,
+    secretKey,
+    version,
+    mailer: options.mailer ?? (config.smtp ? createMailer(config.smtp) : undefined),
+    push:
+      options.pushSender ??
+      createWebPushSender({
+        keys: vapidKeys,
+        subject: vapidSubject(config),
+        allowPrivate: config.notifyPrivateNetworks,
+      }),
+    vapidPublicKey: vapidKeys.publicKey,
+  })
+
   const users = new UserService(db, now)
   const invites = new InviteService(db, now)
   const sessions = new SessionService(db, config.sessionTtlDays, now)
-  const auth = new AuthService({ db, config, logger, users, invites, sessions, now, version })
+  const passwordResets = new PasswordResetService({
+    db,
+    config,
+    logger,
+    users,
+    sessions,
+    notifications,
+    now,
+  })
+  const auth = new AuthService({
+    db,
+    config,
+    logger,
+    users,
+    invites,
+    sessions,
+    passwordResets,
+    now,
+    version,
+  })
   const search = new SearchService(db)
   const events = new EventHub(db)
   const lists = new ListService(db, search, events, now)
-  const tasks = new TaskService(db, lists, search, events, now)
+  const tasks = new TaskService(db, lists, search, events, notifications, now)
   const views = new ViewService(db, tasks, search)
-  const cleanup = new CleanupService(db, search, sessions, now)
+  const reminders = new ReminderService(db, notifications, logger, now)
+  const cleanup = new CleanupService(db, search, sessions, passwordResets, now)
   const admin = new AdminService(db, users, sessions, lists)
   const oidc =
     config.oidc && config.baseUrl
@@ -94,10 +148,13 @@ export function createServices(options: ServiceOptions): Services {
     sessions,
     invites,
     auth,
+    passwordResets,
     admin,
     oidc,
     search,
     events,
+    notifications,
+    reminders,
     lists,
     tasks,
     views,
@@ -106,7 +163,19 @@ export function createServices(options: ServiceOptions): Services {
       loginPerIp: new RateLimiter(50, 15 * MINUTE_MS, clock),
       loginPerAccount: new RateLimiter(10, 15 * MINUTE_MS, clock),
       register: new RateLimiter(10, 60 * MINUTE_MS, clock),
+      passwordReset: new RateLimiter(5, 15 * MINUTE_MS, clock),
       api: new RateLimiter(600, MINUTE_MS, clock),
     },
   }
+}
+
+/**
+ * Push services want a way to reach whoever runs the server: the instance's
+ * public HTTPS address, else the sender address for email, else the project.
+ */
+function vapidSubject(config: Config): string {
+  if (config.baseUrl?.protocol === 'https:') return config.baseUrl.origin
+  const from = config.smtp?.from.match(/<([^<>\s]+@[^<>\s]+)>/)?.[1] ?? config.smtp?.from
+  if (from && /^[^\s@<>]+@[^\s@<>]+$/.test(from)) return `mailto:${from}`
+  return PROJECT_URL
 }

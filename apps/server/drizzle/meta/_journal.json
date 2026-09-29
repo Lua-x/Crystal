@@ -43,6 +43,13 @@
       "when": 1790627005492,
       "tag": "0005_assignees",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790699684464,
+      "tag": "0006_notifications",
+      "breakpoints": true
     }
   ]
 }

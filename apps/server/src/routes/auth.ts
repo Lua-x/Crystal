@@ -1,4 +1,11 @@
-import { authConfigSchema, loginSchema, meSchema, registerSchema } from '@crystal/shared'
+import {
+  authConfigSchema,
+  forgotPasswordSchema,
+  loginSchema,
+  meSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from '@crystal/shared'
 import { createRoute } from '@hono/zod-openapi'
 
 import {
@@ -87,6 +94,51 @@ export function authRoutes(services: Services) {
       services.limits.loginPerAccount.reset(accountKey)
       startSession(c, services, user)
       return c.json(services.users.toMe(user), 200)
+    },
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'post',
+      path: '/forgot-password',
+      tags: ['Auth'],
+      summary: 'Request a password reset link by email',
+      description:
+        'Sends a link that is valid for one hour to the account’s email address. The answer is ' +
+        'the same whether or not the account exists. Needs SMTP and `BASE_URL` ' +
+        '(see `passwordReset` in the instance configuration).',
+      request: { body: jsonBody(forgotPasswordSchema) },
+      responses: {
+        204: noContent,
+        403: errorResponse('Password sign-in is disabled'),
+        ...commonErrors,
+      },
+    }),
+    (c) => {
+      enforceRateLimit(services.limits.passwordReset, ipKey(c))
+      services.passwordResets.request(c.req.valid('json'))
+      return c.body(null, 204)
+    },
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'post',
+      path: '/reset-password',
+      tags: ['Auth'],
+      summary: 'Choose a new password with a reset link',
+      description: 'Uses up the link and signs the account out everywhere.',
+      request: { body: jsonBody(resetPasswordSchema) },
+      responses: {
+        204: noContent,
+        403: errorResponse('Password sign-in is disabled'),
+        ...commonErrors,
+      },
+    }),
+    async (c) => {
+      enforceRateLimit(services.limits.passwordReset, ipKey(c))
+      await services.passwordResets.reset(c.req.valid('json'))
+      return c.body(null, 204)
     },
   )
 

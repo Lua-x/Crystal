@@ -39,7 +39,13 @@ import {
 import { useToday } from './hooks'
 import { ListIcon } from './list-style'
 import { useTaskActions } from './task-actions'
-import { AssigneeEditor, DetailRow, RecurrenceEditor, TagsEditor } from './task-detail-fields'
+import {
+  AssigneeEditor,
+  DetailRow,
+  RecurrenceEditor,
+  ReminderEditor,
+  TagsEditor,
+} from './task-detail-fields'
 
 const NOTES_SAVE_DELAY = 700
 
@@ -169,6 +175,12 @@ function TaskDetailContent({ task, onClose }: { task: Task; onClose: () => void 
             today={today}
             disabled={!canEdit}
             onChange={(recurrence) => actions.update({ id: task.id, input: { recurrence } })}
+          />
+
+          <ReminderEditor
+            task={task}
+            disabled={!canEdit}
+            onChange={(remindAt) => actions.update({ id: task.id, input: { remindAt } })}
           />
 
           <DetailRow

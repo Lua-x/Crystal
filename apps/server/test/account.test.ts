@@ -51,6 +51,9 @@ describe('profile', () => {
       theme: 'dark',
       accentColor: '#34c759',
       smartEntry: false,
+      notifyAssigned: true,
+      dailySummary: false,
+      dailySummaryTime: '07:00',
     })
   })
 

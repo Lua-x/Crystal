@@ -102,6 +102,11 @@ export const taskSchema = z.object({
   tags: z.array(z.string()),
   /** Who is taking care of it; always a member of the list. */
   assignee: z.object({ id: idSchema, displayName: z.string() }).nullable(),
+  /**
+   * When to remind – an instant, independent of the due date. The assignee is
+   * reminded, or whoever set the reminder if nobody is assigned.
+   */
+  remindAt: timestampSchema.nullable(),
   subtasks: z.array(subtaskSchema),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
@@ -136,6 +141,7 @@ export const createTaskSchema = z
     tags: tagsSchema.optional(),
     /** A member of the list. */
     assigneeId: idSchema.nullable().optional(),
+    remindAt: timestampSchema.nullable().optional(),
   })
   .refine((input) => !input.dueTime || input.dueDate, {
     error: 'validation.time_requires_date',
@@ -164,6 +170,8 @@ export const updateTaskSchema = z
     tags: tagsSchema,
     /** A member of the list, or `null` for nobody. */
     assigneeId: idSchema.nullable(),
+    /** Sets (or with `null` removes) the reminder. */
+    remindAt: timestampSchema.nullable(),
   })
   .partial()
 export type UpdateTaskInput = z.input<typeof updateTaskSchema>
