@@ -15,9 +15,9 @@
 </p>
 
 > [!NOTE]
-> **Crystal is in early development.** Lists, tasks, repeats, tags and quick entry are
-> ready to use; sharing, reminders and offline use follow. See the [roadmap](ROADMAP.md)
-> for what comes next.
+> **Crystal is in early development.** Lists, tasks, repeats, tags, quick entry and
+> sharing are ready to use; reminders and offline use follow. See the
+> [roadmap](ROADMAP.md) for what comes next.
 
 <p align="center">
   <picture>
@@ -69,6 +69,9 @@
 
 **For the whole household**
 
+- **Shared lists** for the family or the flat: people can edit or only view, and see each
+  other's changes live, without reloading.
+- **Assign tasks** to someone; “Assigned to me” collects everything that is yours.
 - **Accounts for everyone in the household.** The first account becomes the administrator.
   Others join with invite links, or registration can be opened or closed entirely.
 - **Single sign-on** via OpenID Connect (Authentik, Keycloak, Authelia, Pocket ID, …),
@@ -83,9 +86,8 @@
 - **Secure defaults.** Argon2id passwords, HttpOnly session cookies, CSRF protection,
   rate limiting, strict Content Security Policy, a non-root container without a shell.
 
-**Coming next** – sharing lists and real-time sync, assigning tasks, reminders (Web Push,
-ntfy, Gotify), offline support, import from Microsoft To Do and Todoist, an iCal feed and
-API tokens. Details in the [roadmap](ROADMAP.md).
+**Coming next** – reminders (Web Push, ntfy, Gotify), offline support, import from Microsoft
+To Do and Todoist, an iCal feed and API tokens. Details in the [roadmap](ROADMAP.md).
 
 ## Quick start
 

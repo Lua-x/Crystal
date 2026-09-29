@@ -82,6 +82,30 @@ Design decisions for lists and tasks:
   `packages/shared` and is covered by unit tests.
 - **Quick entry** is parsed in the browser (`parseQuickEntry` in `packages/shared`); the API
   only receives structured fields, so other clients can create tasks without it.
+- **Sharing** adds rows to `list_members` with the role `editor` or `viewer`; every list has
+  one owner. Each person keeps their own sidebar placement and groups. Tasks can be assigned
+  to people who can edit the list (`tasks.assignee_id`); losing that access unassigns them.
+  The default list stays private.
+
+## Live updates
+
+Open apps learn about changes over Server-Sent Events (`GET /api/v1/events`):
+
+```
+Tab A ──PATCH /tasks/…──▶ Crystal ──commit──▶ EventHub ──"changed: [listId]"──▶ Tab B, Tab C
+       X-Crystal-Client: A                     (members of the list, except tab A)
+```
+
+- After every write, the services announce which lists changed to the members of those lists
+  (or, for personal changes like sidebar order, to the author's other tabs). Events carry
+  only list IDs; clients refetch what they show, through the same permission checks as
+  always, so an event never leaks data.
+- Each browser tab sends a random `X-Crystal-Client` header with its requests and the same
+  value when it opens the stream, so it does not hear about its own changes.
+- The stream sends a keep-alive every 25 seconds and ends when the session ends. Browsers
+  reconnect on their own; after a reconnect the app refetches everything, since events may
+  have been missed.
+- Everything lives in the one server process, which fits the single-container design.
 
 On the client, TanStack Query caches lists, tasks and the smart lists. Changes are applied
 optimistically and rolled back with an error message when the server rejects them; the

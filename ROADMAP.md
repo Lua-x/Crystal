@@ -19,11 +19,10 @@ Quick entry with natural language in English and German shown as chips, repeatin
 (from the due date or from completion), tags with their own views, keyboard shortcuts with
 an overview (`?`), command palette (⌘K / Ctrl+K).
 
-## 0.4 – Together
+## ✅ 0.4 – Together
 
-- Share lists with other users of the instance (view or edit)
-- Assign tasks to people in shared lists
-- Real-time updates for everyone involved
+Sharing lists with people on the instance (edit or view), assigning tasks with an “Assigned
+to me” list, live updates for everyone involved.
 
 ## 0.5 – Reminders
 
@@ -59,4 +58,7 @@ Ideas that were deliberately postponed:
   restored right away with “Undo” so far.
 - **Saved filters** that combine conditions (e.g. `#work` and due this week). Tags have
   their own views, and search finds tags, too.
+- **Handing over a list** to another owner. Today the owner can share with editors, but
+  ownership stays; deleting an account deletes the lists it owns.
+- **Assigning in quick entry** (e.g. `+sam`), and an activity history for shared lists.
 - More languages – contributions welcome, see [CONTRIBUTING.md](CONTRIBUTING.md#translations).

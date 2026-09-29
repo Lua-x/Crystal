@@ -8,6 +8,10 @@ every setup:
 2. Set `TRUST_PROXY=true` (or the number of proxies in the chain), so Crystal sees the real
    client address for rate limiting and the correct scheme.
 3. Do not publish port 3000 to the internet; let only the proxy reach it.
+4. Let long-lived responses through unbuffered. Open apps receive changes to shared lists
+   over Server-Sent Events (`/api/v1/events`), a response that stays open and sends a
+   keep-alive every 25 seconds. Caddy and Traefik handle this without extra settings; for
+   Nginx see below.
 
 ## Traefik
 
@@ -69,8 +73,24 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
     }
+
+    # Live updates: an event stream that stays open.
+    location /api/v1/events {
+        proxy_pass http://crystal:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_http_version 1.1;
+        proxy_set_header Connection '';
+        proxy_buffering off;
+        proxy_read_timeout 1h;
+    }
 }
 ```
+
+Crystal also sends `X-Accel-Buffering: no` on the stream, which turns buffering off in most
+Nginx setups (including Nginx Proxy Manager) even without the extra `location`.
 
 ## Troubleshooting
 
@@ -80,3 +100,6 @@ server {
   HTTP while `BASE_URL` starts with `https://`. Browsers drop `Secure` cookies on HTTP.
 - **Every client shares one rate limit** – `TRUST_PROXY` is not set, so all requests appear
   to come from the proxy.
+- **Changes from others only appear after a reload** – the proxy buffers or cuts the event
+  stream at `/api/v1/events`. Check the Nginx settings above; in the browser's developer
+  tools, the request should stay open and show `ready` and `changed` events.

@@ -6,6 +6,25 @@ All notable changes to Crystal are documented in this file. The format follows
 
 ## [Unreleased]
 
+Together: sharing, assigning, live updates.
+
+### Added
+
+- Share lists with other people on the instance, who can edit or only view them. Owners
+  change access or remove people; everyone else can leave. The default list stays private.
+- Assign tasks to people who can edit the list, and find everything assigned to you in the
+  new smart list “Assigned to me”. Repeating tasks keep their assignee.
+- Live updates: changes others make to shared lists (and changes from your other tabs)
+  appear without reloading. See [docs/reverse-proxy.md](docs/reverse-proxy.md) for Nginx.
+- Every person has an avatar color of their own.
+- API: `GET /people`, `GET|POST /lists/{id}/members`, `PATCH|DELETE
+/lists/{id}/members/{userId}`, `assigneeId` on tasks, the `assigned` smart list and the
+  event stream `GET /events`.
+
+### Fixed
+
+- A page that opened while a change was being saved could keep showing stale data.
+
 ## [0.3.0] - 2026-09-28
 
 Comfort: quick entry, repeats, tags, keyboard.
