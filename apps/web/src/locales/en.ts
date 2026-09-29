@@ -63,6 +63,8 @@ export const en = {
     email_not_configured: 'Sending email is not set up on this instance.',
     delivery_failed: 'The notification could not be delivered.',
     token_not_allowed: 'API tokens cannot do this. Sign in instead.',
+    import_invalid: 'This file cannot be imported.',
+    payload_too_large: 'This is too large.',
   },
   validation: {
     required: 'Required',
@@ -495,9 +497,37 @@ export const en = {
       notifications: 'Notifications',
       api: 'API',
       calendar: 'Calendar',
+      transfer: 'Import & export',
       sessions: 'Devices',
       users: 'Users',
       invites: 'Invites',
+    },
+    transfer: {
+      export: 'Export',
+      exportHint:
+        'All your lists and tasks – including shared lists – as one file. You can import it into Crystal again, here or on another instance.',
+      download: 'Download export',
+      import: 'Import',
+      importHint: 'Imports always create new lists; nothing you already have is changed.',
+      source: 'From',
+      sources: {
+        crystal: 'Crystal export (JSON)',
+        todoist: 'Todoist (CSV)',
+        outlook: 'Microsoft To Do via Outlook (CSV)',
+      },
+      help: {
+        crystal: 'A file downloaded with “Download export” above.',
+        todoist:
+          'In Todoist, open a project, choose “…” → “Export as a template” → “Download as CSV file”. Each project becomes a list.',
+        outlook:
+          'Microsoft To Do lists appear in Outlook as task folders. In Outlook for Windows, choose File → Open & Export → Import/Export → Export to a file → Comma Separated Values, then pick the folder. Each file becomes a list.',
+      },
+      file: 'File',
+      listName: 'Name of the new list',
+      submit: 'Import',
+      done_one: 'Imported {{tasks}} tasks into {{count}} list.',
+      done_other: 'Imported {{tasks}} tasks into {{count}} lists.',
+      tooLarge: 'This file is too large to import.',
     },
     calendar: {
       title: 'Calendar subscription',

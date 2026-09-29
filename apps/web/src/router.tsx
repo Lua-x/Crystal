@@ -213,6 +213,15 @@ const apiSettingsRoute = createRoute({
   ),
 })
 
+const transferSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: '/transfer',
+  component: lazyRouteComponent(
+    () => import('./features/settings/transfer-settings'),
+    'TransferSettingsPage',
+  ),
+})
+
 const calendarSettingsRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/calendar',
@@ -290,6 +299,7 @@ const routeTree = rootRoute.addChildren([
       notificationsSettingsRoute,
       sessionsSettingsRoute,
       calendarSettingsRoute,
+      transferSettingsRoute,
       apiSettingsRoute,
       usersSettingsRoute,
       invitesSettingsRoute,

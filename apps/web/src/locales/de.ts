@@ -66,6 +66,8 @@ export const de: Translation = {
     email_not_configured: 'Der E-Mail-Versand ist auf dieser Instanz nicht eingerichtet.',
     delivery_failed: 'Die Benachrichtigung konnte nicht zugestellt werden.',
     token_not_allowed: 'Mit API-Tokens geht das nicht. Melde dich stattdessen an.',
+    import_invalid: 'Diese Datei kann nicht importiert werden.',
+    payload_too_large: 'Das ist zu groß.',
   },
   validation: {
     required: 'Pflichtfeld',
@@ -503,9 +505,37 @@ export const de: Translation = {
       notifications: 'Benachrichtigungen',
       api: 'API',
       calendar: 'Kalender',
+      transfer: 'Import & Export',
       sessions: 'Geräte',
       users: 'Benutzer',
       invites: 'Einladungen',
+    },
+    transfer: {
+      export: 'Export',
+      exportHint:
+        'Alle deine Listen und Aufgaben – auch geteilte Listen – in einer Datei. Du kannst sie wieder in Crystal importieren, hier oder auf einer anderen Instanz.',
+      download: 'Export herunterladen',
+      import: 'Import',
+      importHint: 'Ein Import legt immer neue Listen an; Vorhandenes bleibt unverändert.',
+      source: 'Aus',
+      sources: {
+        crystal: 'Crystal-Export (JSON)',
+        todoist: 'Todoist (CSV)',
+        outlook: 'Microsoft To Do über Outlook (CSV)',
+      },
+      help: {
+        crystal: 'Eine Datei, die du oben mit „Export herunterladen“ gespeichert hast.',
+        todoist:
+          'Öffne in Todoist ein Projekt und wähle „…“ → „Als Vorlage exportieren“ → „Als CSV-Datei herunterladen“. Jedes Projekt wird eine Liste.',
+        outlook:
+          'Listen aus Microsoft To Do erscheinen in Outlook als Aufgabenordner. Wähle in Outlook für Windows Datei → Öffnen und exportieren → Importieren/Exportieren → In Datei exportieren → Kommagetrennte Werte und dann den Ordner. Jede Datei wird eine Liste.',
+      },
+      file: 'Datei',
+      listName: 'Name der neuen Liste',
+      submit: 'Importieren',
+      done_one: '{{tasks}} Aufgaben in {{count}} Liste importiert.',
+      done_other: '{{tasks}} Aufgaben in {{count}} Listen importiert.',
+      tooLarge: 'Diese Datei ist zu groß für einen Import.',
     },
     calendar: {
       title: 'Kalender-Abo',

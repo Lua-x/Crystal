@@ -14,10 +14,15 @@ All notable changes to Crystal are documented in this file. The format follows
 - Interactive API documentation at `/api/docs`.
 - A private calendar link (**Settings → Calendar**) to subscribe to your due tasks in Apple
   Calendar, Google Calendar, Outlook or Thunderbird. The link can be replaced or turned off.
+- Export all lists and tasks as a JSON file, and import from a Crystal export, Todoist (CSV)
+  or Microsoft To Do via Outlook (CSV) under **Settings → Import & export**. Imports always
+  create new lists; Todoist dates such as “every saturday” become repeating tasks.
+- API: `GET /export` and `POST /import`.
 
 ### Security
 
 - Invite and calendar links no longer appear in the request log.
+- Request bodies are limited to 1 MiB (12 MiB for imports).
 
 ## [0.5.0] - 2026-09-29
 

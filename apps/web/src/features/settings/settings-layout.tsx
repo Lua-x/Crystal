@@ -1,5 +1,6 @@
 import { Link, Navigate, Outlet, useRouterState } from '@tanstack/react-router'
 import {
+  ArrowDownUp,
   Bell,
   Braces,
   CalendarDays,
@@ -25,6 +26,7 @@ type SettingsPath =
   | '/settings/sessions'
   | '/settings/api'
   | '/settings/calendar'
+  | '/settings/transfer'
   | '/settings/users'
   | '/settings/invites'
 
@@ -61,6 +63,11 @@ function useNavGroups(): { label?: string; items: NavItem[] }[] {
           to: '/settings/calendar',
           icon: <CalendarDays />,
           label: t('settings.sections.calendar'),
+        },
+        {
+          to: '/settings/transfer',
+          icon: <ArrowDownUp />,
+          label: t('settings.sections.transfer'),
         },
         { to: '/settings/api', icon: <Braces />, label: t('settings.sections.api') },
       ],

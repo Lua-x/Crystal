@@ -20,6 +20,7 @@ import { ReminderService } from './reminders.js'
 import { SearchService } from './search.js'
 import { SessionService } from './sessions.js'
 import { TaskService } from './tasks.js'
+import { TransferService } from './transfer.js'
 import { UserService } from './users.js'
 import { ViewService } from './views.js'
 
@@ -48,6 +49,8 @@ export interface Services {
   reminders: ReminderService
   /** Private iCal feeds of due tasks. */
   calendar: CalendarService
+  /** Export to and import from files. */
+  transfer: TransferService
   lists: ListService
   tasks: TaskService
   views: ViewService
@@ -135,6 +138,7 @@ export function createServices(options: ServiceOptions): Services {
   const views = new ViewService(db, tasks, search)
   const reminders = new ReminderService(db, notifications, logger, now)
   const calendar = new CalendarService(db, config, secretKey, version, now)
+  const transfer = new TransferService(db, lists, search, events, now)
   const cleanup = new CleanupService(db, search, { sessions, passwordResets, apiTokens }, now)
   const admin = new AdminService(db, users, sessions, lists)
   const oidc =
@@ -167,6 +171,7 @@ export function createServices(options: ServiceOptions): Services {
     notifications,
     reminders,
     calendar,
+    transfer,
     lists,
     tasks,
     views,

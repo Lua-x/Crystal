@@ -57,9 +57,9 @@ Tables:
 
 Planned additions, each with its own migration when the feature arrives:
 
-| Phase | Tables                          |
-| ----- | ------------------------------- |
-| 6     | `calendar_feeds`, `attachments` |
+| Phase | Tables        |
+| ----- | ------------- |
+| 6     | `attachments` |
 
 Design decisions for lists and tasks:
 

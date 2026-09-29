@@ -392,6 +392,43 @@ export class ListService {
 
   /* ── Internals ──────────────────────────────────────────────── */
 
+  /** Adds a list of one's own at the end of the sidebar or of a group (imports). */
+  addOwnedList(
+    tx: Executor,
+    userId: string,
+    input: { name: string; color: List['color']; icon: string | null; groupId: string | null },
+  ): string {
+    const id = uuidv7(this.now().getTime())
+    const container = input.groupId
+      ? this.groupItems(userId, input.groupId, tx)
+      : this.topLevelItems(userId, tx)
+    this.insertList(tx, userId, {
+      ...input,
+      id,
+      isDefault: false,
+      position: positionAtEnd(container),
+    })
+    return id
+  }
+
+  /** Adds a sidebar group at the end (imports). */
+  addGroup(tx: Executor, userId: string, name: string): string {
+    const id = uuidv7(this.now().getTime())
+    const now = this.now()
+    tx.insert(listGroups)
+      .values({
+        id,
+        userId,
+        name,
+        position: positionAtEnd(this.topLevelItems(userId, tx)),
+        collapsed: false,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run()
+    return id
+  }
+
   private insertList(
     tx: Executor,
     userId: string,

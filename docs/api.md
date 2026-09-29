@@ -27,6 +27,8 @@ What tokens can do:
 
 - Read and (with “Read and change”) change lists, list groups, tasks and steps, smart lists,
   search, tags and the people you can share with, and follow live updates (`/api/v1/events`).
+- Export everything (`GET /api/v1/export`) and, with “Read and change”, import files
+  (`POST /api/v1/import`).
 - Read your profile (`GET /api/v1/me`).
 - Nothing else: account settings (profile, password, devices, tokens, notifications), sign-in
   and administration always need a signed-in browser. Such requests answer `403` with the
@@ -42,7 +44,8 @@ Errors use the shape `{ "error": { "code": "…", "message": "…", "details": �
 stable and listed in [`packages/shared/src/errors.ts`](../packages/shared/src/errors.ts);
 validation errors (`validation_failed`) list the invalid fields in `details`.
 
-## Rate limits
+## Limits
 
 Each account can make 600 requests per minute. When the limit is reached, Crystal answers `429`
-with a `Retry-After` header.
+with a `Retry-After` header. Request bodies may be up to 1 MiB (imports up to 12 MiB); larger
+ones are answered with `413` and the code `payload_too_large`.

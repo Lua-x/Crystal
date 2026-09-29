@@ -1,8 +1,15 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Download } from '@playwright/test'
 
 import { ADMIN, expectAccessible, openList, signIn, task } from './helpers'
 
 test.describe.configure({ mode: 'serial' })
+
+async function readDownload(download: Download): Promise<string> {
+  const stream = await download.createReadStream()
+  const chunks: Buffer[] = []
+  for await (const chunk of stream) chunks.push(chunk as Buffer)
+  return Buffer.concat(chunks).toString('utf8')
+}
 
 test('personal API tokens work for scripts and can be revoked', async ({ page, request }) => {
   await signIn(page, ADMIN)
@@ -72,6 +79,45 @@ test('a private calendar link shows tasks with a due date', async ({ page, reque
   await page.getByRole('alertdialog').getByRole('button', { name: 'Replace' }).click()
   await expect(link).not.toHaveValue(url)
   expect((await request.get(url)).status()).toBe(404)
+})
+
+test('exporting everything and importing a Todoist project', async ({ page }) => {
+  await signIn(page, ADMIN)
+  await page.goto('/settings/transfer')
+  await expectAccessible(page)
+
+  const downloading = page.waitForEvent('download')
+  await page.getByRole('link', { name: 'Download export' }).click()
+  const download = await downloading
+  expect(download.suggestedFilename()).toMatch(/^crystal-export-\d{4}-\d{2}-\d{2}\.json$/)
+  const exported = JSON.parse(await readDownload(download)) as {
+    format: string
+    lists: { name: string }[]
+  }
+  expect(exported.format).toBe('crystal')
+  expect(exported.lists.map((list) => list.name)).toContain('Tasks')
+
+  await page.getByLabel('From').selectOption('todoist')
+  await page.getByLabel('File').setInputFiles({
+    name: 'Garden.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,DATE,DATE_LANG\n' +
+        'task,Plant tulips @outside,,1,1,every saturday,en\n' +
+        'task,Buy bulbs,,4,2,,en\n' +
+        'task,Mow the lawn,,4,1,,en\n',
+    ),
+  })
+  await expect(page.getByLabel('Name of the new list')).toHaveValue('Garden')
+  await page.getByRole('button', { name: 'Import', exact: true }).click()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Imported 2 tasks into 1 list.' }),
+  ).toBeVisible()
+  await expectAccessible(page)
+
+  await openList(page, 'Garden')
+  await expect(task(page, 'Plant tulips')).toContainText('#outside')
+  await expect(task(page, 'Mow the lawn')).toBeVisible()
 })
 
 test('the API documentation loads without breaking the content security policy', async ({

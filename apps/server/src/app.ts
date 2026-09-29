@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import { compress } from 'hono/compress'
 
 import type { AppEnv } from './context.js'
+import { MB, requestBodyLimits } from './middleware/body-limit.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { apiNotFound, errorHandler, validationHook } from './middleware/errors.js'
 import { apiRateLimit } from './middleware/rate-limit.js'
@@ -20,6 +21,7 @@ import { notificationRoutes } from './routes/notifications.js'
 import { peopleRoutes } from './routes/people.js'
 import { systemRoutes } from './routes/system.js'
 import { subtaskRoutes, taskRoutes } from './routes/tasks.js'
+import { exportRoutes, importRoutes } from './routes/transfer.js'
 import { searchRoutes, tagRoutes, viewRoutes } from './routes/views.js'
 import { CLIENT_ID_PATTERN, runWithOrigin } from './services/events.js'
 import type { Services } from './services/index.js'
@@ -49,6 +51,7 @@ export function createApp(services: Services, options: AppOptions = {}) {
     // API responses contain personal data and must not end up in shared caches.
     c.header('Cache-Control', 'no-store')
   })
+  v1.use('*', requestBodyLimits({ '/api/v1/import': 12 * MB }))
   v1.use('*', csrfProtection(config))
   v1.use('*', sessionMiddleware(services))
   v1.use('*', tokenPolicy)
@@ -71,6 +74,8 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.route('/tags', tagRoutes(services))
   v1.route('/people', peopleRoutes(services))
   v1.route('/notifications', notificationRoutes(services))
+  v1.route('/export', exportRoutes(services))
+  v1.route('/import', importRoutes(services))
   v1.route('/events', eventRoutes(services, options.heartbeatMs))
   app.route('/api/v1', v1)
 
