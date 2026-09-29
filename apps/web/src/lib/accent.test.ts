@@ -85,4 +85,9 @@ describe('computeAccentTokens', () => {
     )
     expect(accentCssVariables('#34c759')['--color-on-accent']).toMatch(/^light-dark\(/)
   })
+
+  it('shades hover states away from the text: darker under white, lighter under dark text', () => {
+    expect(accentCssVariables('green')['--color-accent-shade']).toBe('light-dark(black, black)')
+    expect(accentCssVariables('yellow')['--color-accent-shade']).toBe('light-dark(white, white)')
+  })
 })

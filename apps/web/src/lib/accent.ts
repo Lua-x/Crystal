@@ -90,9 +90,17 @@ export function computeAccentTokens(base: string, scheme: 'light' | 'dark'): Acc
 }
 
 export type AccentCssVariables = Record<
-  '--color-accent' | '--color-on-accent' | '--color-accent-text',
+  '--color-accent' | '--color-on-accent' | '--color-accent-text' | '--color-accent-shade',
   string
 >
+
+/**
+ * What hover and pressed states mix into the accent: away from the text color,
+ * so text on a hovered or pressed button is at least as readable as at rest.
+ */
+export function accentShade(onAccent: string): string {
+  return onAccent === WHITE ? 'black' : 'white'
+}
 
 /** CSS custom properties for an accent, using `light-dark()` for both schemes. */
 export function accentCssVariables(accent: string): AccentCssVariables {
@@ -103,6 +111,7 @@ export function accentCssVariables(accent: string): AccentCssVariables {
     '--color-accent': `light-dark(${light.accent}, ${dark.accent})`,
     '--color-on-accent': `light-dark(${light.onAccent}, ${dark.onAccent})`,
     '--color-accent-text': `light-dark(${light.accentText}, ${dark.accentText})`,
+    '--color-accent-shade': `light-dark(${accentShade(light.onAccent)}, ${accentShade(dark.onAccent)})`,
   }
 }
 

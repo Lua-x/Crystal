@@ -11,7 +11,8 @@
       root.setAttribute('data-theme', appearance.theme)
     }
     var accent = appearance.accent || {}
-    var valuePattern = /^light-dark\(#[0-9a-f]{6}, #[0-9a-f]{6}\)$/i
+    var color = '(#[0-9a-f]{6}|black|white)'
+    var valuePattern = new RegExp('^light-dark\\(' + color + ', ' + color + '\\)$', 'i')
     for (var name in accent) {
       if (/^--color-[a-z-]+$/.test(name) && valuePattern.test(accent[name])) {
         root.style.setProperty(name, accent[name])

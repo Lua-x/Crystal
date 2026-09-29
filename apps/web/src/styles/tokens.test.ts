@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   ACCENT_PRESET_COLORS,
+  accentShade,
   computeAccentTokens,
   SOFT_ACCENT_SHARE,
   SURFACES,
@@ -117,5 +118,17 @@ describe('design tokens', () => {
     expect(token('accent')).toEqual({ light: light.accent, dark: dark.accent })
     expect(token('on-accent')).toEqual({ light: light.onAccent, dark: dark.onAccent })
     expect(token('accent-text')).toEqual({ light: light.accentText, dark: dark.accentText })
+    const shade = /--color-accent-shade:\s*light-dark\((\w+),\s*(\w+)\)/.exec(css)
+    expect(shade?.slice(1)).toEqual([accentShade(light.onAccent), accentShade(dark.onAccent)])
+  })
+
+  it('darkens or lightens hovered and pressed accents away from their text', () => {
+    for (const state of ['hover', 'pressed']) {
+      expect(css).toMatch(
+        new RegExp(
+          `--color-accent-${state}: color-mix\\(in oklab, var\\(--color-accent\\), var\\(--color-accent-shade\\) \\d+%\\)`,
+        ),
+      )
+    }
   })
 })

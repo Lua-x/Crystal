@@ -62,8 +62,10 @@
   --color-accent: light-dark(#1273e9, #1273e9);
   --color-on-accent: light-dark(#ffffff, #ffffff);
   --color-accent-text: light-dark(#005fc9, #539bff);
-  --color-accent-hover: color-mix(in oklab, var(--color-accent), light-dark(black, white) 10%);
-  --color-accent-pressed: color-mix(in oklab, var(--color-accent), light-dark(black, white) 18%);
+  /* Hover and pressed move away from the text color, so they never lose contrast. */
+  --color-accent-shade: light-dark(black, black);
+  --color-accent-hover: color-mix(in oklab, var(--color-accent), var(--color-accent-shade) 10%);
+  --color-accent-pressed: color-mix(in oklab, var(--color-accent), var(--color-accent-shade) 18%);
   --color-accent-soft: color-mix(in oklab, var(--color-accent) 14%, transparent);
   --color-focus-ring: var(--color-accent-text);
 
