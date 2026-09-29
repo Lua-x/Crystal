@@ -509,6 +509,23 @@ export const de: Translation = {
       sessions: 'Geräte',
       users: 'Benutzer',
       invites: 'Einladungen',
+      backups: 'Backups',
+    },
+    backups: {
+      title: 'Datenbank-Backups',
+      automatic_one:
+        'Crystal sichert die Datenbank jede Stunde und behält die neuesten {{retention}}.',
+      automatic_other:
+        'Crystal sichert die Datenbank alle {{count}} Stunden und behält die neuesten {{retention}}.',
+      off: 'Automatische Backups sind ausgeschaltet (BACKUP_INTERVAL_HOURS=0).',
+      location:
+        'Die Backups liegen auf dem Server in {{directory}}. Kopiere sie auch woandershin – ein Backup auf derselben Festplatte übersteht keinen Festplattenschaden.',
+      secret:
+        'Für eine Wiederherstellung auf einem anderen Server brauchst du auch den geheimen Schlüssel (SECRET_KEY oder secret.key im Datenverzeichnis).',
+      empty: 'Noch keine Backups.',
+      create: 'Jetzt sichern',
+      created: 'Backup erstellt.',
+      download: '{{name}} herunterladen',
     },
     transfer: {
       export: 'Export',

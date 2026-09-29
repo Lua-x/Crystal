@@ -106,6 +106,16 @@ A reset link is valid for one hour and can be used once. Crystal sends at most t
 account and hour, answers the same way whether an account exists or not, and signs the account
 out on every device after the password is changed.
 
+## Backups
+
+| Variable                | Default         | Description                                                 |
+| ----------------------- | --------------- | ----------------------------------------------------------- |
+| `BACKUP_INTERVAL_HOURS` | `24`            | Hours between automatic backups (1–720); `0` turns them off |
+| `BACKUP_RETENTION`      | `7`             | How many backups are kept (1–365)                           |
+| `BACKUP_DIR`            | `/data/backups` | Where backups are written; ideally on another disk          |
+
+See [backup.md](backup.md) for restoring.
+
 ## Docker Compose only
 
 | Variable          | Default  | Description                                                      |

@@ -120,6 +120,20 @@ test('exporting everything and importing a Todoist project', async ({ page }) =>
   await expect(task(page, 'Mow the lawn')).toBeVisible()
 })
 
+test('administrators back up the database', async ({ page }) => {
+  await signIn(page, ADMIN)
+  await page.goto('/settings/backups')
+  await expect(page.getByText(/backs up the database every 24 hours/)).toBeVisible()
+  await page.getByRole('button', { name: 'Back up now' }).click()
+  const download = page.getByRole('link', { name: /^Download crystal-.*\.db$/ }).first()
+  await expect(download).toHaveAttribute('href', /^\/api\/v1\/admin\/backups\/crystal-/)
+  await expectAccessible(page)
+
+  const downloading = page.waitForEvent('download')
+  await download.click()
+  expect((await downloading).suggestedFilename()).toMatch(/^crystal-.*\.db$/)
+})
+
 test('the API documentation loads without breaking the content security policy', async ({
   page,
 }) => {

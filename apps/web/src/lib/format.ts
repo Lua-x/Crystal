@@ -21,6 +21,29 @@ export function formatDate(date: string | Date, locale: string): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(date))
 }
 
+export function formatDateTime(date: string | Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(
+    new Date(date),
+  )
+}
+
+/** `1536` → "1.5 kB" (in the locale's number format; powers of 1000, like Finder). */
+export function formatBytes(bytes: number, locale: string): string {
+  const units = ['byte', 'kilobyte', 'megabyte', 'gigabyte'] as const
+  let value = bytes
+  let unit = 0
+  while (value >= 1000 && unit < units.length - 1) {
+    value /= 1000
+    unit++
+  }
+  return new Intl.NumberFormat(locale, {
+    style: 'unit',
+    unit: units[unit],
+    unitDisplay: unit === 0 ? 'long' : 'short',
+    maximumFractionDigits: value < 10 && unit > 0 ? 1 : 0,
+  }).format(value)
+}
+
 export function formatLongDate(date: Date, locale: string, timeZone?: string): string {
   return new Intl.DateTimeFormat(locale, {
     weekday: 'long',

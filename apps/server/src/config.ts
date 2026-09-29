@@ -1,3 +1,5 @@
+import { join } from 'node:path'
+
 import { REGISTRATION_MODES } from '@crystal/shared'
 import { z } from 'zod'
 
@@ -72,6 +74,10 @@ const envSchema = z
     SMTP_FROM: optionalString,
     REMINDER_INTERVAL_SECONDS: z.coerce.number().int().min(1).max(3600).default(30),
     NOTIFY_PRIVATE_NETWORKS: booleanFromEnv.default(true),
+    /** 0 turns automatic backups off. */
+    BACKUP_INTERVAL_HOURS: z.coerce.number().int().min(0).max(720).default(24),
+    BACKUP_RETENTION: z.coerce.number().int().min(1).max(365).default(7),
+    BACKUP_DIR: optionalString,
   })
   .superRefine((env, ctx) => {
     if (env.BASE_URL && (env.BASE_URL.pathname !== '/' || env.BASE_URL.search)) {
@@ -146,6 +152,13 @@ export interface Config {
   reminderIntervalMs: number
   /** Whether notification channels may point to loopback and private network addresses. */
   notifyPrivateNetworks: boolean
+  backups: {
+    /** 0 when automatic backups are off. */
+    intervalHours: number
+    /** How many backups are kept; older ones are deleted. */
+    retention: number
+    directory: string
+  }
 }
 
 export interface SmtpConfig {
@@ -220,5 +233,10 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
         : undefined,
     reminderIntervalMs: parsed.REMINDER_INTERVAL_SECONDS * 1000,
     notifyPrivateNetworks: parsed.NOTIFY_PRIVATE_NETWORKS,
+    backups: {
+      intervalHours: parsed.BACKUP_INTERVAL_HOURS,
+      retention: parsed.BACKUP_RETENTION,
+      directory: parsed.BACKUP_DIR ?? join(parsed.DATA_DIR, 'backups'),
+    },
   }
 }

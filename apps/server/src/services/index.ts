@@ -9,6 +9,7 @@ import { createWebPushSender, deriveVapidKeys, type PushSender } from '../notifi
 import { AdminService } from './admin.js'
 import { ApiTokenService } from './api-tokens.js'
 import { AuthService } from './auth.js'
+import { BackupService } from './backups.js'
 import { CalendarService } from './calendar.js'
 import { CleanupService } from './cleanup.js'
 import { EventHub } from './events.js'
@@ -51,6 +52,8 @@ export interface Services {
   calendar: CalendarService
   /** Export to and import from files. */
   transfer: TransferService
+  /** Automatic and manual database backups. */
+  backups: BackupService
   lists: ListService
   tasks: TaskService
   views: ViewService
@@ -139,6 +142,7 @@ export function createServices(options: ServiceOptions): Services {
   const reminders = new ReminderService(db, notifications, logger, now)
   const calendar = new CalendarService(db, config, secretKey, version, now)
   const transfer = new TransferService(db, lists, search, events, now)
+  const backups = new BackupService(db, config.backups, logger, now)
   const cleanup = new CleanupService(db, search, { sessions, passwordResets, apiTokens }, now)
   const admin = new AdminService(db, users, sessions, lists)
   const oidc =
@@ -172,6 +176,7 @@ export function createServices(options: ServiceOptions): Services {
     reminders,
     calendar,
     transfer,
+    backups,
     lists,
     tasks,
     views,

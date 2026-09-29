@@ -264,6 +264,16 @@ const invitesSettingsRoute = createRoute({
   ),
 })
 
+const backupsSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: '/backups',
+  beforeLoad: requireAdmin,
+  component: lazyRouteComponent(
+    () => import('./features/settings/backups-settings'),
+    'BackupsSettingsPage',
+  ),
+})
+
 /* ── Development only ──────────────────────────────────────── */
 
 // Removed from production builds: `import.meta.env.DEV` is replaced with `false`.
@@ -303,6 +313,7 @@ const routeTree = rootRoute.addChildren([
       apiSettingsRoute,
       usersSettingsRoute,
       invitesSettingsRoute,
+      backupsSettingsRoute,
     ]),
   ]),
   ...devRoutes,

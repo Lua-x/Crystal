@@ -501,6 +501,22 @@ export const en = {
       sessions: 'Devices',
       users: 'Users',
       invites: 'Invites',
+      backups: 'Backups',
+    },
+    backups: {
+      title: 'Database backups',
+      automatic_one: 'Crystal backs up the database every hour and keeps the newest {{retention}}.',
+      automatic_other:
+        'Crystal backs up the database every {{count}} hours and keeps the newest {{retention}}.',
+      off: 'Automatic backups are turned off (BACKUP_INTERVAL_HOURS=0).',
+      location:
+        'Backups are stored in {{directory}} on the server. Copy them somewhere else, too – a backup on the same disk does not survive a broken disk.',
+      secret:
+        'To restore on another server, you also need the secret key (SECRET_KEY or secret.key in the data directory).',
+      empty: 'No backups yet.',
+      create: 'Back up now',
+      created: 'Backup created.',
+      download: 'Download {{name}}',
     },
     transfer: {
       export: 'Export',

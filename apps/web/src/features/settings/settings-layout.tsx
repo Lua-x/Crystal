@@ -5,6 +5,7 @@ import {
   Braces,
   CalendarDays,
   ChevronRight,
+  DatabaseBackup,
   MonitorSmartphone,
   Palette,
   Ticket,
@@ -29,6 +30,7 @@ type SettingsPath =
   | '/settings/transfer'
   | '/settings/users'
   | '/settings/invites'
+  | '/settings/backups'
 
 interface NavItem {
   to: SettingsPath
@@ -79,6 +81,11 @@ function useNavGroups(): { label?: string; items: NavItem[] }[] {
       items: [
         { to: '/settings/users', icon: <Users />, label: t('settings.sections.users') },
         { to: '/settings/invites', icon: <Ticket />, label: t('settings.sections.invites') },
+        {
+          to: '/settings/backups',
+          icon: <DatabaseBackup />,
+          label: t('settings.sections.backups'),
+        },
       ],
     })
   }

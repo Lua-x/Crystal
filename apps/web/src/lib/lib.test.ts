@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { suggestUsername } from '../features/auth/suggest-username'
 import { safeRedirect } from './errors'
-import { describeUserAgent, formatRelative } from './format'
+import { describeUserAgent, formatBytes, formatRelative } from './format'
 import { detectLocale } from './i18n'
 
 describe('safeRedirect', () => {
@@ -66,6 +66,15 @@ describe('formatRelative', () => {
 
   it('says "now" for the last minute', () => {
     expect(formatRelative('2026-09-27T11:59:40Z', 'en', now)).toBe('now')
+  })
+})
+
+describe('formatBytes', () => {
+  it('uses units that fit, in the language of the app', () => {
+    expect(formatBytes(512, 'en')).toBe('512 bytes')
+    expect(formatBytes(1536, 'en')).toBe('1.5 kB')
+    expect(formatBytes(24_000_000, 'en')).toBe('24 MB')
+    expect(formatBytes(1536, 'de')).toBe('1,5 kB')
   })
 })
 

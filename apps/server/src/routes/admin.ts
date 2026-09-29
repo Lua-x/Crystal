@@ -1,6 +1,13 @@
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import { basename } from 'node:path'
+import { Readable } from 'node:stream'
+
 import {
   adminUpdateUserSchema,
   adminUserSchema,
+  backupSchema,
+  backupStatusSchema,
   createdInviteSchema,
   createInviteSchema,
   idSchema,
@@ -145,6 +152,64 @@ export function adminRoutes(services: Services) {
     (c) => {
       if (!services.invites.revoke(c.req.valid('param').id)) throw new AppError(404, 'not_found')
       return c.body(null, 204)
+    },
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'get',
+      path: '/backups',
+      tags,
+      security,
+      summary: 'Backup settings and the backups on disk',
+      responses: { 200: jsonResponse(backupStatusSchema, 'Backups, newest first'), ...authErrors },
+    }),
+    async (c) => c.json(await services.backups.status(), 200),
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'post',
+      path: '/backups',
+      tags,
+      security,
+      summary: 'Back up the database now',
+      description: 'Uses SQLite’s online backup; Crystal keeps running meanwhile.',
+      responses: { 201: jsonResponse(backupSchema, 'The new backup'), ...authErrors },
+    }),
+    async (c) => c.json(await services.backups.create(), 201),
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'get',
+      path: '/backups/{name}',
+      tags,
+      security,
+      summary: 'Download a backup',
+      description: 'The SQLite database file. It contains every account and all data.',
+      request: { params: z.object({ name: z.string().max(100) }) },
+      responses: {
+        200: {
+          description: 'The database file',
+          content: { 'application/vnd.sqlite3': { schema: { type: 'string', format: 'binary' } } },
+        },
+        404: errorResponse('No such backup'),
+        ...authErrors,
+      },
+    }),
+    async (c) => {
+      const path = services.backups.path(c.req.valid('param').name)
+      let size: number
+      try {
+        size = (await stat(path)).size
+      } catch {
+        throw new AppError(404, 'not_found')
+      }
+      c.header('Content-Type', 'application/vnd.sqlite3')
+      c.header('Content-Length', String(size))
+      c.header('Content-Disposition', `attachment; filename="${basename(path)}"`)
+      return c.body(Readable.toWeb(createReadStream(path)) as ReadableStream, 200)
     },
   )
 

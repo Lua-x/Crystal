@@ -18,6 +18,9 @@ All notable changes to Crystal are documented in this file. The format follows
   or Microsoft To Do via Outlook (CSV) under **Settings → Import & export**. Imports always
   create new lists; Todoist dates such as “every saturday” become repeating tasks.
 - API: `GET /export` and `POST /import`.
+- Automatic database backups every 24 hours while Crystal keeps running, keeping the newest
+  seven (`BACKUP_INTERVAL_HOURS`, `BACKUP_RETENTION`, `BACKUP_DIR`). Administrators can make and
+  download backups under **Settings → Backups**. See [docs/backup.md](docs/backup.md).
 
 ### Security
 

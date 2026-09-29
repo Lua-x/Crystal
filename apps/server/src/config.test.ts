@@ -1,3 +1,5 @@
+import { join } from 'node:path'
+
 import { describe, expect, it } from 'vitest'
 
 import { ConfigError, loadConfig } from './config.js'
@@ -118,6 +120,20 @@ describe('loadConfig', () => {
     expect(
       loadConfig({ REMINDER_INTERVAL_SECONDS: '5', NOTIFY_PRIVATE_NETWORKS: 'false' }),
     ).toMatchObject({ reminderIntervalMs: 5000, notifyPrivateNetworks: false })
+  })
+
+  it('reads the backup settings', () => {
+    expect(loadConfig({ DATA_DIR: '/data' }).backups).toEqual({
+      intervalHours: 24,
+      retention: 7,
+      directory: join('/data', 'backups'),
+    })
+    expect(loadConfig({ BACKUP_DIR: '/mnt/nas', BACKUP_INTERVAL_HOURS: '0' }).backups).toEqual({
+      intervalHours: 0,
+      retention: 7,
+      directory: '/mnt/nas',
+    })
+    expect(() => loadConfig({ BACKUP_RETENTION: '0' })).toThrow(/BACKUP_RETENTION/)
   })
 
   it('refuses to disable password login without another way to sign in', () => {
