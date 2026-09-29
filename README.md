@@ -15,8 +15,8 @@
 </p>
 
 > [!NOTE]
-> **Crystal is in early development.** Lists, tasks, repeats, tags, quick entry and
-> sharing are ready to use; reminders and offline use follow. See the
+> **Crystal is in early development.** Lists, tasks, repeats, tags, quick entry, sharing and
+> reminders are ready to use; offline use and import follow. See the
 > [roadmap](ROADMAP.md) for what comes next.
 
 <p align="center">
@@ -67,6 +67,17 @@
 - **Keyboard shortcuts** for everything frequent, and a **command palette** (⌘K / Ctrl+K) to
   jump to any list, find tasks or add one from anywhere. Press `?` for an overview.
 
+**Never miss a thing**
+
+- **Reminders** at any time you like, independent of the due date – with quick choices such as
+  “later today” or “tomorrow”. Repeating tasks take their reminder along.
+- **Notifications where you want them:** in the browser (Web Push) on each of your devices, or
+  through [ntfy](https://ntfy.sh), [Gotify](https://gotify.net),
+  [Apprise](https://github.com/caronc/apprise-api) and email.
+- **A daily summary** in the morning with what is due and what is overdue, and a heads-up
+  when someone assigns a task to you.
+- **Forgot your password?** A reset link by email, once SMTP is configured.
+
 **For the whole household**
 
 - **Shared lists** for the family or the flat: people can edit or only view, and see each
@@ -82,12 +93,13 @@
 - **Accessible.** WCAG 2.1 AA contrast is verified by tests; every screen is checked with
   axe and works with the keyboard alone.
 - **German and English**, more languages are easy to add.
-- **Private by design.** No telemetry, no external requests, no tracking.
+- **Private by design.** No telemetry, no tracking, and no external requests except the
+  notification services you turn on yourself.
 - **Secure defaults.** Argon2id passwords, HttpOnly session cookies, CSRF protection,
   rate limiting, strict Content Security Policy, a non-root container without a shell.
 
-**Coming next** – reminders (Web Push, ntfy, Gotify), offline support, import from Microsoft
-To Do and Todoist, an iCal feed and API tokens. Details in the [roadmap](ROADMAP.md).
+**Coming next** – an installable app with offline support, import from Microsoft To Do and
+Todoist, automatic backups, an iCal feed and API tokens. Details in the [roadmap](ROADMAP.md).
 
 ## Quick start
 
@@ -117,6 +129,7 @@ Everything is configured with environment variables in `.env`. The most importan
 | `TRUST_PROXY`                                         | `false`  | Set to `true` (or the number of proxies) behind a reverse proxy.                           |
 | `CRYSTAL_PORT`                                        | `3000`   | Port on the host (Docker Compose).                                                         |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | –        | Enable single sign-on.                                                                     |
+| `SMTP_HOST`, `SMTP_FROM`, …                           | –        | Email for notifications and password resets.                                               |
 | `LOG_LEVEL`                                           | `info`   | `fatal` … `trace`, or `silent`.                                                            |
 
 All options, with explanations: [docs/configuration.md](docs/configuration.md).

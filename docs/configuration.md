@@ -66,6 +66,46 @@ Notes:
   address matches. Users with a local account sign in with their password and link single
   sign-on under **Settings → Account**.
 
+## Notifications
+
+Everyone chooses how they want to be notified under **Settings → Notifications**: in the
+browser (Web Push), through [ntfy](https://ntfy.sh), [Gotify](https://gotify.net), an
+[Apprise API](https://github.com/caronc/apprise-api) server, or by email. Crystal sends
+reminders, a daily summary if someone asks for it, and a message when a task is assigned to
+someone.
+
+| Variable                    | Default | Description                                                                                                                                                                            |
+| --------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `REMINDER_INTERVAL_SECONDS` | `30`    | How often due reminders and daily summaries are checked (1–3600).                                                                                                                      |
+| `NOTIFY_PRIVATE_NETWORKS`   | `true`  | Whether ntfy, Gotify and Apprise may be reached at loopback and private network addresses (where self-hosted services usually live). Set to `false` on instances with untrusted users. |
+
+Web Push needs no configuration, but browsers only offer it over HTTPS (or on `localhost`).
+The keys are derived from `SECRET_KEY`; if the key changes, everyone has to turn notifications
+on again for their devices. On iPhone and iPad, Safari offers Web Push only to web apps added to
+the Home Screen, which becomes possible with the installable app in a later release.
+
+Crystal never follows redirects of notification services, stops waiting after ten seconds and
+never shows what a service answered. Link-local addresses (such as cloud metadata services) are
+always off limits.
+
+### Email
+
+Email is used for the email notification channel and to reset forgotten passwords. Resetting a
+password also needs `BASE_URL`, so the link in the email points to the right place.
+
+| Variable        | Default            | Description                                                                                       |
+| --------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| `SMTP_HOST`     | –                  | Mail server. Setting it enables email.                                                            |
+| `SMTP_PORT`     | `587`              | Port of the mail server.                                                                          |
+| `SMTP_SECURE`   | `true` on port 465 | `true` for implicit TLS (usually port 465). Otherwise STARTTLS is used when the server offers it. |
+| `SMTP_USER`     | –                  | User name, if the server requires authentication.                                                 |
+| `SMTP_PASSWORD` | –                  | Password for `SMTP_USER`.                                                                         |
+| `SMTP_FROM`     | –                  | Sender, e.g. `Crystal <crystal@example.com>`. Required with `SMTP_HOST`.                          |
+
+A reset link is valid for one hour and can be used once. Crystal sends at most three per
+account and hour, answers the same way whether an account exists or not, and signs the account
+out on every device after the password is changed.
+
 ## Docker Compose only
 
 | Variable          | Default  | Description                                                      |

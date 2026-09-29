@@ -35,26 +35,28 @@ Conventions:
 
 Tables:
 
-| Table             | Purpose                                                                                                                                                 |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `users`           | Accounts: username, display name, optional email, role, Argon2id password hash (null for SSO-only accounts), language, time zone, UI preferences (JSON) |
-| `user_identities` | Linked OpenID Connect identities (issuer + subject)                                                                                                     |
-| `sessions`        | Server-side sessions: token hash, device, last activity, expiry                                                                                         |
-| `invites`         | Invite links: token hash, role, usage limit, expiry, revocation                                                                                         |
-| `lists`           | Name, color, emoji, owner; one default list per account                                                                                                 |
-| `list_members`    | Who can see a list with which role (`owner`, `editor`, `viewer`), and each person's own group and position for it in the sidebar                        |
-| `list_groups`     | Per-person folders in the sidebar, collapsible                                                                                                          |
-| `tasks`           | Title, notes, due date and time, priority, important flag, position, repeat rule (JSON), completion, soft deletion                                      |
-| `subtasks`        | Steps of a task, with their own order and completion                                                                                                    |
-| `task_tags`       | Tags of a task, in lower case                                                                                                                           |
-| `my_day`          | Which tasks a person added to My Day, and for which date                                                                                                |
-| `task_search`     | SQLite FTS5 index over titles, notes, steps and tags                                                                                                    |
+| Table                   | Purpose                                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users`                 | Accounts: username, display name, optional email, role, Argon2id password hash (null for SSO-only accounts), language, time zone, UI preferences (JSON) |
+| `user_identities`       | Linked OpenID Connect identities (issuer + subject)                                                                                                     |
+| `sessions`              | Server-side sessions: token hash, device, last activity, expiry                                                                                         |
+| `invites`               | Invite links: token hash, role, usage limit, expiry, revocation                                                                                         |
+| `lists`                 | Name, color, emoji, owner; one default list per account                                                                                                 |
+| `list_members`          | Who can see a list with which role (`owner`, `editor`, `viewer`), and each person's own group and position for it in the sidebar                        |
+| `list_groups`           | Per-person folders in the sidebar, collapsible                                                                                                          |
+| `tasks`                 | Title, notes, due date and time, priority, important flag, position, repeat rule (JSON), completion, soft deletion                                      |
+| `subtasks`              | Steps of a task, with their own order and completion                                                                                                    |
+| `task_tags`             | Tags of a task, in lower case                                                                                                                           |
+| `my_day`                | Which tasks a person added to My Day, and for which date                                                                                                |
+| `task_search`           | SQLite FTS5 index over titles, notes, steps and tags                                                                                                    |
+| `notification_channels` | A person's ntfy, Gotify, Apprise and email channels; settings encrypted with AES-GCM, last delivery and error                                           |
+| `push_subscriptions`    | Browsers that receive Web Push: endpoint and keys                                                                                                       |
+| `password_resets`       | Reset links sent by email: token hash, expiry, use                                                                                                      |
 
 Planned additions, each with its own migration when the feature arrives:
 
 | Phase | Tables                                        |
 | ----- | --------------------------------------------- |
-| 5     | `push_subscriptions`, `notification_channels` |
 | 6     | `api_tokens`, `calendar_feeds`, `attachments` |
 
 Design decisions for lists and tasks:
@@ -111,6 +113,40 @@ On the client, TanStack Query caches lists, tasks and the smart lists. Changes a
 optimistically and rolled back with an error message when the server rejects them; the
 affected queries are refetched afterwards, so counts and smart lists stay consistent.
 
+## Reminders and notifications
+
+```
+ReminderService (every 30 s) ──claim due reminders──▶ NotificationService ──▶ Web Push (per browser)
+  tasks.remind_at ≤ now, not yet reminded                                   ├─▶ ntfy / Gotify / Apprise
+  daily summaries whose local time has come                                 └─▶ email (SMTP)
+```
+
+- A reminder is an instant (`tasks.remind_at`), independent of the floating due date. The
+  assignee gets it, otherwise whoever set it (`reminder_by`). Each round marks due reminders
+  as sent (`reminded_at`) in the same statement that selects them, before sending, so nothing
+  goes out twice – not even after a crash. Reminders missed by more than a day (the server was
+  down) are dropped.
+- Repeating tasks hand the reminder on to the next occurrence, shifted by as many days as the
+  due date, at the same local time in the recipient's time zone (also across daylight saving
+  time changes).
+- The daily summary goes out once per local day (`users.summary_sent_on`), within two hours
+  after the chosen time.
+- Delivery runs in the background. Every channel records its last success or the reason of its
+  last failure; browsers whose subscription expired are forgotten.
+- **Web Push** uses VAPID keys derived from `SECRET_KEY` (HKDF), so there is nothing to
+  configure or store. The service worker (`/sw.js`) shows the notification and opens the task
+  in an existing window when possible.
+- **Outgoing requests** to notification services are made with Node's HTTP client and a
+  DNS lookup that only hands out allowed addresses, checked at connection time (so DNS
+  rebinding does not help). Redirects are not followed and answers are discarded.
+
+## Password reset
+
+With SMTP and `BASE_URL` configured, “Forgot password?” emails a random link (stored as a
+hash) that works once within an hour. The answer is the same whether an account exists or
+not, and the email is sent in the background so the response time reveals nothing either.
+Setting the new password signs the account out everywhere.
+
 ## Authentication and security
 
 - **Passwords:** Argon2id (19 MiB, 2 iterations, 1 lane – OWASP recommendation). Unknown
@@ -132,7 +168,9 @@ affected queries are refetched afterwards, so counts and smart lists stay consis
   responses are `Cache-Control: no-store`.
 - **Container:** distroless base image without shell or package manager, running as user
   `65532`, read-only root filesystem in the provided Compose file.
-- **Privacy:** no telemetry and no requests to third parties.
+- **Privacy:** no telemetry. Crystal only contacts other servers for notifications a person
+  turned on: the push service of their browser, the ntfy, Gotify or Apprise server they
+  entered, and the configured mail server.
 
 ## Design system
 

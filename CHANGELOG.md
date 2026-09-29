@@ -6,6 +6,34 @@ All notable changes to Crystal are documented in this file. The format follows
 
 ## [Unreleased]
 
+Reminders and notifications.
+
+### Added
+
+- Reminders: pick a date and time per task, independent of the due date, or one of the quick
+  choices (later today, tomorrow, next week, when due). The assignee gets the reminder, or
+  whoever set it. Repeating tasks move their reminder along, at the same local time.
+- Notifications in the browser (Web Push) – per device, with a test button – and through
+  ntfy, Gotify, an Apprise API server or email, under **Settings → Notifications**. Failed
+  deliveries show why.
+- A daily summary at a time of your choice with what is due today and what is overdue.
+- A notification when someone assigns a task to you (can be turned off).
+- “Forgot password?” sends a reset link by email when SMTP and `BASE_URL` are configured.
+- Configuration: `SMTP_*`, `REMINDER_INTERVAL_SECONDS` and `NOTIFY_PRIVATE_NETWORKS`. See
+  [docs/configuration.md](docs/configuration.md#notifications).
+- API: `remindAt` on tasks, `/notifications/channels`, `/notifications/push` and
+  `POST /auth/forgot-password` and `POST /auth/reset-password`.
+
+### Fixed
+
+- Text on hovered and pressed primary buttons could fall below AA contrast in dark mode.
+
+### Security
+
+- Notification services are only reached over http(s), without following redirects, with a
+  ten-second limit and without showing their answers. Link-local addresses are always blocked;
+  private networks can be blocked, too. Access tokens are stored encrypted.
+
 ## [0.4.0] - 2026-09-29
 
 Together: sharing, assigning, live updates.

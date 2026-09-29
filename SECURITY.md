@@ -43,3 +43,9 @@ HTTP on the internet), and denial of service through excessive traffic.
 - Keep the image up to date (`docker compose pull && docker compose up -d`).
 - Back up the data volume regularly ([docs/backup.md](docs/backup.md)) and protect the backups:
   they contain the database and the secret key.
+- Notification services (ntfy, Gotify, Apprise) are addresses that users enter, so the server
+  sends requests on their behalf. By default these may point into private networks, where such
+  services usually run. If not everyone with an account is trusted, set
+  `NOTIFY_PRIVATE_NETWORKS=false` ([docs/configuration.md](docs/configuration.md#notifications)).
+  Redirects are never followed, responses are never shown, and link-local addresses (such as
+  cloud metadata services) are always blocked.

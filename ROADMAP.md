@@ -24,12 +24,11 @@ an overview (`?`), command palette (⌘K / Ctrl+K).
 Sharing lists with people on the instance (edit or view), assigning tasks with an “Assigned
 to me” list, live updates for everyone involved.
 
-## 0.5 – Reminders
+## ✅ 0.5 – Reminders
 
-- Reminder time per task, independent of the due date
-- Web Push, ntfy, Gotify and Apprise
-- Optional daily summary (e.g. at 7 am)
-- Optional email (SMTP) for reminders, the daily summary and password resets
+Reminders per task independent of the due date, notifications through Web Push, ntfy, Gotify,
+Apprise and email, a daily summary, notifications about assigned tasks, password reset by
+email.
 
 ## 0.6 – Extras
 
@@ -61,4 +60,7 @@ Ideas that were deliberately postponed:
 - **Handing over a list** to another owner. Today the owner can share with editors, but
   ownership stays; deleting an account deletes the lists it owns.
 - **Assigning in quick entry** (e.g. `+sam`), and an activity history for shared lists.
+- **Snoozing a reminder** right from the notification, and reminders in quick entry (e.g.
+  `remind 5pm`).
+- **HTML emails** – Crystal sends plain text for now.
 - More languages – contributions welcome, see [CONTRIBUTING.md](CONTRIBUTING.md#translations).
