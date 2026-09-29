@@ -12,6 +12,12 @@ All notable changes to Crystal are documented in this file. The format follows
   write access, optionally expiring. Tokens reach lists and tasks but never account settings.
   See [docs/api.md](docs/api.md).
 - Interactive API documentation at `/api/docs`.
+- A private calendar link (**Settings → Calendar**) to subscribe to your due tasks in Apple
+  Calendar, Google Calendar, Outlook or Thunderbird. The link can be replaced or turned off.
+
+### Security
+
+- Invite and calendar links no longer appear in the request log.
 
 ## [0.5.0] - 2026-09-29
 

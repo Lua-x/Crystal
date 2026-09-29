@@ -494,9 +494,36 @@ export const en = {
       appearance: 'Appearance',
       notifications: 'Notifications',
       api: 'API',
+      calendar: 'Calendar',
       sessions: 'Devices',
       users: 'Users',
       invites: 'Invites',
+    },
+    calendar: {
+      title: 'Calendar subscription',
+      intro:
+        'See your due tasks in Apple Calendar, Google Calendar, Outlook or Thunderbird. Open tasks with a due date show up – without the ones assigned to others.',
+      private:
+        'The link is private: anyone who has it can see these tasks. Replace it if it got into the wrong hands.',
+      create: 'Create calendar link',
+      link: 'Calendar link',
+      open: 'Open in calendar app',
+      google:
+        'Google Calendar: add the link under Other calendars → From URL. Google may take several hours to show changes.',
+      created: 'Created {{date}}',
+      lastUsed: 'Last fetched {{time}}',
+      neverUsed: 'Not fetched yet',
+      replace: 'New link…',
+      replaceTitle: 'Replace the calendar link?',
+      replaceBody:
+        'Calendar apps using the current link stop receiving updates until you add the new one.',
+      replaceConfirm: 'Replace',
+      replaced: 'New link created.',
+      turnOff: 'Turn off…',
+      turnOffTitle: 'Turn the calendar subscription off?',
+      turnOffBody: 'Calendar apps using the link stop receiving your tasks.',
+      turnOffConfirm: 'Turn off',
+      turnedOff: 'Calendar subscription turned off.',
     },
     api: {
       title: 'Personal access tokens',

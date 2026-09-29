@@ -9,6 +9,7 @@ import { createWebPushSender, deriveVapidKeys, type PushSender } from '../notifi
 import { AdminService } from './admin.js'
 import { ApiTokenService } from './api-tokens.js'
 import { AuthService } from './auth.js'
+import { CalendarService } from './calendar.js'
 import { CleanupService } from './cleanup.js'
 import { EventHub } from './events.js'
 import { InviteService } from './invites.js'
@@ -45,6 +46,8 @@ export interface Services {
   events: EventHub
   notifications: NotificationService
   reminders: ReminderService
+  /** Private iCal feeds of due tasks. */
+  calendar: CalendarService
   lists: ListService
   tasks: TaskService
   views: ViewService
@@ -57,6 +60,8 @@ export interface Services {
     register: RateLimiter
     /** "Forgot password" requests from one address. */
     passwordReset: RateLimiter
+    /** Calendar feed downloads from one address. */
+    calendarFeeds: RateLimiter
     /** Overall API budget per user (or address when signed out). */
     api: RateLimiter
   }
@@ -129,6 +134,7 @@ export function createServices(options: ServiceOptions): Services {
   const tasks = new TaskService(db, lists, search, events, notifications, now)
   const views = new ViewService(db, tasks, search)
   const reminders = new ReminderService(db, notifications, logger, now)
+  const calendar = new CalendarService(db, config, secretKey, version, now)
   const cleanup = new CleanupService(db, search, { sessions, passwordResets, apiTokens }, now)
   const admin = new AdminService(db, users, sessions, lists)
   const oidc =
@@ -160,6 +166,7 @@ export function createServices(options: ServiceOptions): Services {
     events,
     notifications,
     reminders,
+    calendar,
     lists,
     tasks,
     views,
@@ -169,6 +176,7 @@ export function createServices(options: ServiceOptions): Services {
       loginPerAccount: new RateLimiter(10, 15 * MINUTE_MS, clock),
       register: new RateLimiter(10, 60 * MINUTE_MS, clock),
       passwordReset: new RateLimiter(5, 15 * MINUTE_MS, clock),
+      calendarFeeds: new RateLimiter(120, 60 * MINUTE_MS, clock),
       api: new RateLimiter(600, MINUTE_MS, clock),
     },
   }

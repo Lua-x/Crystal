@@ -213,6 +213,15 @@ const apiSettingsRoute = createRoute({
   ),
 })
 
+const calendarSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: '/calendar',
+  component: lazyRouteComponent(
+    () => import('./features/settings/calendar-settings'),
+    'CalendarSettingsPage',
+  ),
+})
+
 const sessionsSettingsRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/sessions',
@@ -280,6 +289,7 @@ const routeTree = rootRoute.addChildren([
       appearanceSettingsRoute,
       notificationsSettingsRoute,
       sessionsSettingsRoute,
+      calendarSettingsRoute,
       apiSettingsRoute,
       usersSettingsRoute,
       invitesSettingsRoute,

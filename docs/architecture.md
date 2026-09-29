@@ -40,6 +40,7 @@ Tables:
 | `users`                 | Accounts: username, display name, optional email, role, Argon2id password hash (null for SSO-only accounts), language, time zone, UI preferences (JSON) |
 | `user_identities`       | Linked OpenID Connect identities (issuer + subject)                                                                                                     |
 | `sessions`              | Server-side sessions: token hash, device, last activity, expiry                                                                                         |
+| `calendar_feeds`        | A person's private iCal link: token hash for lookup, the token sealed with AES-GCM so the link can be shown again                                       |
 | `api_tokens`            | Personal access tokens: hash, first characters for display, scope (`read`/`write`), last use, expiry                                                    |
 | `invites`               | Invite links: token hash, role, usage limit, expiry, revocation                                                                                         |
 | `lists`                 | Name, color, emoji, owner; one default list per account                                                                                                 |

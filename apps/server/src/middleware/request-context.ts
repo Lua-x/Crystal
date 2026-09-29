@@ -9,6 +9,12 @@ import { resolveClientIp } from '../lib/client-ip.js'
 import type { Logger } from '../lib/logger.js'
 
 const REQUEST_ID_PATTERN = /^[\w-]{1,64}$/
+/** Paths that carry a secret (invite links, calendar feeds) must not end up in logs. */
+const SECRET_IN_PATH = /^(\/api\/v1\/invites\/|\/invite\/|\/api\/calendar\/)[^/]+/
+
+export function redactPath(path: string): string {
+  return path.replace(SECRET_IN_PATH, '$1[redacted]')
+}
 
 /** Assigns a request ID, resolves the client address and logs each request. */
 export function requestContext(config: Config, logger: Logger): MiddlewareHandler<AppEnv> {
@@ -38,7 +44,7 @@ export function requestContext(config: Config, logger: Logger): MiddlewareHandle
     const entry = {
       requestId,
       method: c.req.method,
-      path,
+      path: redactPath(path),
       status: c.res.status,
       durationMs: Math.round(performance.now() - started),
     }

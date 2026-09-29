@@ -502,9 +502,36 @@ export const de: Translation = {
       appearance: 'Darstellung',
       notifications: 'Benachrichtigungen',
       api: 'API',
+      calendar: 'Kalender',
       sessions: 'Geräte',
       users: 'Benutzer',
       invites: 'Einladungen',
+    },
+    calendar: {
+      title: 'Kalender-Abo',
+      intro:
+        'Sieh deine fälligen Aufgaben in Apple Kalender, Google Kalender, Outlook oder Thunderbird. Offene Aufgaben mit Fälligkeitsdatum erscheinen dort – ohne die, die anderen zugewiesen sind.',
+      private:
+        'Der Link ist privat: Wer ihn hat, sieht diese Aufgaben. Ersetze ihn, falls er in falsche Hände geraten ist.',
+      create: 'Kalender-Link erstellen',
+      link: 'Kalender-Link',
+      open: 'In Kalender-App öffnen',
+      google:
+        'Google Kalender: Füge den Link unter „Weitere Kalender“ → „Per URL“ hinzu. Google zeigt Änderungen oft erst nach einigen Stunden.',
+      created: 'Erstellt am {{date}}',
+      lastUsed: 'Zuletzt abgerufen {{time}}',
+      neverUsed: 'Noch nicht abgerufen',
+      replace: 'Neuer Link …',
+      replaceTitle: 'Kalender-Link ersetzen?',
+      replaceBody:
+        'Kalender-Apps mit dem bisherigen Link bekommen keine Änderungen mehr, bis du den neuen hinzufügst.',
+      replaceConfirm: 'Ersetzen',
+      replaced: 'Neuer Link erstellt.',
+      turnOff: 'Ausschalten …',
+      turnOffTitle: 'Kalender-Abo ausschalten?',
+      turnOffBody: 'Kalender-Apps mit dem Link bekommen deine Aufgaben dann nicht mehr.',
+      turnOffConfirm: 'Ausschalten',
+      turnedOff: 'Kalender-Abo ausgeschaltet.',
     },
     api: {
       title: 'Persönliche Zugriffstokens',

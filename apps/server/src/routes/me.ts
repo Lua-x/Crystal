@@ -1,5 +1,6 @@
 import {
   apiTokenSchema,
+  calendarFeedSchema,
   changePasswordSchema,
   createApiTokenSchema,
   createdApiTokenSchema,
@@ -165,6 +166,55 @@ export function meRoutes(services: Services) {
     }),
     (c) => {
       services.auth.unlinkOidc(requireSession(c).user)
+      return c.body(null, 204)
+    },
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'get',
+      path: '/calendar',
+      tags,
+      security,
+      summary: 'The private calendar feed',
+      description: '`null` when no calendar link exists.',
+      responses: {
+        200: jsonResponse(calendarFeedSchema.nullable(), 'The feed, or null'),
+        ...authErrors,
+      },
+    }),
+    (c) => c.json(services.calendar.get(requireSession(c).user), 200),
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'post',
+      path: '/calendar',
+      tags,
+      security,
+      summary: 'Create the calendar feed, or replace its link',
+      description:
+        'Calendar apps subscribe to the returned path. It lists open tasks with a due date; ' +
+        'a new link makes the previous one stop working.',
+      responses: {
+        201: jsonResponse(calendarFeedSchema, 'The feed with its new link'),
+        ...authErrors,
+      },
+    }),
+    (c) => c.json(services.calendar.create(requireSession(c).user), 201),
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'delete',
+      path: '/calendar',
+      tags,
+      security,
+      summary: 'Turn the calendar feed off',
+      responses: { 204: noContent, 404: errorResponse('There is no feed'), ...authErrors },
+    }),
+    (c) => {
+      services.calendar.delete(requireSession(c).user)
       return c.body(null, 204)
     },
   )

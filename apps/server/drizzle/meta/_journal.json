@@ -57,6 +57,13 @@
       "when": 1790702305510,
       "tag": "0007_api_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790703257738,
+      "tag": "0008_calendar_feeds",
+      "breakpoints": true
     }
   ]
 }

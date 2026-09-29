@@ -125,6 +125,20 @@ export const apiTokens = sqliteTable(
   (table) => [index('api_tokens_user_idx').on(table.userId)],
 )
 
+/**
+ * A person's private calendar feed (iCal). The token is kept sealed so the
+ * link can be shown again; lookups use its hash.
+ */
+export const calendarFeeds = sqliteTable('calendar_feeds', {
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull().unique(),
+  token: text('token').notNull(),
+  createdAt: timestamp('created_at').notNull(),
+  lastUsedAt: timestamp('last_used_at'),
+})
+
 /* ── Lists and tasks ─────────────────────────────────────────── */
 
 export const lists = sqliteTable(

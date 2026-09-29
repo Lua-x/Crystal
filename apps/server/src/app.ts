@@ -10,6 +10,7 @@ import { securityHeaders } from './middleware/security-headers.js'
 import { sessionMiddleware, tokenPolicy } from './middleware/session.js'
 import { adminRoutes } from './routes/admin.js'
 import { authRoutes } from './routes/auth.js'
+import { calendarRoutes } from './routes/calendar.js'
 import { docsRoutes } from './routes/docs.js'
 import { eventRoutes } from './routes/events.js'
 import { inviteRoutes } from './routes/invites.js'
@@ -102,6 +103,7 @@ export function createApp(services: Services, options: AppOptions = {}) {
   })
 
   app.route('/api/docs', docsRoutes())
+  app.route('/api/calendar', calendarRoutes(services))
 
   app.all('/api/*', apiNotFound)
   if (options.staticDir) mountWebApp(app, options.staticDir)

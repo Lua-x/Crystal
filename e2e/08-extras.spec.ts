@@ -41,6 +41,39 @@ test('personal API tokens work for scripts and can be revoked', async ({ page, r
   expect(rejected.status()).toBe(401)
 })
 
+test('a private calendar link shows tasks with a due date', async ({ page, request }) => {
+  await signIn(page, ADMIN)
+  await openList(page, 'Tasks')
+  // Quick entry turns “tomorrow” into the due date.
+  const field = page.getByLabel('Add task')
+  await field.fill('Pay rent tomorrow')
+  await field.press('Enter')
+  await expect(task(page, 'Pay rent')).toContainText('Tomorrow')
+  await page.goto('/settings/calendar')
+  await page.getByRole('button', { name: 'Create calendar link' }).click()
+  const link = page.getByTestId('calendar-link')
+  await expect(link).toHaveValue(/\/api\/calendar\/[\w-]+\.ics$/)
+  await expect(page.getByRole('link', { name: 'Open in calendar app' })).toHaveAttribute(
+    'href',
+    /^webcal:\/\//,
+  )
+  await expectAccessible(page)
+
+  const url = await link.inputValue()
+  const feed = await request.get(url)
+  expect(feed.status()).toBe(200)
+  expect(feed.headers()['content-type']).toContain('text/calendar')
+  const body = await feed.text()
+  expect(body).toContain('BEGIN:VCALENDAR')
+  expect(body).toContain('SUMMARY:Pay rent')
+
+  // A new link replaces the old one.
+  await page.getByRole('button', { name: 'New link…' }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Replace' }).click()
+  await expect(link).not.toHaveValue(url)
+  expect((await request.get(url)).status()).toBe(404)
+})
+
 test('the API documentation loads without breaking the content security policy', async ({
   page,
 }) => {
