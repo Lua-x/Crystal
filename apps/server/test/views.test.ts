@@ -89,6 +89,7 @@ describe('smart lists', () => {
       important: 2,
       planned: 5,
       overdue: 1,
+      assigned: 0,
       all: 6,
       completed: 1,
     })

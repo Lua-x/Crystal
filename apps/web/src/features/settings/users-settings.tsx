@@ -76,7 +76,11 @@ function UserRow({ user }: { user: AdminUser }) {
 
   return (
     <div className="flex items-center gap-3 px-4 py-3">
-      <Avatar name={user.displayName} className={cn('size-9', user.disabled && 'opacity-50')} />
+      <Avatar
+        name={user.displayName}
+        seed={user.id}
+        className={cn('size-9', user.disabled && 'opacity-50')}
+      />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="truncate text-body font-medium">

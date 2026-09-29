@@ -4,6 +4,7 @@ import {
   type AdminUser,
   type Locale,
   type Me,
+  type Person,
   type Preferences,
   type Role,
   type SessionInfo,
@@ -181,6 +182,19 @@ export class UserService {
         createdAt: user.createdAt.toISOString(),
         lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
       }))
+  }
+
+  /**
+   * The other active people on this instance, for sharing lists. Only names
+   * are shown – email addresses stay private.
+   */
+  people(userId: string): Person[] {
+    return this.db
+      .select({ id: users.id, username: users.username, displayName: users.displayName })
+      .from(users)
+      .where(and(isNull(users.disabledAt), ne(users.id, userId)))
+      .orderBy(asc(users.displayName))
+      .all()
   }
 
   /** Throws if the username or email belongs to another account. `null` skips a check. */

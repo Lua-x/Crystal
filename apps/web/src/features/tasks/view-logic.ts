@@ -17,7 +17,7 @@ export function isOpen(task: Task): boolean {
   return task.completedAt === null
 }
 
-export function matchesView(task: Task, view: SmartView, today: string): boolean {
+export function matchesView(task: Task, view: SmartView, today: string, meId: string): boolean {
   switch (view) {
     case 'my-day':
       return task.inMyDay
@@ -27,6 +27,8 @@ export function matchesView(task: Task, view: SmartView, today: string): boolean
       return task.dueDate !== null && isOpen(task)
     case 'overdue':
       return task.dueDate !== null && task.dueDate < today && isOpen(task)
+    case 'assigned':
+      return task.assignee?.id === meId && isOpen(task)
     case 'all':
       return isOpen(task)
     case 'completed':

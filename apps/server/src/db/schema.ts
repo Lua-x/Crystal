@@ -184,6 +184,8 @@ export const tasks = sqliteTable(
     nextTaskId: text('next_task_id').references((): AnySQLiteColumn => tasks.id, {
       onDelete: 'set null',
     }),
+    /** Who takes care of the task; always a member of its list. */
+    assigneeId: text('assignee_id').references(() => users.id, { onDelete: 'set null' }),
     completedAt: timestamp('completed_at'),
     completedBy: text('completed_by').references(() => users.id, { onDelete: 'set null' }),
     createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
@@ -195,6 +197,7 @@ export const tasks = sqliteTable(
     index('tasks_list_position_idx').on(table.listId, table.position),
     index('tasks_due_date_idx').on(table.dueDate),
     index('tasks_completed_at_idx').on(table.completedAt),
+    index('tasks_assignee_idx').on(table.assigneeId),
   ],
 )
 

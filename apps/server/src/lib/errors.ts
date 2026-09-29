@@ -24,7 +24,10 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   oidc_already_linked: 'This single sign-on account is linked to another user.',
   oidc_account_not_found: 'No account is linked to this single sign-on identity.',
   identity_required: 'Set a password before removing your only sign-in method.',
-  list_is_default: 'The default list cannot be deleted.',
+  list_is_default: 'The default list cannot be deleted or shared.',
+  already_member: 'This person already has access to the list.',
+  owner_cannot_leave: 'The owner cannot leave the list; delete it instead.',
+  not_a_member: 'Only people who can edit the list can be assigned.',
 }
 
 /** An expected failure that is reported to the client as `{ error: { code, message } }`. */

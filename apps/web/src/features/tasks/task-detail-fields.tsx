@@ -3,12 +3,13 @@ import {
   RECURRENCE_FREQUENCIES,
   RECURRENCE_MAX_INTERVAL,
   tagSchema,
+  type List,
   type Recurrence,
   type RecurrenceBase,
   type Task,
 } from '@crystal/shared'
 import { useQuery } from '@tanstack/react-query'
-import { Hash, Repeat, X } from 'lucide-react'
+import { Hash, Repeat, UserRound, X } from 'lucide-react'
 import { useId, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -17,7 +18,8 @@ import { Select } from '../../components/ui/select'
 import { inputClassName } from '../../components/ui/styles'
 import { cn } from '../../lib/cn'
 import { translateMessage } from '../../lib/i18n'
-import { tagsQuery } from './data'
+import { useMe } from '../shell/use-me'
+import { membersQuery, tagsQuery } from './data'
 import {
   describeRecurrence,
   presetOf,
@@ -247,6 +249,48 @@ function CustomRecurrence({
         )}
       </div>
     </div>
+  )
+}
+
+/* ── Assignee ───────────────────────────────────────────────────── */
+
+interface AssigneeEditorProps {
+  task: Task
+  list: List
+  disabled: boolean
+  onChange: (assigneeId: string | null) => void
+}
+
+/** Who takes care of the task: anyone who can edit the (shared) list. */
+export function AssigneeEditor({ task, list, disabled, onChange }: AssigneeEditorProps) {
+  const { t } = useTranslation()
+  const me = useMe()
+  const { data: members = [] } = useQuery(membersQuery(list.id))
+  const assignable = members.filter((member) => member.role !== 'viewer')
+
+  return (
+    <DetailRow icon={<UserRound />} label={t('sharing.assignee')}>
+      <Select
+        aria-label={t('sharing.assignTo')}
+        value={task.assignee?.id ?? ''}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value || null)}
+        className="h-8 text-callout"
+      >
+        <option value="">{t('sharing.nobodyAssigned')}</option>
+        {assignable.map((member) => (
+          <option key={member.userId} value={member.userId}>
+            {member.userId === me.id
+              ? t('sharing.you', { name: member.displayName })
+              : member.displayName}
+          </option>
+        ))}
+        {/* Until the members have loaded, the current assignee still shows. */}
+        {task.assignee && !assignable.some((member) => member.userId === task.assignee?.id) && (
+          <option value={task.assignee.id}>{task.assignee.displayName}</option>
+        )}
+      </Select>
+    </DetailRow>
   )
 }
 

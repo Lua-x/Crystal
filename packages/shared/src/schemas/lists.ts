@@ -6,6 +6,7 @@ import {
   LIST_ICON_MAX_LENGTH,
   LIST_NAME_MAX_LENGTH,
   LIST_ROLES,
+  SHARE_ROLES,
 } from '../constants.js'
 import { idSchema, timestampSchema } from './common.js'
 
@@ -26,13 +27,34 @@ export const listSchema = z.object({
   /** Placement in the signed-in user's sidebar. */
   groupId: idSchema.nullable(),
   position: z.string(),
-  /** The list new tasks from smart lists go to. It cannot be deleted. */
+  /** The list new tasks from smart lists go to. It cannot be deleted or shared. */
   isDefault: z.boolean(),
   openCount: z.int(),
+  /** People with access, the owner included; more than one means shared. */
+  memberCount: z.int(),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 })
 export type List = z.infer<typeof listSchema>
+
+export const shareRoleSchema = z.enum(SHARE_ROLES)
+
+export const listMemberSchema = z.object({
+  userId: idSchema,
+  username: z.string(),
+  displayName: z.string(),
+  role: listRoleSchema,
+})
+export type ListMember = z.infer<typeof listMemberSchema>
+
+export const addListMemberSchema = z.object({
+  userId: idSchema,
+  role: shareRoleSchema,
+})
+export type AddListMemberInput = z.infer<typeof addListMemberSchema>
+
+export const updateListMemberSchema = z.object({ role: shareRoleSchema })
+export type UpdateListMemberInput = z.infer<typeof updateListMemberSchema>
 
 /**
  * Where to put a list or group in the sidebar: inside `groupId` (or at the top

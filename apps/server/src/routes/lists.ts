@@ -1,11 +1,14 @@
 import {
+  addListMemberSchema,
   createListGroupSchema,
   createListSchema,
   idSchema,
   listGroupSchema,
+  listMemberSchema,
   listSchema,
   taskSchema,
   updateListGroupSchema,
+  updateListMemberSchema,
   updateListSchema,
 } from '@crystal/shared'
 import { createRoute, z } from '@hono/zod-openapi'
@@ -158,6 +161,110 @@ export function listRoutes(services: Services) {
         },
         200,
       ),
+  )
+
+  /* ── Sharing ── */
+
+  const memberParams = z.object({ id: idSchema, userId: idSchema })
+  const sharingTags = ['Sharing']
+
+  router.openapi(
+    createRoute({
+      method: 'get',
+      path: '/{id}/members',
+      tags: sharingTags,
+      security,
+      summary: 'People with access to a list',
+      request: { params: idParams },
+      responses: {
+        200: jsonResponse(z.array(listMemberSchema), 'Members, the owner first'),
+        ...notFound,
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    (c) => c.json(services.lists.members(requireAuthState(c).user, c.req.valid('param').id), 200),
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'post',
+      path: '/{id}/members',
+      tags: sharingTags,
+      security,
+      summary: 'Share a list with someone',
+      description:
+        'Only the owner can share. Editors can change tasks, viewers can only read them and ' +
+        'add them to their own My Day. The default list cannot be shared.',
+      request: { params: idParams, body: jsonBody(addListMemberSchema) },
+      responses: {
+        201: jsonResponse(z.array(listMemberSchema), 'All members'),
+        409: errorResponse('Already a member, or the default list'),
+        ...notFound,
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    (c) =>
+      c.json(
+        services.lists.addMember(
+          requireAuthState(c).user,
+          c.req.valid('param').id,
+          c.req.valid('json'),
+        ),
+        201,
+      ),
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'patch',
+      path: '/{id}/members/{userId}',
+      tags: sharingTags,
+      security,
+      summary: "Change someone's role",
+      description: 'Only the owner can do this. Someone who becomes a viewer is unassigned.',
+      request: { params: memberParams, body: jsonBody(updateListMemberSchema) },
+      responses: {
+        200: jsonResponse(z.array(listMemberSchema), 'All members'),
+        ...notFound,
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    (c) => {
+      const { id, userId } = c.req.valid('param')
+      return c.json(
+        services.lists.updateMember(requireAuthState(c).user, id, userId, c.req.valid('json')),
+        200,
+      )
+    },
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'delete',
+      path: '/{id}/members/{userId}',
+      tags: sharingTags,
+      security,
+      summary: 'Remove someone from a list, or leave it',
+      description:
+        'The owner can remove anyone else; everyone else can remove themselves (leave). ' +
+        'Their tasks in the list become unassigned.',
+      request: { params: memberParams },
+      responses: {
+        204: noContent,
+        409: errorResponse('The owner cannot leave'),
+        ...notFound,
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    (c) => {
+      const { id, userId } = c.req.valid('param')
+      services.lists.removeMember(requireAuthState(c).user, id, userId)
+      return c.body(null, 204)
+    },
   )
 
   return router

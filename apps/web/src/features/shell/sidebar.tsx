@@ -92,7 +92,7 @@ function AccountMenu({ onNavigate }: { onNavigate: (() => void) | undefined }) {
         aria-label={t('shell.accountMenu')}
         className="flex w-full cursor-default items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-fill-hover data-[state=open]:bg-fill-selected pointer-coarse:py-2.5"
       >
-        <Avatar name={me.displayName} />
+        <Avatar name={me.displayName} seed={me.id} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-callout font-medium">{me.displayName}</span>
           <span className="block truncate text-footnote text-text-secondary">@{me.username}</span>

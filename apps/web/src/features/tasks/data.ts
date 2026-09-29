@@ -4,6 +4,9 @@ import {
   type CreateTaskInput,
   type List,
   type ListGroup,
+  type ListMember,
+  type Person,
+  type ShareRole,
   type SmartView,
   type Subtask,
   type TagSummary,
@@ -44,7 +47,21 @@ export const taskKeys = {
   tagTasks: (tag: string) => ['tasks', 'tag', tag] as const,
   task: (id: string) => ['task', id] as const,
   tags: ['tags'] as const,
+  /** Under `lists`, so refreshing the lists refreshes their members, too. */
+  members: (listId: string) => ['lists', listId, 'members'] as const,
+  people: ['people'] as const,
 }
+
+export const membersQuery = (listId: string) =>
+  queryOptions({
+    queryKey: taskKeys.members(listId),
+    queryFn: () => api<ListMember[]>(`/lists/${listId}/members`),
+  })
+
+export const peopleQuery = queryOptions({
+  queryKey: taskKeys.people,
+  queryFn: () => api<Person[]>('/people'),
+})
 
 export const tagsQuery = queryOptions({
   queryKey: taskKeys.tags,
@@ -237,7 +254,18 @@ export function useUpdateTask() {
       api<Task>(`/tasks/${id}`, { method: 'PATCH', body: input }),
     onMutate: async ({ id, input, position }) => {
       const snapshot = await snapshotTasks(queryClient)
-      patchCachedTask(queryClient, id, (task) => applyUpdate(task, input, position))
+      patchCachedTask(queryClient, id, (task) => {
+        const next = applyUpdate(task, input, position)
+        if (input.assigneeId === undefined) return next
+        // The name comes from the list's members, if they are loaded.
+        const member = queryClient
+          .getQueryData<ListMember[]>(taskKeys.members(task.listId))
+          ?.find((item) => item.userId === input.assigneeId)
+        return {
+          ...next,
+          assignee: member ? { id: member.userId, displayName: member.displayName } : null,
+        }
+      })
       return { snapshot }
     },
     onError: (error, _variables, context) => {
@@ -285,6 +313,7 @@ export function useCreateTask(optimisticKeys: QueryKey[] = []) {
               inMyDay: input.myDay ?? false,
               recurrence: input.recurrence ? recurrenceInputSchema.parse(input.recurrence) : null,
               tags: input.tags ? tagsSchema.parse(input.tags) : [],
+              assignee: null,
               subtasks: [],
               createdAt: now,
               updatedAt: now,
@@ -551,5 +580,43 @@ export function useDeleteGroup() {
         groups?.filter((group) => group.id !== id),
       )
     },
+  )
+}
+
+/* ── Sharing ───────────────────────────────────────────────────── */
+
+/** Member changes answer with all members; the lists (member counts) refresh after. */
+function useMemberMutation<T extends { listId: string }>(
+  request: (variables: T) => Promise<ListMember[] | undefined>,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: request,
+    onSuccess: (members, { listId }) => {
+      if (members) queryClient.setQueryData(taskKeys.members(listId), members)
+    },
+    onError: (error) => toast.error(errorMessage(error)),
+    onSettled: () => refreshTaskData(queryClient),
+  })
+}
+
+export function useShareList() {
+  return useMemberMutation(
+    ({ listId, userId, role }: { listId: string; userId: string; role: ShareRole }) =>
+      api<ListMember[]>(`/lists/${listId}/members`, { method: 'POST', body: { userId, role } }),
+  )
+}
+
+export function useChangeMemberRole() {
+  return useMemberMutation(
+    ({ listId, userId, role }: { listId: string; userId: string; role: ShareRole }) =>
+      api<ListMember[]>(`/lists/${listId}/members/${userId}`, { method: 'PATCH', body: { role } }),
+  )
+}
+
+/** Removes someone from a list – or, for oneself, leaves it. */
+export function useRemoveMember() {
+  return useMemberMutation(({ listId, userId }: { listId: string; userId: string }) =>
+    api<undefined>(`/lists/${listId}/members/${userId}`, { method: 'DELETE' }),
   )
 }

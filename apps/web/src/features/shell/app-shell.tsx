@@ -11,6 +11,7 @@ import { DndProvider } from '../tasks/dnd-provider'
 import { GroupDialog, ListDialog } from '../tasks/list-dialogs'
 import { TaskDetailHost } from '../tasks/task-detail-host'
 import { CommandPalette } from './command-palette'
+import { useLiveUpdates } from './live-updates'
 import { ShellContext, type ShellState } from './shell-context'
 import { useGlobalShortcuts } from './shortcuts'
 import { ShortcutsDialog } from './shortcuts-dialog'
@@ -59,6 +60,7 @@ export function AppShell() {
     [],
   )
   useGlobalShortcuts({ onPalette: togglePalette, onHelp: openShortcuts })
+  useLiveUpdates()
   const overlayProps = (name: NonNullable<typeof overlay>) => ({
     open: overlay === name,
     onOpenChange: (open: boolean) => setOverlay(open ? name : null),

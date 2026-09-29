@@ -1,4 +1,4 @@
-import type { ErrorCode } from '@crystal/shared'
+import { uuidv7, type ErrorCode } from '@crystal/shared'
 
 /** An error response from the API (`{ error: { code, message, details } }`). */
 export class ApiError extends Error {
@@ -19,6 +19,13 @@ interface RequestOptions {
   signal?: AbortSignal
 }
 
+/**
+ * Identifies this browser tab. The server announces changes to every open app
+ * except the tab that made them, which already shows them. (Not
+ * `crypto.randomUUID()`: that needs HTTPS, and home servers often run without.)
+ */
+export const CLIENT_ID = uuidv7()
+
 /** Calls `/api/v1{path}`. Resolves with the parsed JSON (or undefined for 204). */
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, signal } = options
@@ -27,7 +34,10 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     response = await fetch(`/api/v1${path}`, {
       method,
       credentials: 'same-origin',
-      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      headers: {
+        'X-Crystal-Client': CLIENT_ID,
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal,
     })

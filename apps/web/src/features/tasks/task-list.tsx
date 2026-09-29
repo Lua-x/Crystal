@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '../../lib/cn'
 import { springs } from '../../lib/motion'
 import { useDeleteTask } from './data'
-import { useTaskSelection } from './hooks'
+import { useListsById, useTaskSelection } from './hooks'
 import type { TaskActions } from './task-actions'
 import { TaskContextMenu } from './task-menu'
 import { TaskRow } from './task-row'
@@ -43,11 +43,15 @@ export function TaskList({
 }: TaskListProps) {
   const { selectedId, open } = useTaskSelection()
   const deleteTask = useDeleteTask()
+  const allLists = useListsById()
+  // In lists shared for viewing, tasks can only be opened (and put into My Day).
+  const isReadOnly = (task: Task) => allLists.get(task.listId)?.role === 'viewer'
 
   // Keyboard shortcuts on a focused task (see the shortcut overview).
   const onRowKeyDown = (task: Task) => (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.metaKey || event.ctrlKey || event.altKey) return
     const completed = task.completedAt !== null || actions.completing.has(task.id)
+    const editable = !isReadOnly(task)
     switch (event.key) {
       case 'ArrowDown':
       case 'ArrowUp':
@@ -55,11 +59,11 @@ export function TaskList({
         break
       case 'x':
       case 'X':
-        actions.toggleComplete(task, !completed)
+        if (editable) actions.toggleComplete(task, !completed)
         break
       case 's':
       case 'S':
-        actions.toggleImportant(task)
+        if (editable) actions.toggleImportant(task)
         break
       case 'm':
       case 'M':
@@ -67,6 +71,7 @@ export function TaskList({
         break
       case 'Delete':
       case 'Backspace':
+        if (!editable) return
         // Keep the focus in the list: on the next task, or the previous one at the end.
         if (!moveFocus(event.currentTarget, 1)) moveFocus(event.currentTarget, -1)
         deleteTask.mutate(task)
@@ -84,6 +89,7 @@ export function TaskList({
       list={listsById?.get(task.listId)}
       selected={task.id === selectedId}
       completing={actions.completing.has(task.id)}
+      readOnly={isReadOnly(task)}
       onToggleComplete={actions.toggleComplete}
       onToggleImportant={actions.toggleImportant}
       onOpen={(item) => open(item.id)}
@@ -98,6 +104,7 @@ export function TaskList({
       today={today}
       actions={actions}
       onOpen={(item) => open(item.id)}
+      readOnly={isReadOnly(task)}
       touchLongPress={touchLongPress}
     >
       <div>{row}</div>

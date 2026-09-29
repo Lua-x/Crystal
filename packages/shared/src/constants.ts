@@ -61,12 +61,17 @@ export type ListColor = (typeof LIST_COLORS)[number]
 export const LIST_ROLES = ['owner', 'editor', 'viewer'] as const
 export type ListRole = (typeof LIST_ROLES)[number]
 
+/** Roles a list can be shared with; every list has exactly one owner. */
+export const SHARE_ROLES = ['editor', 'viewer'] as const
+export type ShareRole = (typeof SHARE_ROLES)[number]
+
 /** Automatic lists computed from all lists a user can see. */
 export const SMART_VIEWS = [
   'my-day',
   'important',
   'planned',
   'overdue',
+  'assigned',
   'all',
   'completed',
 ] as const

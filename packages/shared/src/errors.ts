@@ -28,6 +28,9 @@ export const ERROR_CODES = [
   'oidc_account_not_found',
   'identity_required',
   'list_is_default',
+  'already_member',
+  'owner_cannot_leave',
+  'not_a_member',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]

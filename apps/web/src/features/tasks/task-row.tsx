@@ -11,6 +11,7 @@ import {
 import type { HTMLAttributes, KeyboardEventHandler, ReactNode, Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Avatar } from '../../components/ui/avatar'
 import { TaskCheckbox } from '../../components/ui/task-checkbox'
 import { cn } from '../../lib/cn'
 import { ListIcon } from './list-style'
@@ -25,6 +26,8 @@ export interface TaskRowProps {
   selected?: boolean
   /** Shown checked while the completion is animating. */
   completing?: boolean
+  /** In a list the user can only view: nothing but opening the details. */
+  readOnly?: boolean
   onToggleComplete: (task: Task, completed: boolean) => void
   onToggleImportant: (task: Task) => void
   onOpen: (task: Task) => void
@@ -47,6 +50,7 @@ export function TaskRow({
   list,
   selected = false,
   completing = false,
+  readOnly = false,
   onToggleComplete,
   onToggleImportant,
   onOpen,
@@ -150,6 +154,7 @@ export function TaskRow({
 
       <TaskCheckbox
         checked={completed}
+        disabled={readOnly}
         onCheckedChange={(checked) => onToggleComplete(task, checked)}
         label={
           completed
@@ -183,6 +188,21 @@ export function TaskRow({
         )}
       </button>
 
+      {task.assignee && (
+        <span
+          role="img"
+          aria-label={t('sharing.assignedTo', { name: task.assignee.displayName })}
+          title={task.assignee.displayName}
+          className="relative z-10 flex shrink-0"
+        >
+          <Avatar
+            name={task.assignee.displayName}
+            seed={task.assignee.id}
+            className="size-6 text-caption"
+          />
+        </span>
+      )}
+
       {task.priority > 0 && !completed && (
         <span
           className="relative z-10 shrink-0 px-1 text-callout font-bold text-accent-text"
@@ -197,6 +217,7 @@ export function TaskRow({
 
       <button
         type="button"
+        disabled={readOnly}
         onClick={() => onToggleImportant(task)}
         aria-pressed={task.important}
         aria-label={

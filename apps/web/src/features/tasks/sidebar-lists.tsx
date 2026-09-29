@@ -16,6 +16,8 @@ import {
   Star,
   Sun,
   Trash2,
+  UserCheck,
+  Users,
 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState, type KeyboardEventHandler, type ReactNode } from 'react'
@@ -35,13 +37,14 @@ import { GroupDialog } from './list-dialogs'
 import { ListIcon } from './list-style'
 import { buildSidebarRows, type SidebarRow } from './sidebar-model'
 
-type SmartPath = '/my-day' | '/important' | '/planned' | '/overdue' | '/all' | '/completed'
+type SmartPath = `/${SmartView}`
 
 const TILES: { view: SmartView; to: SmartPath; icon: ReactNode; tone: string }[] = [
   { view: 'my-day', to: '/my-day', icon: <Sun />, tone: 'text-list-yellow' },
   { view: 'important', to: '/important', icon: <Star />, tone: 'text-important' },
   { view: 'planned', to: '/planned', icon: <CalendarDays />, tone: 'text-list-blue' },
   { view: 'overdue', to: '/overdue', icon: <CalendarClock />, tone: 'text-list-red' },
+  { view: 'assigned', to: '/assigned', icon: <UserCheck />, tone: 'text-list-teal' },
   { view: 'all', to: '/all', icon: <Inbox />, tone: 'text-list-gray' },
   { view: 'completed', to: '/completed', icon: <CircleCheck />, tone: 'text-list-green' },
 ]
@@ -50,9 +53,13 @@ const TILES: { view: SmartView; to: SmartPath; icon: ReactNode; tone: string }[]
 export function SmartTiles({ onNavigate }: { onNavigate: (() => void) | undefined }) {
   const { t } = useTranslation()
   const { data: counts } = useQuery(countsQuery)
+  const { data: lists = [] } = useQuery(listsQuery)
+  // "Assigned to me" only matters once someone shares lists with you.
+  const sharing = lists.some((list) => list.memberCount > 1) || (counts?.assigned ?? 0) > 0
+  const tiles = TILES.filter((tile) => tile.view !== 'assigned' || sharing)
   return (
     <ul aria-label={t('views.smartLists')} className="grid grid-cols-2 gap-2">
-      {TILES.map((tile) => (
+      {tiles.map((tile) => (
         <li key={tile.view}>
           <Tile tile={tile} count={counts?.[tile.view]} onNavigate={onNavigate} />
         </li>
@@ -213,6 +220,7 @@ function ListRow({
   depth: 0 | 1
   onNavigate: (() => void) | undefined
 }) {
+  const { t } = useTranslation()
   return (
     <Link
       to="/lists/$listId"
@@ -226,6 +234,13 @@ function ListRow({
     >
       <ListIcon list={list} />
       <span className="min-w-0 flex-1 truncate">{list.name}</span>
+      {list.memberCount > 1 && (
+        <Users
+          role="img"
+          aria-label={t('sharing.sharedList')}
+          className="size-3.5 shrink-0 text-text-secondary"
+        />
+      )}
       {list.openCount > 0 && (
         <span className="text-footnote text-text-secondary tabular-nums">{list.openCount}</span>
       )}

@@ -1,19 +1,22 @@
 import {
   uuidv7,
+  type AddListMemberInput,
   type CreateListGroupInput,
   type CreateListInput,
   type List,
   type ListGroup,
+  type ListMember,
   type ListPlacement,
   type ListRole,
   type Locale,
   type UpdateListGroupInput,
   type UpdateListInput,
+  type UpdateListMemberInput,
 } from '@crystal/shared'
 import { and, asc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 
 import type { Db } from '../db/client.js'
-import { listGroups, listMembers, lists, tasks, type UserRow } from '../db/schema.js'
+import { listGroups, listMembers, lists, myDay, tasks, users, type UserRow } from '../db/schema.js'
 import type { Executor } from '../db/types.js'
 import { AppError } from '../lib/errors.js'
 import {
@@ -23,6 +26,7 @@ import {
   positionAtStart,
   type Ordered,
 } from '../lib/ordering.js'
+import type { EventHub } from './events.js'
 import type { SearchService } from './search.js'
 
 const ROLE_RANK: Record<ListRole, number> = { viewer: 0, editor: 1, owner: 2 }
@@ -41,6 +45,7 @@ export class ListService {
   constructor(
     private readonly db: Db,
     private readonly search: SearchService,
+    private readonly events: EventHub,
     private readonly now: () => Date,
   ) {}
 
@@ -129,14 +134,15 @@ export class ListService {
         position: positionAtEnd(container),
       })
     })
+    this.events.personalChange(user.id)
     return this.get(user, id)
   }
 
   update(user: UserRow, listId: string, input: UpdateListInput): List {
+    const changesList =
+      input.name !== undefined || input.color !== undefined || input.icon !== undefined
     this.db.transaction((tx) => {
       const role = this.requireRole(user.id, listId, 'viewer', tx)
-      const changesList =
-        input.name !== undefined || input.color !== undefined || input.icon !== undefined
       if (changesList) {
         if (role !== 'owner') throw new AppError(403, 'forbidden')
         tx.update(lists)
@@ -151,6 +157,9 @@ export class ListService {
       }
       if (input.placement) this.placeList(user.id, listId, input.placement, tx)
     })
+    // Name, color and icon are the same for everyone; the placement is personal.
+    if (changesList) this.events.listsChanged([listId])
+    else this.events.personalChange(user.id)
     return this.get(user, listId)
   }
 
@@ -162,11 +171,12 @@ export class ListService {
       if (list?.isDefault) throw new AppError(409, 'list_is_default')
       tx.update(lists).set({ deletedAt: this.now() }).where(eq(lists.id, listId)).run()
     })
+    this.events.listsChanged([listId])
   }
 
   /** Deletes all completed tasks of a list. Returns how many were deleted. */
   deleteCompleted(user: UserRow, listId: string): number {
-    return this.db.transaction((tx) => {
+    const deleted = this.db.transaction((tx) => {
       this.requireRole(user.id, listId, 'editor', tx)
       const done = tx
         .select({ id: tasks.id })
@@ -179,6 +189,111 @@ export class ListService {
       for (const id of ids) this.search.remove(id, tx)
       return ids.length
     })
+    if (deleted > 0) this.events.listsChanged([listId])
+    return deleted
+  }
+
+  /* ── Sharing ────────────────────────────────────────────────── */
+
+  /** Everyone with access, the owner first, then alphabetically. */
+  members(user: UserRow, listId: string): ListMember[] {
+    this.requireRole(user.id, listId, 'viewer')
+    return this.db
+      .select({
+        userId: users.id,
+        username: users.username,
+        displayName: users.displayName,
+        role: listMembers.role,
+      })
+      .from(listMembers)
+      .innerJoin(users, eq(users.id, listMembers.userId))
+      .where(eq(listMembers.listId, listId))
+      .all()
+      .sort(
+        (a, b) =>
+          Number(b.role === 'owner') - Number(a.role === 'owner') ||
+          a.displayName.localeCompare(b.displayName),
+      )
+  }
+
+  /** Shares a list with someone on this instance. Only the owner can do this. */
+  addMember(user: UserRow, listId: string, input: AddListMemberInput): ListMember[] {
+    this.db.transaction((tx) => {
+      this.requireRole(user.id, listId, 'owner', tx)
+      const list = tx.select().from(lists).where(eq(lists.id, listId)).get()
+      // The default list is everyone's private inbox.
+      if (list?.isDefault) throw new AppError(409, 'list_is_default')
+      const person = tx.select().from(users).where(eq(users.id, input.userId)).get()
+      if (!person || person.disabledAt) throw new AppError(404, 'not_found')
+      if (this.roleOf(person.id, listId, tx)) throw new AppError(409, 'already_member')
+      // The list appears at the end of their sidebar.
+      tx.insert(listMembers)
+        .values({
+          listId,
+          userId: person.id,
+          role: input.role,
+          groupId: null,
+          position: positionAtEnd(this.topLevelItems(person.id, tx)),
+          createdAt: this.now(),
+        })
+        .run()
+    })
+    this.events.listsChanged([listId])
+    return this.members(user, listId)
+  }
+
+  updateMember(
+    user: UserRow,
+    listId: string,
+    memberId: string,
+    input: UpdateListMemberInput,
+  ): ListMember[] {
+    this.db.transaction((tx) => {
+      this.requireRole(user.id, listId, 'owner', tx)
+      const role = this.roleOf(memberId, listId, tx)
+      if (!role) throw new AppError(404, 'not_found')
+      if (role === 'owner') throw new AppError(403, 'forbidden')
+      tx.update(listMembers)
+        .set({ role: input.role })
+        .where(and(eq(listMembers.listId, listId), eq(listMembers.userId, memberId)))
+        .run()
+      // Viewers cannot take care of tasks.
+      if (input.role === 'viewer') this.unassign(listId, memberId, tx)
+    })
+    this.events.listsChanged([listId])
+    return this.members(user, listId)
+  }
+
+  /**
+   * Removes someone from a list: the owner removes a member, or a member
+   * leaves. Their tasks in the list become unassigned.
+   */
+  removeMember(user: UserRow, listId: string, memberId: string): void {
+    this.db.transaction((tx) => {
+      const ownRole = this.requireRole(user.id, listId, 'viewer', tx)
+      if (memberId === user.id) {
+        if (ownRole === 'owner') throw new AppError(409, 'owner_cannot_leave')
+      } else {
+        if (ownRole !== 'owner') throw new AppError(403, 'forbidden')
+        if (!this.roleOf(memberId, listId, tx)) throw new AppError(404, 'not_found')
+      }
+      tx.delete(listMembers)
+        .where(and(eq(listMembers.listId, listId), eq(listMembers.userId, memberId)))
+        .run()
+      this.unassign(listId, memberId, tx)
+      const listTasks = tx.select({ id: tasks.id }).from(tasks).where(eq(tasks.listId, listId))
+      tx.delete(myDay)
+        .where(and(eq(myDay.userId, memberId), inArray(myDay.taskId, listTasks)))
+        .run()
+    })
+    this.events.listsChanged([listId], [memberId])
+  }
+
+  private unassign(listId: string, userId: string, tx: Executor): void {
+    tx.update(tasks)
+      .set({ assigneeId: null, updatedAt: this.now() })
+      .where(and(eq(tasks.listId, listId), eq(tasks.assigneeId, userId)))
+      .run()
   }
 
   /** Removes every list the user owns (used when an account is deleted). */
@@ -228,6 +343,7 @@ export class ListService {
         })
         .run()
     })
+    this.events.personalChange(user.id)
     return this.getGroup(user.id, id)
   }
 
@@ -245,6 +361,7 @@ export class ListService {
       }
       tx.update(listGroups).set(changes).where(eq(listGroups.id, groupId)).run()
     })
+    this.events.personalChange(user.id)
     return this.getGroup(user.id, groupId)
   }
 
@@ -270,6 +387,7 @@ export class ListService {
       }
       tx.delete(listGroups).where(eq(listGroups.id, groupId)).run()
     })
+    this.events.personalChange(user.id)
   }
 
   /* ── Internals ──────────────────────────────────────────────── */
@@ -319,8 +437,11 @@ export class ListService {
         and ${tasks.deletedAt} is null
         and ${tasks.completedAt} is null
     )`
+    const memberCount = sql<number>`(
+      select count(*) from ${listMembers} as "others" where "others"."list_id" = ${lists.id}
+    )`
     return this.db
-      .select({ list: lists, member: listMembers, openCount })
+      .select({ list: lists, member: listMembers, openCount, memberCount })
       .from(listMembers)
       .innerJoin(lists, eq(lists.id, listMembers.listId))
       .where(
@@ -332,7 +453,7 @@ export class ListService {
       )
       .orderBy(asc(listMembers.position))
       .all()
-      .map(({ list, member, openCount }) => ({
+      .map(({ list, member, openCount, memberCount }) => ({
         id: list.id,
         name: list.name,
         color: list.color,
@@ -342,6 +463,7 @@ export class ListService {
         position: member.position,
         isDefault: list.isDefault && list.createdBy === userId,
         openCount: Number(openCount),
+        memberCount: Number(memberCount),
         createdAt: list.createdAt.toISOString(),
         updatedAt: list.updatedAt.toISOString(),
       }))

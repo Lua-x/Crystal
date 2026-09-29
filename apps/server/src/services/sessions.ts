@@ -88,6 +88,20 @@ export class SessionService {
     return { session: row.session, user: row.user, renewed: renew }
   }
 
+  /**
+   * Whether a session is still valid, without touching it – for connections
+   * that stay open, such as the event stream.
+   */
+  isActive(sessionId: string): boolean {
+    const row = this.db
+      .select({ expiresAt: sessions.expiresAt, disabledAt: users.disabledAt })
+      .from(sessions)
+      .innerJoin(users, eq(users.id, sessions.userId))
+      .where(eq(sessions.id, sessionId))
+      .get()
+    return Boolean(row && !row.disabledAt && row.expiresAt.getTime() > this.now().getTime())
+  }
+
   listForUser(userId: string): SessionRow[] {
     return this.db
       .select()

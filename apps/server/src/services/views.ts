@@ -79,6 +79,12 @@ export class ViewService {
       case 'overdue':
         rows = this.visibleTasks(user, and(lt(tasks.dueDate, today), open), dueDateOrder())
         break
+      case 'assigned':
+        rows = this.visibleTasks(user, and(eq(tasks.assigneeId, user.id), open), [
+          ...dueDateOrder(),
+          asc(tasks.createdAt),
+        ])
+        break
       case 'all':
         rows = this.visibleTasks(user, open, [asc(tasks.listId), asc(tasks.position)])
         break
@@ -108,6 +114,7 @@ export class ViewService {
       important: this.countVisible(user, and(eq(tasks.important, true), open)),
       planned: this.countVisible(user, and(isNotNull(tasks.dueDate), open)),
       overdue: this.countVisible(user, and(lt(tasks.dueDate, today), open)),
+      assigned: this.countVisible(user, and(eq(tasks.assigneeId, user.id), open)),
       all: this.countVisible(user, open),
       completed: this.countVisible(user, isNotNull(tasks.completedAt)),
     }

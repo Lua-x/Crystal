@@ -9,6 +9,7 @@ import {
   Plus,
   Star,
   Sun,
+  UserCheck,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -41,6 +42,7 @@ const EMPTY_ICON: Record<SmartView, ReactNode> = {
   important: <Star />,
   planned: <CalendarDays />,
   overdue: <CalendarClock />,
+  assigned: <UserCheck />,
   all: <Inbox />,
   completed: <CircleCheck />,
 }
@@ -60,6 +62,7 @@ function quickAddDefaults(
     case 'all':
       return {}
     case 'overdue':
+    case 'assigned':
     case 'completed':
       return null
   }
@@ -77,7 +80,7 @@ export function SmartViewPage({ view }: { view: SmartView }) {
   const defaults = quickAddDefaults(view, today)
 
   // Keeps the cached result consistent right after local changes.
-  const tasks = (query.data ?? []).filter((task) => matchesView(task, view, today))
+  const tasks = (query.data ?? []).filter((task) => matchesView(task, view, today, me.id))
   const { open, completed } = splitByCompletion(tasks)
 
   const common = { today, actions, listsById }

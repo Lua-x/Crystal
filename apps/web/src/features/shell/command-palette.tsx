@@ -19,6 +19,7 @@ import {
   Star,
   Sun,
   SunMedium,
+  UserCheck,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
@@ -47,6 +48,7 @@ const VIEW_ICONS: Record<SmartView, ReactNode> = {
   important: <Star />,
   planned: <CalendarDays />,
   overdue: <CalendarClock />,
+  assigned: <UserCheck />,
   all: <Inbox />,
   completed: <CircleCheck />,
 }

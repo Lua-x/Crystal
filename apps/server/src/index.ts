@@ -71,6 +71,8 @@ function main(): void {
   const shutdown = (signal: string) => {
     logger.info({ signal }, 'Shutting down')
     clearInterval(cleanup)
+    // Open event streams would keep the server from closing.
+    services.events.closeAll()
     server.close(() => {
       database.close()
       process.exit(0)

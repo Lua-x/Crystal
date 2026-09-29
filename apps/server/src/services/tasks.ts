@@ -20,6 +20,7 @@ import {
   subtasks,
   tasks,
   taskTags,
+  users,
   type SubtaskRow,
   type TaskRow,
   type UserRow,
@@ -33,6 +34,7 @@ import {
   positionAtStart,
   type Ordered,
 } from '../lib/ordering.js'
+import type { EventHub } from './events.js'
 import type { ListService } from './lists.js'
 import type { SearchService } from './search.js'
 
@@ -48,6 +50,7 @@ const SHARED_FIELDS = [
   'placement',
   'recurrence',
   'tags',
+  'assigneeId',
 ] as const
 
 export class TaskService {
@@ -55,6 +58,7 @@ export class TaskService {
     private readonly db: Db,
     private readonly lists: ListService,
     private readonly search: SearchService,
+    private readonly events: EventHub,
     private readonly now: () => Date,
   ) {}
 
@@ -102,6 +106,19 @@ export class TaskService {
       .all()) {
       tagsByTask.set(row.taskId, [...(tagsByTask.get(row.taskId) ?? []), row.tag])
     }
+    const assigneeIds = [
+      ...new Set(rows.flatMap((row) => (row.assigneeId ? [row.assigneeId] : []))),
+    ]
+    const assignees = new Map(
+      assigneeIds.length > 0
+        ? executor
+            .select({ id: users.id, displayName: users.displayName })
+            .from(users)
+            .where(inArray(users.id, assigneeIds))
+            .all()
+            .map((person) => [person.id, person])
+        : [],
+    )
     return rows.map((row) => ({
       id: row.id,
       listId: row.listId,
@@ -116,6 +133,7 @@ export class TaskService {
       inMyDay: inMyDay.has(row.id),
       recurrence: row.recurrence ?? null,
       tags: tagsByTask.get(row.id) ?? [],
+      assignee: (row.assigneeId && assignees.get(row.assigneeId)) || null,
       subtasks: byTask.get(row.id) ?? [],
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -152,6 +170,7 @@ export class TaskService {
       if (tx.select({ id: tasks.id }).from(tasks).where(eq(tasks.id, id)).get()) {
         throw new AppError(400, 'validation_failed', 'This ID is already in use.')
       }
+      if (input.assigneeId) this.requireAssignable(input.assigneeId, listId, tx)
       const now = this.now()
       // New tasks go to the top of the list.
       tx.insert(tasks)
@@ -166,6 +185,7 @@ export class TaskService {
           priority: input.priority ?? 0,
           position: positionAtStart(this.orderedTasks(listId, tx)),
           recurrence,
+          assigneeId: input.assigneeId ?? null,
           createdBy: user.id,
           createdAt: now,
           updatedAt: now,
@@ -175,11 +195,12 @@ export class TaskService {
       if (input.myDay) this.setMyDay(user, id, true, tx)
       this.search.reindex(id, tx)
     })
+    this.events.listsChanged([listId])
     return this.get(user, id)
   }
 
   update(user: UserRow, taskId: string, input: UpdateTaskData): Task {
-    this.db.transaction((tx) => {
+    const touched = this.db.transaction((tx) => {
       const task = this.findTask(taskId, tx)
       const changesTask = SHARED_FIELDS.some((field) => input[field] !== undefined)
       // Adding a task to one's own My Day only requires read access.
@@ -235,6 +256,19 @@ export class TaskService {
           )
         }
 
+        const listId = changes.listId ?? task.listId
+        if (input.assigneeId !== undefined) {
+          if (input.assigneeId) this.requireAssignable(input.assigneeId, listId, tx)
+          changes.assigneeId = input.assigneeId
+        } else if (
+          changes.listId &&
+          task.assigneeId &&
+          !this.isAssignable(task.assigneeId, changes.listId, tx)
+        ) {
+          // Someone who cannot work on the new list cannot keep the task.
+          changes.assigneeId = null
+        }
+
         tx.update(tasks).set(changes).where(eq(tasks.id, taskId)).run()
         if (input.tags !== undefined) this.setTags(taskId, input.tags, tx)
         // After the other changes, so the next occurrence inherits them.
@@ -246,22 +280,31 @@ export class TaskService {
       }
 
       if (input.myDay !== undefined) this.setMyDay(user, taskId, input.myDay, tx)
+      return {
+        shared: changesTask,
+        lists: [task.listId, input.placement?.listId ?? task.listId],
+      }
     })
+    // My Day is personal; everything else concerns everyone on the list(s).
+    if (touched.shared) this.events.listsChanged(touched.lists)
+    else this.events.personalChange(user.id)
     return this.get(user, taskId)
   }
 
   /** Moves the task to the trash; it can be restored until the cleanup job runs. */
   delete(user: UserRow, taskId: string): void {
-    this.db.transaction((tx) => {
+    const listId = this.db.transaction((tx) => {
       const task = this.findTask(taskId, tx)
       this.lists.requireRole(user.id, task.listId, 'editor', tx)
       tx.update(tasks).set({ deletedAt: this.now() }).where(eq(tasks.id, taskId)).run()
       this.search.remove(taskId, tx)
+      return task.listId
     })
+    this.events.listsChanged([listId])
   }
 
   restore(user: UserRow, taskId: string): Task {
-    this.db.transaction((tx) => {
+    const listId = this.db.transaction((tx) => {
       const task = tx.select().from(tasks).where(eq(tasks.id, taskId)).get()
       if (!task) throw new AppError(404, 'not_found')
       this.lists.requireRole(user.id, task.listId, 'editor', tx)
@@ -270,14 +313,16 @@ export class TaskService {
         .where(eq(tasks.id, taskId))
         .run()
       this.search.reindex(taskId, tx)
+      return task.listId
     })
+    this.events.listsChanged([listId])
     return this.get(user, taskId)
   }
 
   /* ── Subtasks ─────────────────────────────────────────────────── */
 
   addSubtask(user: UserRow, taskId: string, input: CreateSubtaskInput): Task {
-    this.db.transaction((tx) => {
+    const listId = this.db.transaction((tx) => {
       const task = this.findTask(taskId, tx)
       this.lists.requireRole(user.id, task.listId, 'editor', tx)
       const id = input.id ?? uuidv7(this.now().getTime())
@@ -297,13 +342,15 @@ export class TaskService {
         .run()
       this.touch(taskId, tx)
       this.search.reindex(taskId, tx)
+      return task.listId
     })
+    this.events.listsChanged([listId])
     return this.get(user, taskId)
   }
 
   updateSubtask(user: UserRow, subtaskId: string, input: UpdateSubtaskInput): Task {
-    const taskId = this.db.transaction((tx) => {
-      const subtask = this.findSubtask(user, subtaskId, tx)
+    const { taskId, listId } = this.db.transaction((tx) => {
+      const { subtask, listId } = this.findSubtask(user, subtaskId, tx)
       const changes: Partial<SubtaskRow> = { updatedAt: this.now() }
       if (input.title !== undefined) changes.title = input.title
       if (input.completed !== undefined) changes.completedAt = input.completed ? this.now() : null
@@ -318,19 +365,21 @@ export class TaskService {
       tx.update(subtasks).set(changes).where(eq(subtasks.id, subtaskId)).run()
       this.touch(subtask.taskId, tx)
       if (input.title !== undefined) this.search.reindex(subtask.taskId, tx)
-      return subtask.taskId
+      return { taskId: subtask.taskId, listId }
     })
+    this.events.listsChanged([listId])
     return this.get(user, taskId)
   }
 
   deleteSubtask(user: UserRow, subtaskId: string): Task {
-    const taskId = this.db.transaction((tx) => {
-      const subtask = this.findSubtask(user, subtaskId, tx)
+    const { taskId, listId } = this.db.transaction((tx) => {
+      const { subtask, listId } = this.findSubtask(user, subtaskId, tx)
       tx.delete(subtasks).where(eq(subtasks.id, subtaskId)).run()
       this.touch(subtask.taskId, tx)
       this.search.reindex(subtask.taskId, tx)
-      return subtask.taskId
+      return { taskId: subtask.taskId, listId }
     })
+    this.events.listsChanged([listId])
     return this.get(user, taskId)
   }
 
@@ -405,6 +454,7 @@ export class TaskService {
         ),
         recurrence: rule,
         recurrenceAnchor: rule.from === 'due' ? (task.recurrenceAnchor ?? task.dueDate) : null,
+        assigneeId: task.assigneeId,
         createdBy: user.id,
         createdAt: now,
         updatedAt: now,
@@ -458,12 +508,26 @@ export class TaskService {
     return task
   }
 
-  private findSubtask(user: UserRow, subtaskId: string, executor: Executor): SubtaskRow {
+  private findSubtask(
+    user: UserRow,
+    subtaskId: string,
+    executor: Executor,
+  ): { subtask: SubtaskRow; listId: string } {
     const subtask = executor.select().from(subtasks).where(eq(subtasks.id, subtaskId)).get()
     if (!subtask) throw new AppError(404, 'not_found')
     const task = this.findTask(subtask.taskId, executor)
     this.lists.requireRole(user.id, task.listId, 'editor', executor)
-    return subtask
+    return { subtask, listId: task.listId }
+  }
+
+  /** Tasks can be assigned to people who can edit the list. */
+  private isAssignable(userId: string, listId: string, executor: Executor): boolean {
+    const role = this.lists.roleOf(userId, listId, executor)
+    return role === 'owner' || role === 'editor'
+  }
+
+  private requireAssignable(userId: string, listId: string, executor: Executor): void {
+    if (!this.isAssignable(userId, listId, executor)) throw new AppError(400, 'not_a_member')
   }
 
   private setMyDay(user: UserRow, taskId: string, add: boolean, tx: Executor): void {

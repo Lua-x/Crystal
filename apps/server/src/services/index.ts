@@ -7,6 +7,7 @@ import { RateLimiter } from '../lib/rate-limit.js'
 import { AdminService } from './admin.js'
 import { AuthService } from './auth.js'
 import { CleanupService } from './cleanup.js'
+import { EventHub } from './events.js'
 import { InviteService } from './invites.js'
 import { ListService } from './lists.js'
 import { SearchService } from './search.js'
@@ -30,6 +31,8 @@ export interface Services {
   admin: AdminService
   oidc: OidcService | undefined
   search: SearchService
+  /** Live updates for open apps. */
+  events: EventHub
   lists: ListService
   tasks: TaskService
   views: ViewService
@@ -64,8 +67,9 @@ export function createServices(options: ServiceOptions): Services {
   const sessions = new SessionService(db, config.sessionTtlDays, now)
   const auth = new AuthService({ db, config, logger, users, invites, sessions, now, version })
   const search = new SearchService(db)
-  const lists = new ListService(db, search, now)
-  const tasks = new TaskService(db, lists, search, now)
+  const events = new EventHub(db)
+  const lists = new ListService(db, search, events, now)
+  const tasks = new TaskService(db, lists, search, events, now)
   const views = new ViewService(db, tasks, search)
   const cleanup = new CleanupService(db, search, sessions, now)
   const admin = new AdminService(db, users, sessions, lists)
@@ -93,6 +97,7 @@ export function createServices(options: ServiceOptions): Services {
     admin,
     oidc,
     search,
+    events,
     lists,
     tasks,
     views,

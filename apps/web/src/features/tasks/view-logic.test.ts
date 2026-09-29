@@ -10,6 +10,7 @@ import {
 } from './view-logic'
 
 const TODAY = '2026-09-30' // a Wednesday
+const ME = 'me'
 const words = { today: 'Today', tomorrow: 'Tomorrow', yesterday: 'Yesterday' }
 
 function task(overrides: Partial<Task> = {}): Task {
@@ -27,6 +28,7 @@ function task(overrides: Partial<Task> = {}): Task {
     inMyDay: false,
     recurrence: null,
     tags: [],
+    assignee: null,
     subtasks: [],
     createdAt: '2026-09-30T08:00:00.000Z',
     updatedAt: '2026-09-30T08:00:00.000Z',
@@ -37,13 +39,16 @@ function task(overrides: Partial<Task> = {}): Task {
 describe('matchesView', () => {
   it('follows the smart list rules', () => {
     const done = task({ completedAt: '2026-09-30T09:00:00.000Z', important: true, inMyDay: true })
-    expect(matchesView(done, 'my-day', TODAY)).toBe(true)
-    expect(matchesView(done, 'important', TODAY)).toBe(false)
-    expect(matchesView(done, 'completed', TODAY)).toBe(true)
-    expect(matchesView(task({ dueDate: '2026-09-29' }), 'overdue', TODAY)).toBe(true)
-    expect(matchesView(task({ dueDate: TODAY }), 'overdue', TODAY)).toBe(false)
-    expect(matchesView(task({ dueDate: TODAY }), 'planned', TODAY)).toBe(true)
-    expect(matchesView(task(), 'planned', TODAY)).toBe(false)
+    expect(matchesView(done, 'my-day', TODAY, ME)).toBe(true)
+    expect(matchesView(done, 'important', TODAY, ME)).toBe(false)
+    expect(matchesView(done, 'completed', TODAY, ME)).toBe(true)
+    expect(matchesView(task({ dueDate: '2026-09-29' }), 'overdue', TODAY, ME)).toBe(true)
+    expect(matchesView(task({ dueDate: TODAY }), 'overdue', TODAY, ME)).toBe(false)
+    expect(matchesView(task({ dueDate: TODAY }), 'planned', TODAY, ME)).toBe(true)
+    expect(matchesView(task(), 'planned', TODAY, ME)).toBe(false)
+    const mine = task({ assignee: { id: ME, displayName: 'Me' } })
+    expect(matchesView(mine, 'assigned', TODAY, ME)).toBe(true)
+    expect(matchesView(mine, 'assigned', TODAY, 'someone-else')).toBe(false)
   })
 })
 

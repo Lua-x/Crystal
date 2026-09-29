@@ -35,6 +35,8 @@ interface TaskMenuProps {
   onOpen: (task: Task) => void
   /** Open on a touch long press; off where a long press picks the task up instead. */
   touchLongPress?: boolean
+  /** In a list shared for viewing: only opening and My Day. */
+  readOnly?: boolean
   children: ReactElement
 }
 
@@ -50,12 +52,10 @@ export function TaskContextMenu({
   actions,
   onOpen,
   touchLongPress = true,
+  readOnly = false,
   children,
 }: TaskMenuProps) {
   const { t } = useTranslation()
-  const { data: lists = [] } = useQuery(listsQuery)
-  const deleteTask = useDeleteTask()
-  const targets = lists.filter((list) => list.id !== task.listId && list.role !== 'viewer')
 
   return (
     <ContextMenu>
@@ -76,60 +76,74 @@ export function TaskContextMenu({
         >
           {task.inMyDay ? t('tasks.menu.removeFromMyDay') : t('tasks.menu.addToMyDay')}
         </ContextMenuItem>
-        <ContextMenuItem
-          icon={task.important ? <StarOff /> : <Star />}
-          onSelect={() => actions.toggleImportant(task)}
-        >
-          {task.important ? t('tasks.menu.unmarkImportant') : t('tasks.menu.markImportant')}
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem
-          icon={<CalendarDays />}
-          onSelect={() => actions.update({ id: task.id, input: { dueDate: today } })}
-        >
-          {t('tasks.menu.dueToday')}
-        </ContextMenuItem>
-        <ContextMenuItem
-          icon={<CalendarPlus />}
-          onSelect={() => actions.update({ id: task.id, input: { dueDate: addDays(today, 1) } })}
-        >
-          {t('tasks.menu.dueTomorrow')}
-        </ContextMenuItem>
-        {task.dueDate && (
-          <ContextMenuItem
-            icon={<CalendarX />}
-            onSelect={() => actions.update({ id: task.id, input: { dueDate: null } })}
-          >
-            {t('tasks.menu.removeDue')}
-          </ContextMenuItem>
-        )}
-        {targets.length > 0 && (
-          <>
-            <ContextMenuSeparator />
-            <ContextMenuSub icon={<FolderInput />} label={t('tasks.menu.moveTo')}>
-              {targets.map((list) => (
-                <ContextMenuItem
-                  key={list.id}
-                  icon={<ListIcon list={list} className="size-4" />}
-                  onSelect={() => {
-                    actions.update({
-                      id: task.id,
-                      input: { placement: { listId: list.id, after: null } },
-                    })
-                    toast({ title: t('lists.movedTo', { list: list.name }) })
-                  }}
-                >
-                  <span className="truncate">{list.name}</span>
-                </ContextMenuItem>
-              ))}
-            </ContextMenuSub>
-          </>
-        )}
-        <ContextMenuSeparator />
-        <ContextMenuItem icon={<Trash2 />} destructive onSelect={() => deleteTask.mutate(task)}>
-          {t('tasks.menu.delete')}
-        </ContextMenuItem>
+        {!readOnly && <EditActions task={task} today={today} actions={actions} />}
       </ContextMenuContent>
     </ContextMenu>
+  )
+}
+
+/** Everything that changes the task itself (not offered in lists shared for viewing). */
+function EditActions({ task, today, actions }: Omit<TaskMenuProps, 'onOpen' | 'children'>) {
+  const { t } = useTranslation()
+  const { data: lists = [] } = useQuery(listsQuery)
+  const deleteTask = useDeleteTask()
+  const targets = lists.filter((list) => list.id !== task.listId && list.role !== 'viewer')
+
+  return (
+    <>
+      <ContextMenuItem
+        icon={task.important ? <StarOff /> : <Star />}
+        onSelect={() => actions.toggleImportant(task)}
+      >
+        {task.important ? t('tasks.menu.unmarkImportant') : t('tasks.menu.markImportant')}
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem
+        icon={<CalendarDays />}
+        onSelect={() => actions.update({ id: task.id, input: { dueDate: today } })}
+      >
+        {t('tasks.menu.dueToday')}
+      </ContextMenuItem>
+      <ContextMenuItem
+        icon={<CalendarPlus />}
+        onSelect={() => actions.update({ id: task.id, input: { dueDate: addDays(today, 1) } })}
+      >
+        {t('tasks.menu.dueTomorrow')}
+      </ContextMenuItem>
+      {task.dueDate && (
+        <ContextMenuItem
+          icon={<CalendarX />}
+          onSelect={() => actions.update({ id: task.id, input: { dueDate: null } })}
+        >
+          {t('tasks.menu.removeDue')}
+        </ContextMenuItem>
+      )}
+      {targets.length > 0 && (
+        <>
+          <ContextMenuSeparator />
+          <ContextMenuSub icon={<FolderInput />} label={t('tasks.menu.moveTo')}>
+            {targets.map((list) => (
+              <ContextMenuItem
+                key={list.id}
+                icon={<ListIcon list={list} className="size-4" />}
+                onSelect={() => {
+                  actions.update({
+                    id: task.id,
+                    input: { placement: { listId: list.id, after: null } },
+                  })
+                  toast({ title: t('lists.movedTo', { list: list.name }) })
+                }}
+              >
+                <span className="truncate">{list.name}</span>
+              </ContextMenuItem>
+            ))}
+          </ContextMenuSub>
+        </>
+      )}
+      <ContextMenuSeparator />
+      <ContextMenuItem icon={<Trash2 />} destructive onSelect={() => deleteTask.mutate(task)}>
+        {t('tasks.menu.delete')}
+      </ContextMenuItem>
+    </>
   )
 }

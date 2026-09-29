@@ -10,18 +10,23 @@ import { securityHeaders } from './middleware/security-headers.js'
 import { sessionMiddleware } from './middleware/session.js'
 import { adminRoutes } from './routes/admin.js'
 import { authRoutes } from './routes/auth.js'
+import { eventRoutes } from './routes/events.js'
 import { inviteRoutes } from './routes/invites.js'
 import { listGroupRoutes, listRoutes } from './routes/lists.js'
 import { meRoutes } from './routes/me.js'
+import { peopleRoutes } from './routes/people.js'
 import { systemRoutes } from './routes/system.js'
 import { subtaskRoutes, taskRoutes } from './routes/tasks.js'
 import { searchRoutes, tagRoutes, viewRoutes } from './routes/views.js'
+import { CLIENT_ID_PATTERN, runWithOrigin } from './services/events.js'
 import type { Services } from './services/index.js'
 import { mountWebApp } from './static.js'
 
 export interface AppOptions {
   /** Directory with the built web app; omitted in development (Vite serves it). */
   staticDir?: string | undefined
+  /** How often the event stream sends a keep-alive (shorter in tests). */
+  heartbeatMs?: number | undefined
 }
 
 export function createApp(services: Services, options: AppOptions = {}) {
@@ -44,6 +49,11 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.use('*', csrfProtection(config))
   v1.use('*', sessionMiddleware(services))
   v1.use('*', apiRateLimit(services.limits.api))
+  // Changes are announced to other open apps, but not back to the tab that made them.
+  v1.use('*', (c, next) => {
+    const client = c.req.header('x-crystal-client')
+    return runWithOrigin(client && CLIENT_ID_PATTERN.test(client) ? client : undefined, next)
+  })
   v1.route('/auth', authRoutes(services))
   v1.route('/invites', inviteRoutes(services))
   v1.route('/me', meRoutes(services))
@@ -55,6 +65,8 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.route('/views', viewRoutes(services))
   v1.route('/search', searchRoutes(services))
   v1.route('/tags', tagRoutes(services))
+  v1.route('/people', peopleRoutes(services))
+  v1.route('/events', eventRoutes(services, options.heartbeatMs))
   app.route('/api/v1', v1)
 
   app.openAPIRegistry.registerComponent('securitySchemes', 'session', {

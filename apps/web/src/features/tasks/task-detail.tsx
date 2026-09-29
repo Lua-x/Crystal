@@ -39,7 +39,7 @@ import {
 import { useToday } from './hooks'
 import { ListIcon } from './list-style'
 import { useTaskActions } from './task-actions'
-import { DetailRow, RecurrenceEditor, TagsEditor } from './task-detail-fields'
+import { AssigneeEditor, DetailRow, RecurrenceEditor, TagsEditor } from './task-detail-fields'
 
 const NOTES_SAVE_DELAY = 700
 
@@ -212,6 +212,15 @@ function TaskDetailContent({ task, onClose }: { task: Task; onClose: () => void 
                 ))}
             </Select>
           </DetailRow>
+
+          {list && (list.memberCount > 1 || task.assignee) && (
+            <AssigneeEditor
+              task={task}
+              list={list}
+              disabled={!canEdit}
+              onChange={(assigneeId) => actions.update({ id: task.id, input: { assigneeId } })}
+            />
+          )}
 
           <TagsEditor
             task={task}

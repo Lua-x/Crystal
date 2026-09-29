@@ -100,6 +100,8 @@ export const taskSchema = z.object({
   /** Completing a repeating task creates its next occurrence. */
   recurrence: recurrenceSchema.nullable(),
   tags: z.array(z.string()),
+  /** Who is taking care of it; always a member of the list. */
+  assignee: z.object({ id: idSchema, displayName: z.string() }).nullable(),
   subtasks: z.array(subtaskSchema),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
@@ -132,6 +134,8 @@ export const createTaskSchema = z
     /** Without a due date, the task becomes due on the first matching day from today. */
     recurrence: recurrenceInputSchema.nullable().optional(),
     tags: tagsSchema.optional(),
+    /** A member of the list. */
+    assigneeId: idSchema.nullable().optional(),
   })
   .refine((input) => !input.dueTime || input.dueDate, {
     error: 'validation.time_requires_date',
@@ -158,6 +162,8 @@ export const updateTaskSchema = z
     recurrence: recurrenceInputSchema.nullable(),
     /** Replaces all tags of the task. */
     tags: tagsSchema,
+    /** A member of the list, or `null` for nobody. */
+    assigneeId: idSchema.nullable(),
   })
   .partial()
 export type UpdateTaskInput = z.input<typeof updateTaskSchema>
@@ -183,6 +189,7 @@ export const viewCountsSchema = z.object({
   important: z.int(),
   planned: z.int(),
   overdue: z.int(),
+  assigned: z.int(),
   all: z.int(),
   completed: z.int(),
 })

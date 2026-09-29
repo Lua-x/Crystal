@@ -46,6 +46,14 @@ export function parsePreferences(raw: unknown): Preferences {
   }
 }
 
+/** Someone on this instance, as others may see them (for sharing and assigning). */
+export const personSchema = z.object({
+  id: idSchema,
+  username: z.string(),
+  displayName: z.string(),
+})
+export type Person = z.infer<typeof personSchema>
+
 export const linkedIdentitySchema = z.object({
   provider: z.literal('oidc'),
   email: z.string().nullable(),

@@ -48,14 +48,18 @@ export function createTestContext(env: Record<string, string> = {}): TestContext
     version: 'test',
     now: clock.now,
   })
-  const app = createApp(services)
+  const app = createApp(services, { heartbeatMs: 50 })
 
   return {
     app,
     services,
     clock,
     client: (options) => new TestClient(app, options),
-    close: database.close,
+    close: () => {
+      // Open event streams would otherwise keep polling a closed database.
+      services.events.closeAll()
+      database.close()
+    },
   }
 }
 
@@ -88,12 +92,65 @@ export class TestClient {
     return this.request<T>('POST', path, body, headers)
   }
 
-  patch<T = unknown>(path: string, body?: unknown) {
-    return this.request<T>('PATCH', path, body)
+  patch<T = unknown>(path: string, body?: unknown, headers?: Record<string, string>) {
+    return this.request<T>('PATCH', path, body, headers)
   }
 
-  delete<T = unknown>(path: string) {
-    return this.request<T>('DELETE', path)
+  delete<T = unknown>(path: string, headers?: Record<string, string>) {
+    return this.request<T>('DELETE', path, undefined, headers)
+  }
+
+  /** Opens a Server-Sent Events stream; `next()` resolves with the next event or `null`. */
+  async openStream(path: string) {
+    const controller = new AbortController()
+    const headers = new Headers({ 'x-forwarded-for': this.options.ip ?? '203.0.113.10' })
+    if (this.cookies.size > 0) {
+      headers.set('cookie', [...this.cookies].map(([name, value]) => `${name}=${value}`).join('; '))
+    }
+    const response = await this.app.request(`${BASE_URL}${path}`, {
+      headers,
+      signal: controller.signal,
+    })
+    const reader = response.body!.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let pending: ReturnType<typeof reader.read> | undefined
+
+    const next = async (timeoutMs = 500): Promise<{ event: string; data: unknown } | null> => {
+      const deadline = Date.now() + timeoutMs
+      for (;;) {
+        const end = buffer.indexOf('\n\n')
+        if (end !== -1) {
+          const block = buffer.slice(0, end)
+          buffer = buffer.slice(end + 2)
+          if (block.startsWith(':')) continue // keep-alive comment
+          const field = (name: string) =>
+            block
+              .split('\n')
+              .find((line) => line.startsWith(`${name}:`))
+              ?.slice(name.length + 1)
+              .trim()
+          return { event: field('event') ?? 'message', data: JSON.parse(field('data') ?? 'null') }
+        }
+        const remaining = deadline - Date.now()
+        if (remaining <= 0) return null
+        pending ??= reader.read()
+        const result = await Promise.race([
+          pending,
+          new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), remaining)),
+        ])
+        if (result === 'timeout') return null
+        pending = undefined
+        if (result.done) return null
+        buffer += decoder.decode(result.value as Uint8Array, { stream: true })
+      }
+    }
+
+    const close = async () => {
+      controller.abort()
+      await reader.cancel().catch(() => undefined)
+    }
+    return { status: response.status, next, close }
   }
 
   async request<T>(
