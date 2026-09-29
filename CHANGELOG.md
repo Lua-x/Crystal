@@ -6,6 +6,13 @@ All notable changes to Crystal are documented in this file. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Personal access tokens for scripts and other apps (**Settings → API**), read-only or with
+  write access, optionally expiring. Tokens reach lists and tasks but never account settings.
+  See [docs/api.md](docs/api.md).
+- Interactive API documentation at `/api/docs`.
+
 ## [0.5.0] - 2026-09-29
 
 Reminders and notifications.

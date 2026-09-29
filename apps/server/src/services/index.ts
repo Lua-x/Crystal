@@ -7,6 +7,7 @@ import { RateLimiter } from '../lib/rate-limit.js'
 import { createMailer, type Mailer } from '../notifications/mailer.js'
 import { createWebPushSender, deriveVapidKeys, type PushSender } from '../notifications/push.js'
 import { AdminService } from './admin.js'
+import { ApiTokenService } from './api-tokens.js'
 import { AuthService } from './auth.js'
 import { CleanupService } from './cleanup.js'
 import { EventHub } from './events.js'
@@ -32,6 +33,8 @@ export interface Services {
   version: string
   users: UserService
   sessions: SessionService
+  /** Personal API tokens. */
+  apiTokens: ApiTokenService
   invites: InviteService
   auth: AuthService
   passwordResets: PasswordResetService
@@ -99,6 +102,7 @@ export function createServices(options: ServiceOptions): Services {
   const users = new UserService(db, now)
   const invites = new InviteService(db, now)
   const sessions = new SessionService(db, config.sessionTtlDays, now)
+  const apiTokens = new ApiTokenService(db, now)
   const passwordResets = new PasswordResetService({
     db,
     config,
@@ -125,7 +129,7 @@ export function createServices(options: ServiceOptions): Services {
   const tasks = new TaskService(db, lists, search, events, notifications, now)
   const views = new ViewService(db, tasks, search)
   const reminders = new ReminderService(db, notifications, logger, now)
-  const cleanup = new CleanupService(db, search, sessions, passwordResets, now)
+  const cleanup = new CleanupService(db, search, { sessions, passwordResets, apiTokens }, now)
   const admin = new AdminService(db, users, sessions, lists)
   const oidc =
     config.oidc && config.baseUrl
@@ -146,6 +150,7 @@ export function createServices(options: ServiceOptions): Services {
     version,
     users,
     sessions,
+    apiTokens,
     invites,
     auth,
     passwordResets,

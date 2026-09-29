@@ -31,7 +31,7 @@ Conventions:
 - IDs are **UUIDv7** – sortable by creation time and generated in application code, so offline
   clients will be able to create records without a round trip.
 - Timestamps are milliseconds since the epoch (UTC).
-- Secrets (session and invite tokens, later API tokens) are stored only as **SHA-256 hashes**.
+- Secrets (session, invite, reset and API tokens) are stored only as **SHA-256 hashes**.
 
 Tables:
 
@@ -40,6 +40,7 @@ Tables:
 | `users`                 | Accounts: username, display name, optional email, role, Argon2id password hash (null for SSO-only accounts), language, time zone, UI preferences (JSON) |
 | `user_identities`       | Linked OpenID Connect identities (issuer + subject)                                                                                                     |
 | `sessions`              | Server-side sessions: token hash, device, last activity, expiry                                                                                         |
+| `api_tokens`            | Personal access tokens: hash, first characters for display, scope (`read`/`write`), last use, expiry                                                    |
 | `invites`               | Invite links: token hash, role, usage limit, expiry, revocation                                                                                         |
 | `lists`                 | Name, color, emoji, owner; one default list per account                                                                                                 |
 | `list_members`          | Who can see a list with which role (`owner`, `editor`, `viewer`), and each person's own group and position for it in the sidebar                        |
@@ -55,9 +56,9 @@ Tables:
 
 Planned additions, each with its own migration when the feature arrives:
 
-| Phase | Tables                                        |
-| ----- | --------------------------------------------- |
-| 6     | `api_tokens`, `calendar_feeds`, `attachments` |
+| Phase | Tables                          |
+| ----- | ------------------------------- |
+| 6     | `calendar_feeds`, `attachments` |
 
 Design decisions for lists and tasks:
 
@@ -157,6 +158,10 @@ Setting the new password signs the account out everywhere.
   sessions; disabling an account or resetting its password signs it out everywhere.
 - **CSRF:** every state-changing request must carry an `Origin` header matching `BASE_URL` (or
   the requested host). Combined with `SameSite=Lax`, this also prevents login CSRF.
+- **API tokens:** `Authorization: Bearer crystal_…`. A request with this header is authenticated
+  by the token alone – the session cookie is ignored – so it needs no `Origin` check; browsers
+  cannot add the header cross-site because Crystal allows no CORS. Tokens only reach task and
+  list endpoints (`tokenPolicy`), read-only tokens only `GET`.
 - **OpenID Connect:** authorization code flow with PKCE, `state` and `nonce` via
   `openid-client`. The per-attempt secrets travel in an AES-GCM encrypted, short-lived cookie.
   Identities are linked by issuer and subject, never by email.

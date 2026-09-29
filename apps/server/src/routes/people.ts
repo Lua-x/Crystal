@@ -4,7 +4,7 @@ import { createRoute, z } from '@hono/zod-openapi'
 import { requireAuthState } from '../context.js'
 import { requireAuth } from '../middleware/session.js'
 import type { Services } from '../services/index.js'
-import { authErrors, createRouter, jsonResponse } from './openapi.js'
+import { authErrors, createRouter, jsonResponse, sessionOrToken } from './openapi.js'
 
 export function peopleRoutes(services: Services) {
   const router = createRouter()
@@ -15,7 +15,7 @@ export function peopleRoutes(services: Services) {
       method: 'get',
       path: '/',
       tags: ['Sharing'],
-      security: [{ session: [] }],
+      security: sessionOrToken,
       summary: 'Other people on this instance',
       description: 'Active accounts, for sharing lists. Email addresses are not included.',
       responses: { 200: jsonResponse(z.array(personSchema), 'People'), ...authErrors },

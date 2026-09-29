@@ -32,6 +32,7 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   email_required: 'Add an email address to your account first.',
   email_not_configured: 'Sending email is not configured on this instance.',
   delivery_failed: 'The notification could not be delivered.',
+  token_not_allowed: 'API tokens cannot be used for this; sign in instead.',
 }
 
 /** An expected failure that is reported to the client as `{ error: { code, message } }`. */

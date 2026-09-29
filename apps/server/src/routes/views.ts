@@ -11,10 +11,10 @@ import { createRoute, z } from '@hono/zod-openapi'
 import { requireAuthState } from '../context.js'
 import { requireAuth } from '../middleware/session.js'
 import type { Services } from '../services/index.js'
-import { authErrors, commonErrors, createRouter, jsonResponse } from './openapi.js'
+import { authErrors, commonErrors, createRouter, jsonResponse, sessionOrToken } from './openapi.js'
 
 const tags = ['Smart lists']
-const security = [{ session: [] }]
+const security = sessionOrToken
 
 export function viewRoutes(services: Services) {
   const router = createRouter()

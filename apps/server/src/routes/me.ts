@@ -1,5 +1,8 @@
 import {
+  apiTokenSchema,
   changePasswordSchema,
+  createApiTokenSchema,
+  createdApiTokenSchema,
   idSchema,
   meSchema,
   sessionInfoSchema,
@@ -8,7 +11,7 @@ import {
 import { createRoute, z } from '@hono/zod-openapi'
 
 import { clearSessionCookie } from '../auth/cookies.js'
-import { requireAuthState } from '../context.js'
+import { requireAuthState, requireSession } from '../context.js'
 import { AppError } from '../lib/errors.js'
 import { enforceRateLimit } from '../middleware/rate-limit.js'
 import { requireAuth } from '../middleware/session.js'
@@ -22,10 +25,12 @@ import {
   jsonBody,
   jsonResponse,
   noContent,
+  sessionOnly,
+  sessionOrToken,
 } from './openapi.js'
 
 const tags = ['Account']
-const security = [{ session: [] }]
+const security = sessionOnly
 
 export function meRoutes(services: Services) {
   const router = createRouter()
@@ -36,7 +41,7 @@ export function meRoutes(services: Services) {
       method: 'get',
       path: '/',
       tags,
-      security,
+      security: sessionOrToken,
       summary: 'The signed-in user',
       responses: { 200: jsonResponse(meSchema, 'The signed-in user'), ...authErrors },
     }),
@@ -77,7 +82,7 @@ export function meRoutes(services: Services) {
       responses: { 204: noContent, ...authErrors, ...commonErrors },
     }),
     async (c) => {
-      const { user, session } = requireAuthState(c)
+      const { user, session } = requireSession(c)
       enforceRateLimit(services.limits.loginPerAccount, `password:${user.id}`)
       await services.auth.changePassword(user, session.id, c.req.valid('json'))
       return c.body(null, 204)
@@ -97,7 +102,7 @@ export function meRoutes(services: Services) {
       },
     }),
     (c) => {
-      const { user, session } = requireAuthState(c)
+      const { user, session } = requireSession(c)
       const list = services.sessions
         .listForUser(user.id)
         .map((row) => toSessionInfo(row, session.id))
@@ -115,7 +120,7 @@ export function meRoutes(services: Services) {
       responses: { 204: noContent, ...authErrors },
     }),
     (c) => {
-      const { user, session } = requireAuthState(c)
+      const { user, session } = requireSession(c)
       services.sessions.revokeAllForUser(user.id, session.id)
       return c.body(null, 204)
     },
@@ -137,7 +142,7 @@ export function meRoutes(services: Services) {
       },
     }),
     (c) => {
-      const { user, session } = requireAuthState(c)
+      const { user, session } = requireSession(c)
       const { id } = c.req.valid('param')
       if (!services.sessions.revoke(user.id, id)) throw new AppError(404, 'not_found')
       if (id === session.id) clearSessionCookie(c, services.config)
@@ -159,7 +164,63 @@ export function meRoutes(services: Services) {
       },
     }),
     (c) => {
-      services.auth.unlinkOidc(requireAuthState(c).user)
+      services.auth.unlinkOidc(requireSession(c).user)
+      return c.body(null, 204)
+    },
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'get',
+      path: '/tokens',
+      tags,
+      security,
+      summary: 'Personal API tokens',
+      responses: {
+        200: jsonResponse(z.array(apiTokenSchema), 'Tokens, newest first'),
+        ...authErrors,
+      },
+    }),
+    (c) => c.json(services.apiTokens.list(requireSession(c).user), 200),
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'post',
+      path: '/tokens',
+      tags,
+      security,
+      summary: 'Create a personal API token',
+      description:
+        'The token is returned only in this response. Send it as `Authorization: Bearer <token>`. ' +
+        'Tokens can use lists, tasks, views, search, tags and people – never account settings.',
+      request: { body: jsonBody(createApiTokenSchema) },
+      responses: {
+        201: jsonResponse(createdApiTokenSchema, 'The new token, including the secret'),
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    (c) => c.json(services.apiTokens.create(requireSession(c).user, c.req.valid('json')), 201),
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'delete',
+      path: '/tokens/{id}',
+      tags,
+      security,
+      summary: 'Revoke a personal API token',
+      request: { params: z.object({ id: idSchema }) },
+      responses: {
+        204: noContent,
+        404: errorResponse('No such token'),
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    (c) => {
+      services.apiTokens.revoke(requireSession(c).user, c.req.valid('param').id)
       return c.body(null, 204)
     },
   )

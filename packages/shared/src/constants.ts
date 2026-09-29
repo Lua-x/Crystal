@@ -93,6 +93,15 @@ export const RECURRENCE_MAX_INTERVAL = 999
 export const TAG_MAX_LENGTH = 40
 export const TAGS_PER_TASK_MAX = 20
 
+/** What a personal API token may do: only read, or also change data. */
+export const API_TOKEN_SCOPES = ['read', 'write'] as const
+export type ApiTokenScope = (typeof API_TOKEN_SCOPES)[number]
+/** Every token starts with this, so secret scanners and people recognize it. */
+export const API_TOKEN_PREFIX = 'crystal_'
+export const API_TOKEN_NAME_MAX_LENGTH = 60
+export const API_TOKEN_MAX_DAYS = 365
+export const API_TOKENS_PER_USER_MAX = 25
+
 export const LIST_NAME_MAX_LENGTH = 100
 export const LIST_ICON_MAX_LENGTH = 16
 export const GROUP_NAME_MAX_LENGTH = 100

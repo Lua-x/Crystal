@@ -1,4 +1,5 @@
 import {
+  API_TOKEN_SCOPES,
   LIST_COLORS,
   LIST_ROLES,
   NOTIFICATION_CHANNEL_TYPES,
@@ -103,6 +104,26 @@ export const invites = sqliteTable('invites', {
   createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').notNull(),
 })
+
+/** Personal access tokens for the API (`Authorization: Bearer crystal_…`). */
+export const apiTokens = sqliteTable(
+  'api_tokens',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    tokenHash: text('token_hash').notNull().unique(),
+    /** The first characters of the token, shown so people can tell tokens apart. */
+    hint: text('hint').notNull(),
+    scope: text('scope', { enum: API_TOKEN_SCOPES }).notNull(),
+    createdAt: timestamp('created_at').notNull(),
+    lastUsedAt: timestamp('last_used_at'),
+    expiresAt: timestamp('expires_at'),
+  },
+  (table) => [index('api_tokens_user_idx').on(table.userId)],
+)
 
 /* ── Lists and tasks ─────────────────────────────────────────── */
 
@@ -332,6 +353,7 @@ export const passwordResets = sqliteTable(
 
 export type UserRow = typeof users.$inferSelect
 export type SessionRow = typeof sessions.$inferSelect
+export type ApiTokenRow = typeof apiTokens.$inferSelect
 export type InviteRow = typeof invites.$inferSelect
 export type UserIdentityRow = typeof userIdentities.$inferSelect
 export type ListRow = typeof lists.$inferSelect

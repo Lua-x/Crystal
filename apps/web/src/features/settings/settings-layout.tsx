@@ -1,6 +1,7 @@
 import { Link, Navigate, Outlet, useRouterState } from '@tanstack/react-router'
 import {
   Bell,
+  Braces,
   ChevronRight,
   MonitorSmartphone,
   Palette,
@@ -21,6 +22,7 @@ type SettingsPath =
   | '/settings/appearance'
   | '/settings/notifications'
   | '/settings/sessions'
+  | '/settings/api'
   | '/settings/users'
   | '/settings/invites'
 
@@ -49,6 +51,10 @@ function useNavGroups(): { label?: string; items: NavItem[] }[] {
           label: t('settings.sections.sessions'),
         },
       ],
+    },
+    {
+      label: t('settings.integrations'),
+      items: [{ to: '/settings/api', icon: <Braces />, label: t('settings.sections.api') }],
     },
   ]
   if (me.role === 'admin') {

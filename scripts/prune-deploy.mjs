@@ -36,6 +36,8 @@ function walk(dir) {
         remove(path)
       } else if (entry.name === 'better-sqlite3' && dir.endsWith('node_modules')) {
         pruneBetterSqlite(path)
+      } else if (entry.name === 'swagger-ui-dist' && dir.endsWith('node_modules')) {
+        pruneSwaggerUi(path)
       } else {
         walk(path)
       }
@@ -53,6 +55,22 @@ function pruneBetterSqlite(dir) {
     if (file !== `${target}.node`) remove(join(prebuilds, file))
   }
   walk(dir)
+}
+
+/** The API documentation only serves the bundle and its stylesheet. */
+function pruneSwaggerUi(dir) {
+  const keep = new Set([
+    'package.json',
+    'index.js',
+    'absolute-path.js',
+    'swagger-ui-bundle.js',
+    'swagger-ui.css',
+    'LICENSE',
+    'NOTICE',
+  ])
+  for (const file of readdirSync(dir)) {
+    if (!keep.has(file)) remove(join(dir, file))
+  }
 }
 
 walk(join(root, 'node_modules'))

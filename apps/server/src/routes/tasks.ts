@@ -19,10 +19,11 @@ import {
   jsonBody,
   jsonResponse,
   noContent,
+  sessionOrToken,
 } from './openapi.js'
 
 const tags = ['Tasks']
-const security = [{ session: [] }]
+const security = sessionOrToken
 const idParams = z.object({ id: idSchema })
 const notFound = { 404: errorResponse('No such task, or no access to it') }
 

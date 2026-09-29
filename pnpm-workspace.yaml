@@ -2,8 +2,10 @@ packages:
   - apps/*
   - packages/*
 
-# Dependencies that ship native code. better-sqlite3 bundles prebuilt binaries
-# for all supported platforms, so its node-gyp fallback must never run.
+# Which dependencies may run install scripts. better-sqlite3 bundles prebuilt
+# binaries for all supported platforms, so its node-gyp fallback must never run.
+# @scarf/scarf (pulled in by swagger-ui-dist) only reports download analytics.
 allowBuilds:
+  '@scarf/scarf': false
   better-sqlite3: false
   esbuild: true

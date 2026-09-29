@@ -20,7 +20,13 @@ export function eventRoutes(services: Services, heartbeatMs = HEARTBEAT_MS) {
   router.use('*', requireAuth)
 
   router.get('/', (c) => {
-    const { user, session } = requireAuthState(c)
+    const auth = requireAuthState(c)
+    const { user } = auth
+    // The stream ends when the session is signed out or the token revoked.
+    const stillValid = () =>
+      auth.kind === 'session'
+        ? services.sessions.isActive(auth.session.id)
+        : services.apiTokens.isActive(auth.token.id)
     const client = c.req.query('client')
     // Tells nginx not to buffer the stream.
     c.header('X-Accel-Buffering', 'no')
@@ -50,7 +56,7 @@ export function eventRoutes(services: Services, heartbeatMs = HEARTBEAT_MS) {
               resolve()
             }
           })
-          if (!open || !services.sessions.isActive(session.id)) break
+          if (!open || !stillValid()) break
           await stream.write(': keep-alive\n\n')
         }
       } finally {

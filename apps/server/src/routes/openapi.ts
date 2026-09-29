@@ -28,6 +28,13 @@ export const commonErrors = {
   429: errorResponse('Too many requests'),
 } as const
 
+type SecurityRequirement = Record<string, string[]>
+
+/** Routes a browser session or a personal API token can use. */
+export const sessionOrToken: SecurityRequirement[] = [{ session: [] }, { token: [] }]
+/** Account and instance settings: browser sessions only. */
+export const sessionOnly: SecurityRequirement[] = [{ session: [] }]
+
 export const authErrors = {
   401: errorResponse('Not signed in'),
   403: errorResponse('Not allowed (or the request origin could not be verified)'),

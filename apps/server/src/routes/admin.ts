@@ -20,10 +20,11 @@ import {
   jsonBody,
   jsonResponse,
   noContent,
+  sessionOnly,
 } from './openapi.js'
 
 const tags = ['Administration']
-const security = [{ session: [] }]
+const security = sessionOnly
 const idParams = z.object({ id: idSchema })
 
 export function adminRoutes(services: Services) {

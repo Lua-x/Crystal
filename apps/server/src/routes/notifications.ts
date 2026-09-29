@@ -19,10 +19,11 @@ import {
   jsonBody,
   jsonResponse,
   noContent,
+  sessionOnly,
 } from './openapi.js'
 
 const tags = ['Notifications']
-const security = [{ session: [] }]
+const security = sessionOnly
 const idParams = z.object({ id: idSchema })
 const notFound = { 404: errorResponse('No such channel or device') }
 const deliveryFailed = {

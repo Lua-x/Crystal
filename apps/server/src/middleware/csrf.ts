@@ -15,6 +15,9 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 export function csrfProtection(config: Config): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
     if (SAFE_METHODS.has(c.req.method)) return next()
+    // Requests with an API token do not use cookies, so there is nothing to forge;
+    // browsers cannot add this header cross-site without CORS, which Crystal never allows.
+    if (c.req.header('authorization') !== undefined) return next()
 
     const origin = c.req.header('origin')
     if (origin && isAllowedOrigin(origin, c.req.header.bind(c.req), config)) return next()

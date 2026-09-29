@@ -2,25 +2,37 @@ import { isNotNull, and, lt } from 'drizzle-orm'
 
 import type { Db } from '../db/client.js'
 import { lists, myDay, tasks } from '../db/schema.js'
-import type { PasswordResetService } from './password-resets.js'
 import type { SearchService } from './search.js'
-import type { SessionService } from './sessions.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 /** Deleted lists and tasks stay restorable (and visible to syncing clients) this long. */
 export const TRASH_RETENTION_DAYS = 30
+
+/** Something with records that run out: sessions, reset links, API tokens. */
+interface Expiring {
+  deleteExpired(): number
+}
 
 /** Periodic housekeeping; runs hourly and is safe to run at any time. */
 export class CleanupService {
   constructor(
     private readonly db: Db,
     private readonly search: SearchService,
-    private readonly sessions: SessionService,
-    private readonly passwordResets: PasswordResetService,
+    private readonly expiring: {
+      sessions: Expiring
+      passwordResets: Expiring
+      apiTokens: Expiring
+    },
     private readonly now: () => Date,
   ) {}
 
-  run(): { sessions: number; passwordResets: number; tasks: number; lists: number } {
+  run(): {
+    sessions: number
+    passwordResets: number
+    apiTokens: number
+    tasks: number
+    lists: number
+  } {
     const cutoff = new Date(this.now().getTime() - TRASH_RETENTION_DAYS * DAY_MS)
     return this.db.transaction((tx) => {
       const removedTasks = tx
@@ -37,8 +49,9 @@ export class CleanupService {
       tx.delete(myDay).where(lt(myDay.date, oldDate)).run()
       this.search.removeOrphans(tx)
       return {
-        sessions: this.sessions.deleteExpired(),
-        passwordResets: this.passwordResets.deleteExpired(),
+        sessions: this.expiring.sessions.deleteExpired(),
+        passwordResets: this.expiring.passwordResets.deleteExpired(),
+        apiTokens: this.expiring.apiTokens.deleteExpired(),
         tasks: removedTasks,
         lists: removedLists,
       }

@@ -204,6 +204,15 @@ const notificationsSettingsRoute = createRoute({
   ),
 })
 
+const apiSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: '/api',
+  component: lazyRouteComponent(
+    () => import('./features/settings/api-settings'),
+    'ApiSettingsPage',
+  ),
+})
+
 const sessionsSettingsRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/sessions',
@@ -271,6 +280,7 @@ const routeTree = rootRoute.addChildren([
       appearanceSettingsRoute,
       notificationsSettingsRoute,
       sessionsSettingsRoute,
+      apiSettingsRoute,
       usersSettingsRoute,
       invitesSettingsRoute,
     ]),
