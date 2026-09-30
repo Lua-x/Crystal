@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ChevronRight,
   DatabaseBackup,
+  Gamepad2,
   MonitorSmartphone,
   Palette,
   Ticket,
@@ -16,6 +17,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../lib/cn'
+import { useIsGaming } from '../../lib/instance-mode'
 import { useMediaQuery, WIDE_QUERY } from '../../lib/use-media-query'
 import { Page } from '../shell/page'
 import { useMe } from '../shell/use-me'
@@ -27,6 +29,7 @@ type SettingsPath =
   | '/settings/sessions'
   | '/settings/api'
   | '/settings/calendar'
+  | '/settings/steam'
   | '/settings/transfer'
   | '/settings/users'
   | '/settings/invites'
@@ -41,6 +44,7 @@ interface NavItem {
 function useNavGroups(): { label?: string; items: NavItem[] }[] {
   const { t } = useTranslation()
   const me = useMe()
+  const gaming = useIsGaming()
   const groups: { label?: string; items: NavItem[] }[] = [
     {
       items: [
@@ -61,6 +65,15 @@ function useNavGroups(): { label?: string; items: NavItem[] }[] {
     {
       label: t('settings.integrations'),
       items: [
+        ...(gaming
+          ? [
+              {
+                to: '/settings/steam' as const,
+                icon: <Gamepad2 />,
+                label: t('settings.sections.steam'),
+              },
+            ]
+          : []),
         {
           to: '/settings/calendar',
           icon: <CalendarDays />,

@@ -37,6 +37,14 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   payload_too_large: 'The request is too large.',
   unsupported_file: 'Only images and PDF files can be attached.',
   too_many_attachments: 'This task already has as many attachments as it can have.',
+  steam_not_configured: 'Steam is not set up on this instance (STEAM_API_KEY).',
+  steam_not_linked: 'Link a Steam account first.',
+  steam_profile_not_found: 'There is no Steam profile with this name or link.',
+  steam_profile_private: 'The game details of this Steam profile are private.',
+  steam_game_not_found: 'This game is not linked to Steam.',
+  steam_already_imported: 'This Steam game has already been imported.',
+  steam_no_achievements: 'This game has no achievements on Steam.',
+  steam_unavailable: 'Steam could not be reached. Please try again later.',
 }
 
 /** An expected failure that is reported to the client as `{ error: { code, message } }`. */

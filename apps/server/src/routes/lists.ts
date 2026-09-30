@@ -6,6 +6,7 @@ import {
   listGroupSchema,
   listMemberSchema,
   listSchema,
+  steamSyncResultSchema,
   taskSchema,
   updateListGroupSchema,
   updateListMemberSchema,
@@ -14,6 +15,7 @@ import {
 import { createRoute, z } from '@hono/zod-openapi'
 
 import { requireAuthState } from '../context.js'
+import { enforceRateLimit } from '../middleware/rate-limit.js'
 import { requireAuth } from '../middleware/session.js'
 import type { Services } from '../services/index.js'
 import {
@@ -120,6 +122,37 @@ export function listRoutes(services: Services) {
     (c) => {
       services.lists.delete(requireAuthState(c).user, c.req.valid('param').id)
       return c.body(null, 204)
+    },
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'post',
+      path: '/{id}/steam-sync',
+      tags,
+      security,
+      summary: 'Compare a game with Steam',
+      description:
+        'Completes goals whose achievement the owner’s Steam account unlocked since, and adds ' +
+        'achievements the game gained. Games imported from Steam are also synced automatically ' +
+        '(`STEAM_SYNC_HOURS`).',
+      request: { params: idParams },
+      responses: {
+        200: jsonResponse(steamSyncResultSchema, 'What changed'),
+        409: errorResponse(
+          'Not a Steam game (`steam_game_not_found`), the owner has no Steam account linked, ' +
+            'or its game details are private',
+        ),
+        502: errorResponse('Steam could not be reached'),
+        ...notFound,
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    async (c) => {
+      const { user } = requireAuthState(c)
+      enforceRateLimit(services.limits.steam, user.id)
+      return c.json(await services.steam.sync(user, c.req.valid('param').id), 200)
     },
   )
 

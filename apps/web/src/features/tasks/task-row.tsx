@@ -2,6 +2,7 @@ import type { List, Task } from '@crystal/shared'
 import {
   Bell,
   CalendarDays,
+  EyeOff,
   GripVertical,
   ListChecks,
   NotebookText,
@@ -9,6 +10,7 @@ import {
   Repeat,
   Star,
   Sun,
+  Trophy,
 } from 'lucide-react'
 import type { HTMLAttributes, KeyboardEventHandler, ReactNode, Ref } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,6 +19,8 @@ import { Avatar } from '../../components/ui/avatar'
 import { TaskCheckbox } from '../../components/ui/task-checkbox'
 import { cn } from '../../lib/cn'
 import { useClock } from '../../lib/use-clock'
+import { GameCover } from '../games/game-cover'
+import { formatRarity } from '../games/game-logic'
 import { useMe } from '../shell/use-me'
 import { ListIcon } from './list-style'
 import { describeRecurrence } from './recurrence-text'
@@ -156,6 +160,28 @@ export function TaskRow({
       </span>,
     )
   }
+  if (task.achievement?.percent != null) {
+    const percent = formatRarity(task.achievement.percent, i18n.language)
+    meta.push(
+      <span
+        key="rarity"
+        role="img"
+        aria-label={t('games.rarityLabel', { percent })}
+        className="inline-flex items-center gap-1"
+      >
+        <Trophy aria-hidden className="size-3.5" />
+        {percent}
+      </span>,
+    )
+  }
+  if (task.achievement?.hidden && !task.notes.trim() && !completed) {
+    meta.push(
+      <span key="hidden" className="inline-flex items-center gap-1">
+        <EyeOff aria-hidden className="size-3.5" />
+        {t('games.hidden')}
+      </span>,
+    )
+  }
   if (task.notes.trim()) {
     meta.push(
       <span key="notes" className="inline-flex items-center">
@@ -195,6 +221,17 @@ export function TaskRow({
         }
         className="relative z-10"
       />
+
+      {task.achievement?.iconImageId && (
+        <GameCover
+          imageId={task.achievement.iconImageId}
+          className={cn(
+            'ml-1 size-8 shrink-0 rounded-md transition-[filter,opacity] duration-300',
+            // Like on Steam: locked achievements are shown in gray.
+            !completed && 'opacity-70 grayscale',
+          )}
+        />
+      )}
 
       <button
         type="button"

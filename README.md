@@ -103,6 +103,9 @@
   goal – an achievement, a boss, a collectible.
 - **Games with a cover and progress:** see at a glance how many goals are done, and give
   yourself a finish-by date for the game and for each goal. Crystal counts the days for you.
+- **Achievements from Steam:** link your Steam account, pick a game from your library and get
+  every achievement as a goal – with its icon and how rare it is. What you unlock is ticked off
+  automatically. [How to set it up](docs/configuration.md#steam-gaming-mode)
 - Everything else works as usual: My Day for today's session, reminders, sharing a game with
   your co-op partner, statistics.
 
@@ -122,7 +125,7 @@
   axe, works with the keyboard alone and tells screen readers which page opened.
 - **German and English**, more languages are easy to add.
 - **Private by design.** No telemetry, no tracking, and no external requests except the
-  notification services you turn on yourself.
+  notification services you turn on yourself – and Steam, if you link your account.
 - **Secure defaults.** Argon2id passwords, HttpOnly session cookies, CSRF protection,
   rate limiting, strict Content Security Policy, a non-root container without a shell.
 

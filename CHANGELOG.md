@@ -13,9 +13,16 @@ All notable changes to Crystal are documented in this file. The format follows
   stay everyday instances. In gaming mode every list is a game and every task a goal.
 - Games can have a cover picture and a finish-by date. Above their goals, games show the
   cover, how many goals are done, and how many days are left.
-- API: `PUT` and `DELETE /lists/{id}/cover`, `GET /images/{id}`; lists report
-  `coverImageId`, `deadline` and `completedCount`. The mode is part of `GET /auth/config`, and
-  the first account chooses it with `mode` when registering.
+- Achievements from Steam: with `STEAM_API_KEY` set, people link their Steam account under
+  **Settings → Steam**, pick a game from their library and get every achievement as a goal,
+  with its icon and how many players unlocked it. Achievements unlocked on Steam are ticked
+  off – right away, with **Sync with Steam**, and every `STEAM_SYNC_HOURS` (6) by themselves.
+  See [docs/configuration.md](docs/configuration.md#steam-gaming-mode).
+- API: `PUT` and `DELETE /lists/{id}/cover`, `GET /images/{id}`,
+  `POST /lists/{id}/steam-sync` and `/steam` for the Steam account and library; lists report
+  `coverImageId`, `deadline`, `completedCount`, `steamAppId` and `steamSyncedAt`, tasks their
+  `achievement`. The mode is part of `GET /auth/config`, and the first account chooses it with
+  `mode` when registering.
 
 ## [1.0.0] - 2026-09-30
 

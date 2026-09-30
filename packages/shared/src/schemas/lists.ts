@@ -35,6 +35,10 @@ export const listSchema = z.object({
   coverImageId: idSchema.nullable(),
   /** The day the list should be finished by, if one was set. */
   deadline: listDeadlineSchema.nullable(),
+  /** The Steam game whose achievements this game tracks. */
+  steamAppId: z.int().nullable(),
+  /** When the achievements were last compared with Steam. */
+  steamSyncedAt: timestampSchema.nullable(),
   openCount: z.int(),
   completedCount: z.int(),
   /** People with access, the owner included; more than one means shared. */

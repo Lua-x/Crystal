@@ -31,6 +31,8 @@ export interface TestContext {
 
 export interface TestContextOptions {
   mailer?: boolean
+  /** Answers requests to Steam instead of the network. */
+  steamFetch?: typeof fetch
 }
 
 /** A fresh in-memory instance with its own database and a controllable clock. */
@@ -71,6 +73,7 @@ export function createTestContext(
     now: clock.now,
     pushSender: push,
     ...(mailer ? { mailer } : {}),
+    ...(options.steamFetch ? { steamFetch: options.steamFetch } : {}),
   })
   const app = createApp(services, { heartbeatMs: 50 })
 
@@ -186,6 +189,10 @@ export class TestClient {
 
   patch<T = unknown>(path: string, body?: unknown, headers?: Record<string, string>) {
     return this.request<T>('PATCH', path, body, headers)
+  }
+
+  put<T = unknown>(path: string, body?: unknown, headers?: Record<string, string>) {
+    return this.request<T>('PUT', path, body, headers)
   }
 
   delete<T = unknown>(path: string, headers?: Record<string, string>) {

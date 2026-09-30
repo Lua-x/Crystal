@@ -1,16 +1,21 @@
 import type { List } from '@crystal/shared'
-import { CalendarClock, Trophy } from 'lucide-react'
+import { CalendarClock, RefreshCw, Trophy } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '../../components/ui/button'
+import { toast } from '../../components/ui/toast-store'
 import { cn } from '../../lib/cn'
+import { errorMessage } from '../../lib/errors'
+import { formatRelative } from '../../lib/format'
 import { LIST_BG_CLASS } from '../tasks/list-colors'
 import { GameCover } from './game-cover'
 import { deadlineState, gameProgress, type GameProgress } from './game-logic'
+import { useSteamSync } from './steam-data'
 
-/** Cover, progress and finish-by date above a game's goals. */
+/** Cover, progress, finish-by date and Steam sync above a game's goals. */
 export function GameHeader({ list, today }: { list: List; today: string }) {
   const progress = gameProgress(list)
-  if (!list.coverImageId && !progress && !list.deadline) return null
+  if (!list.coverImageId && !progress && !list.deadline && !list.steamAppId) return null
   const finished = progress !== null && progress.done === progress.total
 
   return (
@@ -26,6 +31,44 @@ export function GameHeader({ list, today }: { list: List; today: string }) {
           {progress && <ProgressBar list={list} progress={progress} />}
           {list.deadline && <Deadline deadline={list.deadline} today={today} finished={finished} />}
         </div>
+      )}
+      {list.steamAppId !== null && <SteamSync list={list} />}
+    </div>
+  )
+}
+
+/** When the game was last compared with Steam, and a way to do it now. */
+function SteamSync({ list }: { list: List }) {
+  const { t, i18n } = useTranslation()
+  const sync = useSteamSync()
+  return (
+    <div className="-mt-2 flex flex-wrap items-center gap-x-2 px-1 text-footnote text-text-secondary">
+      {list.steamSyncedAt && (
+        <span>
+          {t('games.synced', { time: formatRelative(list.steamSyncedAt, i18n.language) })}
+        </span>
+      )}
+      {list.role !== 'viewer' && (
+        <Button
+          size="sm"
+          variant="plain"
+          loading={sync.isPending}
+          onClick={() =>
+            sync.mutate(list.id, {
+              onSuccess: (result) => {
+                const parts = [
+                  result.unlocked > 0 ? t('games.syncUnlocked', { count: result.unlocked }) : null,
+                  result.added > 0 ? t('games.syncAdded', { count: result.added }) : null,
+                ].filter((part) => part !== null)
+                toast.success(parts.length > 0 ? parts.join(' · ') : t('games.syncNothing'))
+              },
+              onError: (error) => toast.error(errorMessage(error)),
+            })
+          }
+        >
+          <RefreshCw aria-hidden />
+          {t('games.sync')}
+        </Button>
       )}
     </div>
   )

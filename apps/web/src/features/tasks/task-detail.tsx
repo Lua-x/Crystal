@@ -24,6 +24,7 @@ import { AutoTextarea } from '../../components/ui/textarea'
 import { inputClassName } from '../../components/ui/styles'
 import { cn } from '../../lib/cn'
 import { formatDate } from '../../lib/format'
+import { AchievementInfo } from '../games/achievement-info'
 import {
   findCachedTask,
   listsQuery,
@@ -136,6 +137,8 @@ function TaskDetailContent({ task, onClose }: { task: Task; onClose: () => void 
             <Star aria-hidden className={cn('size-5', task.important && 'fill-current')} />
           </button>
         </div>
+
+        <AchievementInfo task={task} />
 
         <Subtasks task={task} disabled={!canEdit} />
 

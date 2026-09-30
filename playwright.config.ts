@@ -9,6 +9,9 @@ const BASE_URL = `http://localhost:${PORT}`
 /** A second instance, set up in gaming mode by `e2e/gaming`. */
 const GAMING_PORT = 4174
 const GAMING_URL = `http://localhost:${GAMING_PORT}`
+/** Stands in for Steam, so the gaming instance can import achievements. */
+const STEAM_PORT = 4175
+const STEAM_URL = `http://127.0.0.1:${STEAM_PORT}`
 
 // Every run starts with empty instances. Build first: `pnpm build`.
 const dataDir = process.env.E2E_DATA_DIR ?? mkdtempSync(join(tmpdir(), 'crystal-e2e-'))
@@ -67,7 +70,17 @@ export default defineConfig({
         PORT: String(GAMING_PORT),
         BASE_URL: GAMING_URL,
         DATA_DIR: gamingDataDir,
+        STEAM_API_KEY: 'e2e-steam-key',
+        STEAM_API_URL: STEAM_URL,
+        STEAM_STORE_URL: STEAM_URL,
       },
+    },
+    {
+      command: 'node e2e/fake-steam.mjs',
+      url: `${STEAM_URL}/health`,
+      reuseExistingServer: false,
+      timeout: 30_000,
+      env: { PORT: String(STEAM_PORT) },
     },
   ],
 })

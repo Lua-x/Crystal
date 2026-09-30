@@ -4,6 +4,7 @@ import type { Db } from '../db/client.js'
 import { deriveKey } from '../lib/crypto.js'
 import type { Logger } from '../lib/logger.js'
 import { RateLimiter } from '../lib/rate-limit.js'
+import { SteamClient } from '../steam/client.js'
 import { createMailer, type Mailer } from '../notifications/mailer.js'
 import { createWebPushSender, deriveVapidKeys, type PushSender } from '../notifications/push.js'
 import { AdminService } from './admin.js'
@@ -23,6 +24,7 @@ import { PasswordResetService } from './password-resets.js'
 import { ReminderService } from './reminders.js'
 import { SearchService } from './search.js'
 import { SessionService } from './sessions.js'
+import { SteamService } from './steam.js'
 import { StatsService } from './stats.js'
 import { TaskService } from './tasks.js'
 import { TransferService } from './transfer.js'
@@ -68,6 +70,8 @@ export interface Services {
   tasks: TaskService
   views: ViewService
   stats: StatsService
+  /** Steam achievements as goals. */
+  steam: SteamService
   cleanup: CleanupService
   limits: {
     /** All sign-in attempts from one address. */
@@ -81,6 +85,8 @@ export interface Services {
     calendarFeeds: RateLimiter
     /** Overall API budget per user (or address when signed out). */
     api: RateLimiter
+    /** Requests that reach Steam, per user; they count against the instance's key. */
+    steam: RateLimiter
   }
 }
 
@@ -95,6 +101,8 @@ export interface ServiceOptions {
   mailer?: Mailer
   /** Replaces the real Web Push delivery (tests). */
   pushSender?: PushSender
+  /** Replaces the network for Steam requests (tests). */
+  steamFetch?: typeof fetch
 }
 
 export function createServices(options: ServiceOptions): Services {
@@ -155,6 +163,17 @@ export function createServices(options: ServiceOptions): Services {
   const tasks = new TaskService(db, lists, search, events, notifications, attachments, now)
   const views = new ViewService(db, tasks, search)
   const stats = new StatsService(db, views, now)
+  const steam = new SteamService({
+    db,
+    client: config.steam ? new SteamClient(config.steam, options.steamFetch) : undefined,
+    syncHours: config.steam?.syncHours ?? 0,
+    lists,
+    images,
+    search,
+    events,
+    logger,
+    now,
+  })
   const reminders = new ReminderService(db, notifications, logger, now)
   const calendar = new CalendarService(db, config, secretKey, version, now)
   const transfer = new TransferService(db, lists, search, events, now)
@@ -200,6 +219,7 @@ export function createServices(options: ServiceOptions): Services {
     tasks,
     views,
     stats,
+    steam,
     cleanup,
     limits: {
       loginPerIp: new RateLimiter(50, 15 * MINUTE_MS, clock),
@@ -208,6 +228,7 @@ export function createServices(options: ServiceOptions): Services {
       passwordReset: new RateLimiter(5, 15 * MINUTE_MS, clock),
       calendarFeeds: new RateLimiter(120, 60 * MINUTE_MS, clock),
       api: new RateLimiter(600, MINUTE_MS, clock),
+      steam: new RateLimiter(60, 60 * MINUTE_MS, clock),
     },
   }
 }

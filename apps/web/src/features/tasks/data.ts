@@ -370,6 +370,7 @@ export function useCreateTask(optimisticKeys: QueryKey[] = []) {
               remindAt: input.remindAt ?? null,
               subtasks: [],
               attachments: [],
+              achievement: null,
               createdAt: now,
               updatedAt: now,
             }

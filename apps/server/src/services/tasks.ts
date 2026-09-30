@@ -20,6 +20,7 @@ import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 
 import type { Db } from '../db/client.js'
 import {
+  achievements,
   myDay,
   subtasks,
   tasks,
@@ -129,6 +130,17 @@ export class TaskService {
         : [],
     )
     const files = this.attachments.forTasks(ids, executor)
+    const achievementsByTask = new Map(
+      executor
+        .select()
+        .from(achievements)
+        .where(inArray(achievements.taskId, ids))
+        .all()
+        .map((row) => [
+          row.taskId,
+          { iconImageId: row.iconImageId, percent: row.percent, hidden: row.hidden },
+        ]),
+    )
     return rows.map((row) => ({
       id: row.id,
       listId: row.listId,
@@ -147,6 +159,7 @@ export class TaskService {
       remindAt: row.remindAt?.toISOString() ?? null,
       subtasks: byTask.get(row.id) ?? [],
       attachments: files.get(row.id) ?? [],
+      achievement: achievementsByTask.get(row.id) ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     }))

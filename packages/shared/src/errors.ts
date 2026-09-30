@@ -40,6 +40,14 @@ export const ERROR_CODES = [
   'payload_too_large',
   'unsupported_file',
   'too_many_attachments',
+  'steam_not_configured',
+  'steam_not_linked',
+  'steam_profile_not_found',
+  'steam_profile_private',
+  'steam_game_not_found',
+  'steam_already_imported',
+  'steam_no_achievements',
+  'steam_unavailable',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]

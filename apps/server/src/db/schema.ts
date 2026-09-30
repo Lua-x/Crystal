@@ -16,6 +16,7 @@ import {
   index,
   integer,
   primaryKey,
+  real,
   sqliteTable,
   text,
   uniqueIndex,
@@ -65,6 +66,9 @@ export const users = sqliteTable('users', {
   disabledAt: timestamp('disabled_at'),
   /** The local day (`YYYY-MM-DD`) the last daily summary was sent for. */
   summarySentOn: text('summary_sent_on'),
+  /** The linked Steam account (SteamID64) and its name when it was linked. */
+  steamId: text('steam_id'),
+  steamName: text('steam_name'),
 })
 
 export const userIdentities = sqliteTable(
@@ -170,6 +174,9 @@ export const lists = sqliteTable(
     coverImageId: text('cover_image_id'),
     /** Calendar day `YYYY-MM-DD` the list should be finished by. */
     deadline: text('deadline'),
+    /** The Steam game whose achievements the list tracks, for its owner's Steam account. */
+    steamAppId: integer('steam_app_id'),
+    steamSyncedAt: timestamp('steam_synced_at'),
     createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at').notNull(),
     updatedAt: timestamp('updated_at').notNull(),
@@ -345,6 +352,30 @@ export const images = sqliteTable(
   (table) => [index('images_list_idx').on(table.listId)],
 )
 
+/**
+ * The Steam achievements of a game and the goals they became. A goal deleted by
+ * someone leaves its row without a task, so syncing does not bring it back.
+ */
+export const achievements = sqliteTable(
+  'achievements',
+  {
+    listId: text('list_id')
+      .notNull()
+      .references(() => lists.id, { onDelete: 'cascade' }),
+    /** Steam's name for the achievement, stable across languages. */
+    apiName: text('api_name').notNull(),
+    taskId: text('task_id').references(() => tasks.id, { onDelete: 'set null' }),
+    iconImageId: text('icon_image_id').references(() => images.id, { onDelete: 'set null' }),
+    /** Share of all players who unlocked it, 0–100. */
+    percent: real('percent'),
+    hidden: integer('hidden', { mode: 'boolean' }).notNull().default(false),
+  },
+  (table) => [
+    primaryKey({ columns: [table.listId, table.apiName] }),
+    uniqueIndex('achievements_task_idx').on(table.taskId),
+  ],
+)
+
 /** Tasks a user picked for a day. Entries for past days are simply ignored. */
 export const myDay = sqliteTable(
   'my_day',
@@ -438,5 +469,6 @@ export type SubtaskRow = typeof subtasks.$inferSelect
 export type TaskTagRow = typeof taskTags.$inferSelect
 export type AttachmentRow = typeof attachments.$inferSelect
 export type ImageRow = typeof images.$inferSelect
+export type AchievementRow = typeof achievements.$inferSelect
 export type NotificationChannelRow = typeof notificationChannels.$inferSelect
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect

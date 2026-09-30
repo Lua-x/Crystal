@@ -1,19 +1,23 @@
 import { LIST_COLORS, type List, type ListColor } from '@crystal/shared'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Check } from 'lucide-react'
 import { RadioGroup } from 'radix-ui'
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '../../components/ui/button'
 import { Dialog } from '../../components/ui/dialog'
 import { Field } from '../../components/ui/field'
 import { Input } from '../../components/ui/input'
+import { SegmentedControl } from '../../components/ui/segmented-control'
 import { toast } from '../../components/ui/toast-store'
 import { cn } from '../../lib/cn'
 import { errorMessage } from '../../lib/errors'
 import { useIsGaming } from '../../lib/instance-mode'
 import { CoverField, DeadlineField, type CoverDraft } from '../games/game-fields'
+import { steamStatusQuery } from '../games/steam-data'
+import { SteamLibrary } from '../games/steam-library'
 import {
   useCreateGroup,
   useCreateList,
@@ -110,21 +114,82 @@ export function ListDialog({
   onCreated,
 }: ListDialogProps) {
   const { t } = useTranslation()
+  const gaming = useIsGaming()
+  const form = (
+    <ListForm
+      list={list}
+      groupId={groupId}
+      onDone={() => onOpenChange(false)}
+      onCreated={onCreated}
+    />
+  )
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
       title={list ? t('lists.editListTitle') : t('lists.newListTitle')}
     >
-      {open && (
-        <ListForm
-          list={list}
-          groupId={groupId}
-          onDone={() => onOpenChange(false)}
-          onCreated={onCreated}
-        />
-      )}
+      {open &&
+        (gaming && !list ? (
+          <NewGame
+            groupId={groupId}
+            manualForm={form}
+            onDone={() => onOpenChange(false)}
+            onCreated={onCreated}
+          />
+        ) : (
+          form
+        ))}
     </Dialog>
+  )
+}
+
+/** A new game: imported from Steam (when set up) or entered by hand. */
+function NewGame({
+  groupId,
+  manualForm,
+  onDone,
+  onCreated,
+}: {
+  groupId: string | null
+  manualForm: ReactNode
+  onDone: () => void
+  onCreated: (() => void) | undefined
+}) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const steam = useQuery(steamStatusQuery)
+  const [source, setSource] = useState<'steam' | 'manual' | null>(null)
+  if (steam.isPending) return null
+  if (!steam.data?.available) return manualForm
+  // Linked accounts start with their library; everyone else with the form.
+  const shown = source ?? (steam.data.profile ? 'steam' : 'manual')
+
+  return (
+    <div className="flex flex-col gap-5">
+      <SegmentedControl
+        aria-label={t('games.source')}
+        value={shown}
+        onValueChange={setSource}
+        options={[
+          { value: 'steam', label: t('games.fromSteam') },
+          { value: 'manual', label: t('games.manually') },
+        ]}
+        className="w-full"
+      />
+      {shown === 'steam' ? (
+        <SteamLibrary
+          groupId={groupId}
+          onOpen={(listId) => {
+            onDone()
+            onCreated?.()
+            void navigate({ to: '/lists/$listId', params: { listId } })
+          }}
+        />
+      ) : (
+        manualForm
+      )}
+    </div>
   )
 }
 

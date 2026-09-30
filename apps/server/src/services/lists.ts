@@ -527,6 +527,8 @@ export class ListService {
         isDefault: list.isDefault && list.createdBy === userId,
         coverImageId: list.coverImageId,
         deadline: list.deadline,
+        steamAppId: list.steamAppId,
+        steamSyncedAt: list.steamSyncedAt?.toISOString() ?? null,
         openCount: Number(openCount),
         completedCount: Number(completedCount),
         memberCount: Number(memberCount),
@@ -541,7 +543,8 @@ export class ListService {
     return group
   }
 
-  private requireGroup(userId: string, groupId: string, executor: Executor): void {
+  /** Fails with 404 unless the group is one of the user's. */
+  requireGroup(userId: string, groupId: string, executor: Executor): void {
     const group = executor
       .select({ id: listGroups.id })
       .from(listGroups)

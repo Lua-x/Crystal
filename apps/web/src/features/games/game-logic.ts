@@ -5,6 +5,14 @@ export function imageUrl(imageId: string): string {
   return `/api/v1/images/${imageId}`
 }
 
+/** "6.8 %" – how many players unlocked an achievement (Steam gives 0–100). */
+export function formatRarity(percent: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'percent',
+    maximumFractionDigits: percent < 10 ? 1 : 0,
+  }).format(percent / 100)
+}
+
 export interface GameProgress {
   done: number
   total: number

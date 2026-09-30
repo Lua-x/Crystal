@@ -84,6 +84,8 @@ export class UserService {
       lastLoginAt: null,
       disabledAt: null,
       summarySentOn: null,
+      steamId: null,
+      steamName: null,
     }
     executor.insert(users).values(row).run()
     return row

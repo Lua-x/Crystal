@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { deadlineState, gameProgress } from './game-logic'
+import { deadlineState, formatRarity, gameProgress } from './game-logic'
 
 describe('gameProgress', () => {
   it('counts done goals against all goals', () => {
@@ -18,6 +18,16 @@ describe('gameProgress', () => {
 
   it('has nothing to show without goals', () => {
     expect(gameProgress({ openCount: 0, completedCount: 0 })).toBeNull()
+  })
+})
+
+describe('formatRarity', () => {
+  it('shows rare achievements precisely and common ones rounded', () => {
+    expect(formatRarity(6.8, 'en')).toBe('6.8%')
+    expect(formatRarity(0.1, 'en')).toBe('0.1%')
+    expect(formatRarity(71.4, 'en')).toBe('71%')
+    // German puts a no-break space before the percent sign.
+    expect(formatRarity(6.8, 'de').replace(/\s/g, ' ')).toBe('6,8 %')
   })
 })
 

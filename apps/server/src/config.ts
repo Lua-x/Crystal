@@ -79,6 +79,13 @@ const envSchema = z
     BACKUP_RETENTION: z.coerce.number().int().min(1).max(365).default(7),
     BACKUP_DIR: optionalString,
     ATTACHMENT_MAX_MB: z.coerce.number().int().min(1).max(100).default(10),
+    /** Key for the Steam Web API; without it, Steam achievements cannot be imported. */
+    STEAM_API_KEY: optionalString,
+    /** 0 only compares achievements with Steam when someone asks for it. */
+    STEAM_SYNC_HOURS: z.coerce.number().int().min(0).max(168).default(6),
+    /** Other addresses for the Steam Web API and store, e.g. a test server. */
+    STEAM_API_URL: urlFromEnv.default(new URL('https://api.steampowered.com')),
+    STEAM_STORE_URL: urlFromEnv.default(new URL('https://store.steampowered.com')),
   })
   .superRefine((env, ctx) => {
     if (env.BASE_URL && (env.BASE_URL.pathname !== '/' || env.BASE_URL.search)) {
@@ -118,6 +125,14 @@ const envSchema = z
       })
     }
   })
+
+export interface SteamConfig {
+  apiKey: string
+  /** 0 when achievements are only compared on request. */
+  syncHours: number
+  apiUrl: URL
+  storeUrl: URL
+}
 
 export interface OidcConfig {
   issuer: URL
@@ -161,6 +176,8 @@ export interface Config {
     /** Covers and other pictures of lists. */
     directory: string
   }
+  /** Steam achievements; `undefined` without `STEAM_API_KEY`. */
+  steam: SteamConfig | undefined
   backups: {
     /** 0 when automatic backups are off. */
     intervalHours: number
@@ -249,6 +266,14 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     images: {
       directory: join(parsed.DATA_DIR, 'images'),
     },
+    steam: parsed.STEAM_API_KEY
+      ? {
+          apiKey: parsed.STEAM_API_KEY,
+          syncHours: parsed.STEAM_SYNC_HOURS,
+          apiUrl: parsed.STEAM_API_URL,
+          storeUrl: parsed.STEAM_STORE_URL,
+        }
+      : undefined,
     backups: {
       intervalHours: parsed.BACKUP_INTERVAL_HOURS,
       retention: parsed.BACKUP_RETENTION,

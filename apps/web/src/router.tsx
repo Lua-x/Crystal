@@ -242,6 +242,15 @@ const calendarSettingsRoute = createRoute({
   ),
 })
 
+const steamSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: '/steam',
+  component: lazyRouteComponent(
+    () => import('./features/settings/steam-settings'),
+    'SteamSettingsPage',
+  ),
+})
+
 const sessionsSettingsRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/sessions',
@@ -321,6 +330,7 @@ const routeTree = rootRoute.addChildren([
       notificationsSettingsRoute,
       sessionsSettingsRoute,
       calendarSettingsRoute,
+      steamSettingsRoute,
       transferSettingsRoute,
       apiSettingsRoute,
       usersSettingsRoute,

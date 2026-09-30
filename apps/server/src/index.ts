@@ -80,13 +80,18 @@ function main(): void {
 
   services.reminders.start(config.reminderIntervalMs)
   services.backups.start()
+  services.steam.start()
   if (config.backups.intervalHours === 0) logger.info('Automatic backups are turned off.')
   if (!config.smtp) logger.info('SMTP is not configured; email notifications are off.')
 
   const shutdown = (signal: string) => {
     logger.info({ signal }, 'Shutting down')
     clearInterval(cleanup)
-    const remindersStopped = Promise.all([services.reminders.stop(), services.backups.stop()])
+    const remindersStopped = Promise.all([
+      services.reminders.stop(),
+      services.backups.stop(),
+      services.steam.stop(),
+    ])
     // Open event streams would keep the server from closing.
     services.events.closeAll()
     server.close(() => {

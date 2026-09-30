@@ -32,6 +32,7 @@ function task(overrides: Partial<Task> = {}): Task {
     remindAt: null,
     subtasks: [],
     attachments: [],
+    achievement: null,
     createdAt: '2026-09-30T08:00:00.000Z',
     updatedAt: '2026-09-30T08:00:00.000Z',
     ...overrides,

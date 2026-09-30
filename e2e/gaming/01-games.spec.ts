@@ -58,7 +58,7 @@ test('a game gets a cover and a finish-by date', async ({ page }) => {
   await signIn(page, ADMIN)
   await page.getByRole('button', { name: 'Add game', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Add a game' })
-  await dialog.getByLabel('Name', { exact: true }).fill('Hollow Knight')
+  await dialog.getByLabel('Name', { exact: true }).fill('Silksong')
 
   // A file that is no picture is refused right away.
   await dialog.locator('input[type=file]').setInputFiles({
@@ -79,7 +79,7 @@ test('a game gets a cover and a finish-by date', async ({ page }) => {
   await expectAccessible(page)
   await dialog.getByRole('button', { name: 'Create' }).click()
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Hollow Knight' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Silksong' })).toBeVisible()
   const cover = page.locator('main img').first()
   await expect(cover).toHaveAttribute('src', /^\/api\/v1\/images\//)
   await expect(page.getByText(/Finish by .* · 10 days left/)).toBeVisible()
@@ -89,7 +89,7 @@ test('a game gets a cover and a finish-by date', async ({ page }) => {
 test('progress follows the goals', async ({ page }) => {
   await signIn(page, ADMIN)
   await sidebar(page)
-    .getByRole('link', { name: /^Hollow Knight/ })
+    .getByRole('link', { name: /^Silksong/ })
     .click()
   await addGoals(page, 'Defeat Hornet', 'Find all grubs', 'Reach Dirtmouth', 'Beat the Radiance')
   const progress = page.getByRole('progressbar', { name: 'Progress' })
@@ -105,16 +105,16 @@ test('progress follows the goals', async ({ page }) => {
 test('the finish-by date and cover can be changed or removed', async ({ page }) => {
   await signIn(page, ADMIN)
   await sidebar(page)
-    .getByRole('link', { name: /^Hollow Knight/ })
+    .getByRole('link', { name: /^Silksong/ })
     .click()
-  await page.getByRole('button', { name: 'Actions for Hollow Knight' }).click()
+  await page.getByRole('button', { name: 'Actions for Silksong' }).click()
   await page.getByRole('menuitem', { name: 'Edit game…' }).click()
   const dialog = page.getByRole('dialog', { name: 'Edit game' })
   await dialog.getByLabel('Finish by').fill(inDays(-2))
   await dialog.getByRole('button', { name: 'Save' }).click()
   await expect(page.getByText(/Finish by .* · 2 days over/)).toBeVisible()
 
-  await page.getByRole('button', { name: 'Actions for Hollow Knight' }).click()
+  await page.getByRole('button', { name: 'Actions for Silksong' }).click()
   await page.getByRole('menuitem', { name: 'Edit game…' }).click()
   await dialog.getByRole('button', { name: 'Remove date' }).click()
   await dialog.getByRole('button', { name: 'Remove picture' }).click()
@@ -135,7 +135,7 @@ test('goals use gaming words everywhere', async ({ page }) => {
   await page.keyboard.press('Escape')
 
   await sidebar(page)
-    .getByRole('link', { name: /^Hollow Knight/ })
+    .getByRole('link', { name: /^Silksong/ })
     .click()
   await task(page, 'Defeat Hornet').click()
   const details = page.getByRole('complementary', { name: 'Goal details' })

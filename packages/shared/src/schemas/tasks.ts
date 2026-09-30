@@ -15,6 +15,7 @@ import {
   TASK_TITLE_MAX_LENGTH,
 } from '../constants.js'
 import { idSchema, timestampSchema } from './common.js'
+import { achievementSchema } from './steam.js'
 
 /**
  * A tag: letters, digits, `_`, `-` and `/`, stored in lower case without the
@@ -121,6 +122,8 @@ export const taskSchema = z.object({
   subtasks: z.array(subtaskSchema),
   /** Oldest first. */
   attachments: z.array(attachmentSchema),
+  /** Set for goals imported from a Steam achievement. */
+  achievement: achievementSchema.nullable(),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 })

@@ -51,7 +51,8 @@ Tables:
 | `subtasks`              | Steps of a task, with their own order and completion                                                                                                    |
 | `task_tags`             | Tags of a task, in lower case                                                                                                                           |
 | `attachments`           | Files attached to tasks: name for display, type recognized from the content, size; the file itself is `DATA_DIR/attachments/<id>`                       |
-| `images`                | Pictures that belong to a list (game covers): type recognized from the content, size; the file itself is `DATA_DIR/images/<id>`                         |
+| `images`                | Pictures that belong to a list (game covers, achievement icons): type recognized from the content, size; the file itself is `DATA_DIR/images/<id>`      |
+| `achievements`          | Steam achievements of a game: Steam's name, the goal it became (empty once deleted), icon, share of players, hidden flag                                |
 | `my_day`                | Which tasks a person added to My Day, and for which date                                                                                                |
 | `task_search`           | SQLite FTS5 index over titles, notes, steps and tags                                                                                                    |
 | `notification_channels` | A person's ntfy, Gotify, Apprise and email channels; settings encrypted with AES-GCM, last delivery and error                                           |
@@ -68,6 +69,11 @@ Design decisions for lists and tasks:
   optional cover and finish-by date) and a task is a goal. The web app loads the gaming words
   as an overlay over the base language (`locales/gaming-*.ts`), so only differing texts are
   translated twice.
+- **Steam games** (`lists.steam_app_id`) follow the Steam account of their owner
+  (`users.steam_id`). Importing creates one goal per achievement; syncing – on request or
+  every `STEAM_SYNC_HOURS` – completes goals whose achievement was unlocked since (at the
+  unlock time) and adds new achievements. It never reopens goals, and a goal someone deleted
+  keeps its `achievements` row without a task, so it does not come back.
 
 - **Access** always goes through `list_members`. A list that does not exist and one you may
   not see both answer `404`, so IDs reveal nothing. Sharing (0.4) only adds rows there.
@@ -207,7 +213,12 @@ Setting the new password signs the account out everywhere.
   `65532`, read-only root filesystem in the provided Compose file.
 - **Privacy:** no telemetry. Crystal only contacts other servers for notifications a person
   turned on: the push service of their browser, the ntfy, Gotify or Apprise server they
-  entered, and the configured mail server.
+  entered, and the configured mail server – and Steam, for people who linked a Steam account
+  on an instance with `STEAM_API_KEY`.
+- **Steam:** only fixed Web API and store endpoints are called, with timeouts and size limits.
+  Covers and icons are downloaded only from Steam's media hosts (every redirect is checked
+  again), recognized by their content and stored locally, so browsers never contact Steam. The
+  API key stays on the server and is never logged.
 
 ## Design system
 

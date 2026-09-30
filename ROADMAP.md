@@ -48,7 +48,7 @@ and screenshots in light and dark mode.
 
 - ✅ Chosen once during setup: every list is a game, every task a goal. Games have a cover,
   a finish-by date and show their progress.
-- Achievements from Steam: link your Steam profile, pick a game from your library and get
+- ✅ Achievements from Steam: link your Steam profile, pick a game from your library and get
   all its achievements as goals; unlocked ones are ticked off automatically.
 - Maps: upload a map of a game and pin goals to places on it, e.g. collectibles.
 

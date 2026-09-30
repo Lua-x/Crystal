@@ -126,6 +126,26 @@ See [backup.md](backup.md) for restoring.
 Images (PNG, JPEG, GIF, WebP, AVIF, HEIC) and PDFs can be attached, up to 20 per task. They are
 stored in `DATA_DIR/attachments`.
 
+## Steam (gaming mode)
+
+On gaming instances, people can link their Steam account and import games with all their
+achievements as goals. This needs a Steam Web API key: sign in at
+<https://steamcommunity.com/dev/apikey>, enter your domain (any name works) and copy the key.
+
+| Variable           | Default                          | Description                                                                  |
+| ------------------ | -------------------------------- | ---------------------------------------------------------------------------- |
+| `STEAM_API_KEY`    | –                                | Steam Web API key. Without it, Steam is not offered.                         |
+| `STEAM_SYNC_HOURS` | `6`                              | Hours between automatic syncs of imported games (1–168); `0` only on request |
+| `STEAM_API_URL`    | `https://api.steampowered.com`   | Where the Web API is reached; only change it for tests                       |
+| `STEAM_STORE_URL`  | `https://store.steampowered.com` | Where game names and covers are looked up; only change it for tests          |
+
+The key belongs to the instance and is never sent to browsers. Everyone links their own
+account under **Settings → Steam**; their game details must be public in the Steam privacy
+settings. A game imported from Steam follows its owner's Steam account: unlocked achievements
+are ticked off at their unlock time, and achievements the game gains later (for example with
+DLC) are added. Crystal only contacts Steam for people who linked an account, and downloads
+covers and icons once, so browsers never load anything from Steam.
+
 ## Docker Compose only
 
 | Variable          | Default  | Description                                                      |
