@@ -32,7 +32,7 @@
       "eslint --max-warnings 0 --no-warn-ignored",
       "prettier --write"
     ],
-    "*.{json,md,yml,yaml,css,html}": "prettier --write"
+    "*.{json,webmanifest,md,yml,yaml,css,html}": "prettier --write"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
