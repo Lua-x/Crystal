@@ -21,6 +21,7 @@ import { PasswordResetService } from './password-resets.js'
 import { ReminderService } from './reminders.js'
 import { SearchService } from './search.js'
 import { SessionService } from './sessions.js'
+import { StatsService } from './stats.js'
 import { TaskService } from './tasks.js'
 import { TransferService } from './transfer.js'
 import { UserService } from './users.js'
@@ -60,6 +61,7 @@ export interface Services {
   lists: ListService
   tasks: TaskService
   views: ViewService
+  stats: StatsService
   cleanup: CleanupService
   limits: {
     /** All sign-in attempts from one address. */
@@ -143,6 +145,7 @@ export function createServices(options: ServiceOptions): Services {
   const attachments = new AttachmentService(db, lists, events, config.attachments, now)
   const tasks = new TaskService(db, lists, search, events, notifications, attachments, now)
   const views = new ViewService(db, tasks, search)
+  const stats = new StatsService(db, views, now)
   const reminders = new ReminderService(db, notifications, logger, now)
   const calendar = new CalendarService(db, config, secretKey, version, now)
   const transfer = new TransferService(db, lists, search, events, now)
@@ -185,6 +188,7 @@ export function createServices(options: ServiceOptions): Services {
     lists,
     tasks,
     views,
+    stats,
     cleanup,
     limits: {
       loginPerIp: new RateLimiter(50, 15 * MINUTE_MS, clock),

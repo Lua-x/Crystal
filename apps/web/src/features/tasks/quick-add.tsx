@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import {
   parseQuickEntry,
   type CreateTaskInput,
@@ -177,7 +178,7 @@ function chipLabel(
   token: QuickEntryToken,
   parsed: QuickEntryResult,
   context: {
-    t: ReturnType<typeof useTranslation>['t']
+    t: TFunction
     locale: string
     today: string
     lists: { id: string; name: string }[]

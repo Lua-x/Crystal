@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import {
   NOTIFICATION_CHANNEL_TYPES,
   type CreateChannelInput,
@@ -81,7 +82,7 @@ export function NotificationsSettingsPage() {
 
 /* ── This device (Web Push) ────────────────────────────────────── */
 
-function deviceName(userAgent: string | null, t: ReturnType<typeof useTranslation>['t']) {
+function deviceName(userAgent: string | null, t: TFunction) {
   const device = describeUserAgent(userAgent)
   const name =
     device.browser && device.os
@@ -204,7 +205,7 @@ function PushDeviceRow({ device }: { device: PushDevice }) {
 
 /* ── Other services ────────────────────────────────────────────── */
 
-type Translate = ReturnType<typeof useTranslation>['t']
+type Translate = TFunction
 
 /** A readable reason for a failed delivery (`timeout`, `http:401`, …). */
 function describeFailure(reason: string, t: Translate): string {

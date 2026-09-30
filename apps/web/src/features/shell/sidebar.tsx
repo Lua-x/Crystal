@@ -1,5 +1,13 @@
 import { useNavigate } from '@tanstack/react-router'
-import { ChevronsUpDown, FolderPlus, Keyboard, LogOut, Plus, Settings } from 'lucide-react'
+import {
+  ChartColumn,
+  ChevronsUpDown,
+  FolderPlus,
+  Keyboard,
+  LogOut,
+  Plus,
+  Settings,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -113,6 +121,15 @@ function AccountMenu({ onNavigate }: { onNavigate: (() => void) | undefined }) {
           }}
         >
           {t('common.settings')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          icon={<ChartColumn />}
+          onSelect={() => {
+            onNavigate?.()
+            void navigate({ to: '/stats' })
+          }}
+        >
+          {t('stats.title')}
         </DropdownMenuItem>
         {!isCompact && (
           <DropdownMenuItem icon={<Keyboard />} onSelect={openShortcuts}>

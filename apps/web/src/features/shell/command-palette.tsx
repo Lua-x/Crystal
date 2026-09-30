@@ -5,6 +5,7 @@ import { Command } from 'cmdk'
 import {
   CalendarClock,
   CalendarDays,
+  ChartColumn,
   CircleCheck,
   FolderPlus,
   Hash,
@@ -176,6 +177,12 @@ function PaletteContent({
             icon: VIEW_ICONS[view],
             onSelect: run(() => void navigate({ to: `/${view}` })),
           })),
+          {
+            value: 'stats',
+            label: t('stats.title'),
+            icon: <ChartColumn />,
+            onSelect: run(() => void navigate({ to: '/stats' })),
+          },
           {
             value: 'settings',
             label: t('common.settings'),

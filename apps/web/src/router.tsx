@@ -146,6 +146,12 @@ const tagRoute = createRoute({
   component: TagPage,
 })
 
+const statsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/stats',
+  component: lazyRouteComponent(() => import('./features/stats/stats-page'), 'StatsPage'),
+})
+
 const searchRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/search',
@@ -302,6 +308,7 @@ const routeTree = rootRoute.addChildren([
     listRoute,
     tagRoute,
     searchRoute,
+    statsRoute,
     settingsRoute.addChildren([
       settingsIndexRoute,
       accountSettingsRoute,

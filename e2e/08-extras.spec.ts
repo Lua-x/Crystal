@@ -163,6 +163,19 @@ test('attaching images and PDFs to a task', async ({ page }) => {
   await expect(files.getByRole('listitem')).toHaveCount(1)
 })
 
+test('statistics show completed tasks per week and the streak', async ({ page }) => {
+  await signIn(page, ADMIN)
+  await page.getByRole('button', { name: 'Account menu' }).click()
+  await page.getByRole('menuitem', { name: 'Statistics' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Statistics' })).toBeVisible()
+  // Earlier tests completed tasks today.
+  await expect(page.getByRole('region', { name: 'Streak' })).toContainText('1 day')
+  const weeks = page.getByRole('region', { name: 'Completed per week' }).getByRole('listitem')
+  await expect(weeks).toHaveCount(12)
+  await expect(weeks.last()).toContainText(/Week of .*: [1-9]\d* completed/)
+  await expectAccessible(page)
+})
+
 test('administrators back up the database', async ({ page }) => {
   await signIn(page, ADMIN)
   await page.goto('/settings/backups')

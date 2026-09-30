@@ -24,6 +24,8 @@ All notable changes to Crystal are documented in this file. The format follows
 - Attach images and PDFs to tasks – with the button or by dropping them on the details – up to
   `ATTACHMENT_MAX_MB` (10 MiB) each and 20 per task. Images show as thumbnails; rows show a
   paperclip.
+- Statistics (account menu or command palette): tasks completed per week over the last 12
+  weeks, today, in total, and your streak of days with something done.
 
 ### Security
 

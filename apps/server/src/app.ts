@@ -20,6 +20,7 @@ import { listGroupRoutes, listRoutes } from './routes/lists.js'
 import { meRoutes } from './routes/me.js'
 import { notificationRoutes } from './routes/notifications.js'
 import { peopleRoutes } from './routes/people.js'
+import { statsRoutes } from './routes/stats.js'
 import { systemRoutes } from './routes/system.js'
 import { subtaskRoutes, taskRoutes } from './routes/tasks.js'
 import { exportRoutes, importRoutes } from './routes/transfer.js'
@@ -85,6 +86,7 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.route('/tags', tagRoutes(services))
   v1.route('/people', peopleRoutes(services))
   v1.route('/notifications', notificationRoutes(services))
+  v1.route('/stats', statsRoutes(services))
   v1.route('/export', exportRoutes(services))
   v1.route('/import', importRoutes(services))
   v1.route('/events', eventRoutes(services, options.heartbeatMs))

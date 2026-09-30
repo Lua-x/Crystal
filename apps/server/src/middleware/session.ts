@@ -51,7 +51,7 @@ export function sessionMiddleware(services: Services): MiddlewareHandler<AppEnv>
 
 /** What API tokens can reach: tasks and lists, not account or instance settings. */
 const TOKEN_PATHS =
-  /^\/api\/v1\/(lists|list-groups|tasks|subtasks|attachments|views|search|tags|people|events|export|import)(\/|$)/
+  /^\/api\/v1\/(lists|list-groups|tasks|subtasks|attachments|views|search|tags|people|events|stats|export|import)(\/|$)/
 
 /**
  * Keeps API tokens to the data they are meant for, and read-only tokens to
