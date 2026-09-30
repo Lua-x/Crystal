@@ -1,7 +1,7 @@
 # Roadmap
 
-Crystal was built in phases, each ending with a release; the seventh became 1.0. Next up is
-the gaming mode (1.1); further ideas are collected under [Later](#later).
+Crystal was built in phases, each ending with a release; the seventh became 1.0, and the
+gaming mode followed as 1.1. Further ideas are collected under [Later](#later).
 
 ## ✅ 0.1 – Foundation
 
@@ -44,13 +44,11 @@ A faster start through loading parts of the app on demand, page titles, a skip l
 page announcements for screen readers, placeholder rows while loading, gentler empty states,
 and screenshots in light and dark mode.
 
-## 1.1 – Gaming mode (in progress)
+## ✅ 1.1 – Gaming mode
 
-- ✅ Chosen once during setup: every list is a game, every task a goal. Games have a cover,
-  a finish-by date and show their progress.
-- ✅ Achievements from Steam: link your Steam profile, pick a game from your library and get
-  all its achievements as goals; unlocked ones are ticked off automatically.
-- ✅ Maps: upload a map of a game and pin goals to places on it, e.g. collectibles.
+Chosen once during setup: every list is a game, every task a goal. Games with a cover,
+progress and a finish-by date, achievements imported from Steam and ticked off automatically,
+and maps with goals pinned to places on them.
 
 ## Later
 
@@ -59,7 +57,13 @@ Ideas that were deliberately postponed:
 - **Offline changes to lists and sharing.** Offline, tasks and steps can be added and changed;
   creating lists, sharing and settings still need a connection.
 - **Attachments in backups and exports.** Automatic backups and the JSON export contain the
-  database only; attachments are covered by backing up the data directory.
+  database only; attachments, covers and maps are covered by backing up the data directory.
+- **Achievements from other platforms** – Xbox, PlayStation, GOG or RetroAchievements – next to
+  Steam.
+- **Everyone's own Steam progress in shared games.** A shared game follows its owner's Steam
+  account; co-op partners cannot track their own unlocks in the same game yet.
+- **Several places for one goal** (e.g. pins for each step of “Find all 12 shards”); today a goal
+  has at most one place on a map.
 - **Storage quotas** per person for attachments (today: a size limit per file and 20 files per
   task).
 - **PostgreSQL** as an alternative to SQLite (SQLite is plenty for households; supporting two

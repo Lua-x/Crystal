@@ -6,6 +6,10 @@ All notable changes to Crystal are documented in this file. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-30
+
+Gaming mode: games, achievements from Steam and maps.
+
 ### Added
 
 - Gaming mode: when setting up Crystal, choose whether it is for everyday lists or for gaming.
@@ -214,7 +218,8 @@ and tasks follow in 0.2.
 - Security: Argon2id password hashing, hashed session tokens, CSRF protection, rate limiting,
   strict Content Security Policy.
 
-[Unreleased]: https://github.com/Lua-x/Crystal/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Lua-x/Crystal/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Lua-x/Crystal/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Lua-x/Crystal/compare/v0.6.0...v1.0.0
 [0.6.0]: https://github.com/Lua-x/Crystal/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Lua-x/Crystal/compare/v0.4.0...v0.5.0

@@ -109,6 +109,18 @@
 - **Maps with pins:** add a picture of the game's world and pin goals to the spots where they
   are – collectibles, bosses, secrets. Zoom and pan with mouse, touch or keyboard; open or tick
   off a goal right from its pin.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/gaming-dark.png" />
+    <img src="docs/screenshots/gaming-light.png" width="420" alt="A game in gaming mode: its cover, a progress bar with 4 of 9 goals done, the finish-by date with 24 days left, two maps, and goals with dates, steps and map pins." />
+  </picture>
+  &nbsp;
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/gaming-map-dark.png" />
+    <img src="docs/screenshots/gaming-map-light.png" width="420" alt="A map of islands with four pinned goals. One pin is selected and shows its goal with buttons for details, moving and removing the pin; the goals of the game are listed beside the map." />
+  </picture>
+</p>
 - Everything else works as usual: My Day for today's session, reminders, sharing a game with
   your co-op partner, statistics.
 
