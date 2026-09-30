@@ -14,10 +14,6 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License: AGPL-3.0" /></a>
 </p>
 
-> [!NOTE]
-> **Crystal is in early development.** Everything below is ready to use; the road to 1.0 is
-> about polish. See the [roadmap](ROADMAP.md).
-
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-dark.png" />
@@ -33,7 +29,19 @@
   &nbsp;
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/phone-details-dark.png" />
-    <img src="docs/screenshots/phone-details-light.png" width="260" alt="Task details as a bottom sheet on a phone, with steps and a note." />
+    <img src="docs/screenshots/phone-details-light.png" width="260" alt="Task details as a bottom sheet on a phone, with steps, due date, reminder and priority." />
+  </picture>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/shared-dark.png" />
+    <img src="docs/screenshots/shared-light.png" width="420" alt="A household list shared with a second person: their avatars above the list, and a task assigned to them with steps and an attached photo." />
+  </picture>
+  &nbsp;
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/stats-dark.png" />
+    <img src="docs/screenshots/stats-light.png" width="420" alt="Statistics: tasks done today, the current streak, the total, open tasks, and a bar chart of tasks completed per week over twelve weeks." />
   </picture>
 </p>
 
@@ -102,15 +110,14 @@
   your own – adjusted automatically so text always stays readable.
 - **Works everywhere.** Phone, tablet and desktop, with touch targets of at least 44 px.
 - **Accessible.** WCAG 2.1 AA contrast is verified by tests; every screen is checked with
-  axe and works with the keyboard alone.
+  axe, works with the keyboard alone and tells screen readers which page opened.
 - **German and English**, more languages are easy to add.
 - **Private by design.** No telemetry, no tracking, and no external requests except the
   notification services you turn on yourself.
 - **Secure defaults.** Argon2id passwords, HttpOnly session cookies, CSRF protection,
   rate limiting, strict Content Security Policy, a non-root container without a shell.
 
-**Coming next** – polish for 1.0: animations, accessibility and performance reviews, and
-documentation with screenshots. Details in the [roadmap](ROADMAP.md).
+**What's next?** Ideas for after 1.0 are collected in the [roadmap](ROADMAP.md).
 
 ## Quick start
 
@@ -158,9 +165,10 @@ updating across major versions. To stay on a release line, set `CRYSTAL_VERSION`
 
 ## Backups
 
-All data – database, secret key and later attachments – lives in the `crystal-data` volume.
-How to back it up and restore it: [docs/backup.md](docs/backup.md). Automatic, scheduled
-backups are planned (see the [roadmap](ROADMAP.md)).
+All data – database, secret key and attachments – lives in the `crystal-data` volume. Crystal
+backs up the database every 24 hours and keeps the newest seven copies; administrators can
+also make and download a backup under **Settings → Backups**. How to back up the whole volume
+and restore it: [docs/backup.md](docs/backup.md).
 
 ## Development
 
