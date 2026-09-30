@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Logo } from '../../components/brand/logo'
 import { SegmentedControl } from '../../components/ui/segmented-control'
 import { rememberLocale } from '../../lib/appearance'
+import { useDocumentTitle } from '../../lib/document-title'
 import { setLocale } from '../../lib/i18n'
 import { authConfigQuery } from '../../lib/queries'
 
@@ -49,6 +50,7 @@ export function AuthLayout() {
 }
 
 export function AuthHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  useDocumentTitle(title)
   return (
     <div className="mb-6 text-center">
       <h1 className="text-title2 font-bold">{title}</h1>

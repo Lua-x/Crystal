@@ -19,7 +19,7 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react'
-import { motion } from 'motion/react'
+import { m } from 'motion/react'
 import { useState, type KeyboardEventHandler, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -267,9 +267,9 @@ function GroupRow({ group }: { group: ListGroup }) {
         }
         className="flex h-full min-w-0 flex-1 cursor-default items-center gap-1.5 rounded-lg pl-1.5 text-callout font-semibold text-text-secondary hover:bg-fill-hover"
       >
-        <motion.span animate={{ rotate: group.collapsed ? 0 : 90 }} transition={springs.snappy}>
+        <m.span animate={{ rotate: group.collapsed ? 0 : 90 }} transition={springs.snappy}>
           <ChevronRight aria-hidden className="size-4" />
-        </motion.span>
+        </m.span>
         <span className="truncate">{group.name}</span>
       </button>
       <DropdownMenu>

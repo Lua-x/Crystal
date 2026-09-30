@@ -22,7 +22,7 @@ import {
   SunMedium,
   UserCheck,
 } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -71,7 +71,7 @@ export function CommandPalette({ open, onOpenChange, ...actions }: CommandPalett
         {open && (
           <DialogPrimitive.Portal forceMount>
             <DialogPrimitive.Overlay asChild forceMount>
-              <motion.div
+              <m.div
                 className="fixed inset-0 z-40 bg-overlay"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -81,7 +81,7 @@ export function CommandPalette({ open, onOpenChange, ...actions }: CommandPalett
             </DialogPrimitive.Overlay>
             <div className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center p-3 pt-[max(0.75rem,12dvh)]">
               <DialogPrimitive.Content asChild forceMount aria-describedby={undefined}>
-                <motion.div
+                <m.div
                   className="pointer-events-auto w-full max-w-xl overflow-hidden rounded-2xl bg-elevated shadow-lg outline-none"
                   initial={{ opacity: 0, scale: 0.98, y: -8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -92,7 +92,7 @@ export function CommandPalette({ open, onOpenChange, ...actions }: CommandPalett
                     {t('palette.label')}
                   </DialogPrimitive.Title>
                   <PaletteContent onClose={() => onOpenChange(false)} {...actions} />
-                </motion.div>
+                </m.div>
               </DialogPrimitive.Content>
             </div>
           </DialogPrimitive.Portal>

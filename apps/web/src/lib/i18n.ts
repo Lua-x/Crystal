@@ -1,10 +1,10 @@
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from '@crystal/shared'
+// DEFAULT_LOCALE is the answer when the browser prefers no supported language.
 import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { z } from 'zod'
 
-import { de } from '../locales/de'
-import { en, type Translation } from '../locales/en'
+import type { Translation } from '../locales/en'
 
 declare module 'i18next' {
   interface CustomTypeOptions {
@@ -23,14 +23,28 @@ export function detectLocale(languages: readonly string[] = navigator.languages)
   return DEFAULT_LOCALE
 }
 
-export function initI18n(initialLocale: Locale) {
-  void i18next.use(initReactI18next).init({
-    resources: { en: { translation: en }, de: { translation: de } },
+/** Each language is its own chunk: only the one in use is downloaded. */
+const TRANSLATIONS: Record<Locale, () => Promise<Translation>> = {
+  en: () => import('../locales/en').then((module) => module.en),
+  de: () => import('../locales/de').then((module) => module.de),
+}
+
+async function loadTranslation(locale: Locale): Promise<void> {
+  if (i18next.hasResourceBundle(locale, 'translation')) return
+  i18next.addResourceBundle(locale, 'translation', await TRANSLATIONS[locale]())
+}
+
+/** Starts i18n with the given language; resolves once its texts are loaded. */
+export async function initI18n(initialLocale: Locale): Promise<void> {
+  await i18next.use(initReactI18next).init({
+    resources: {},
     lng: initialLocale,
-    fallbackLng: DEFAULT_LOCALE,
+    // Every language has every key (the type checker ensures it), so none is needed.
+    fallbackLng: false,
     interpolation: { escapeValue: false }, // React escapes already.
     returnNull: false,
   })
+  await loadTranslation(initialLocale)
   document.documentElement.lang = initialLocale
 
   // Zod messages in the user's language. Custom messages (translation keys
@@ -62,6 +76,7 @@ export function initI18n(initialLocale: Locale) {
 }
 
 export async function setLocale(locale: Locale) {
+  await loadTranslation(locale)
   if (i18next.language !== locale) await i18next.changeLanguage(locale)
   document.documentElement.lang = locale
 }

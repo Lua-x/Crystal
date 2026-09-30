@@ -2,7 +2,7 @@ import type { List, Task } from '@crystal/shared'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronRight } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { useState, type KeyboardEvent, type KeyboardEventHandler, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -152,7 +152,7 @@ function moveFocus(from: HTMLElement, step: 1 | -1): boolean {
 /** Rows fade and fold in when added and fold away when completed or deleted. */
 function AnimatedItem({ children }: { children: ReactNode }) {
   return (
-    <motion.li
+    <m.li
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
@@ -160,7 +160,7 @@ function AnimatedItem({ children }: { children: ReactNode }) {
       className="overflow-visible"
     >
       {children}
-    </motion.li>
+    </m.li>
   )
 }
 
@@ -262,15 +262,15 @@ export function CompletedSection({
         aria-expanded={expanded}
         className="flex h-8 cursor-default items-center gap-1.5 rounded-lg px-2 text-subhead font-semibold text-text-secondary hover:bg-fill-hover pointer-coarse:h-11"
       >
-        <motion.span animate={{ rotate: expanded ? 90 : 0 }} transition={springs.snappy}>
+        <m.span animate={{ rotate: expanded ? 90 : 0 }} transition={springs.snappy}>
           <ChevronRight aria-hidden className="size-4" />
-        </motion.span>
+        </m.span>
         {t('tasks.completedSection')}
         <span className="font-regular">{tasks.length}</span>
       </button>
       <AnimatePresence initial={false}>
         {expanded && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -284,7 +284,7 @@ export function CompletedSection({
               label={t('tasks.completedSection')}
               {...(listsById ? { listsById } : {})}
             />
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </section>

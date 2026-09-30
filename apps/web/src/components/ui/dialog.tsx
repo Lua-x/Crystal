@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -44,7 +44,7 @@ export function Dialog({
         {open && (
           <DialogPrimitive.Portal forceMount>
             <DialogPrimitive.Overlay asChild forceMount>
-              <motion.div
+              <m.div
                 className="fixed inset-0 z-40 bg-overlay"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -69,7 +69,7 @@ export function Dialog({
                   }
                 }}
               >
-                <motion.div
+                <m.div
                   className={cn(
                     'pointer-events-auto flex max-h-[90dvh] w-full flex-col overflow-hidden bg-elevated shadow-lg outline-none',
                     'rounded-t-3xl pb-[env(safe-area-inset-bottom)] sm:max-w-md sm:rounded-2xl sm:pb-0',
@@ -118,7 +118,7 @@ export function Dialog({
                       {footer}
                     </div>
                   )}
-                </motion.div>
+                </m.div>
               </DialogPrimitive.Content>
             </div>
           </DialogPrimitive.Portal>

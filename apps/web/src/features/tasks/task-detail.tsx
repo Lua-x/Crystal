@@ -11,10 +11,8 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 
 import { Button } from '../../components/ui/button'
 import { IconButton } from '../../components/ui/icon-button'
@@ -49,6 +47,7 @@ import {
 } from './task-detail-fields'
 
 const NOTES_SAVE_DELAY = 700
+const Markdown = lazy(() => import('./markdown'))
 
 export function TaskDetail({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const { t } = useTranslation()
@@ -570,21 +569,10 @@ function NotesEditor({
       </div>
       {preview && value.trim() ? (
         <div className="markdown rounded-xl bg-cell p-3 text-callout shadow-sm">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            // Remote images would leak to third parties (and the CSP blocks them).
-            disallowedElements={['img']}
-            unwrapDisallowed
-            components={{
-              a: ({ children, href }) => (
-                <a href={href} target="_blank" rel="noopener noreferrer">
-                  {children}
-                </a>
-              ),
-            }}
-          >
-            {value}
-          </ReactMarkdown>
+          {/* The plain text shows while the Markdown renderer loads. */}
+          <Suspense fallback={<p className="whitespace-pre-wrap">{value}</p>}>
+            <Markdown>{value}</Markdown>
+          </Suspense>
         </div>
       ) : (
         <AutoTextarea

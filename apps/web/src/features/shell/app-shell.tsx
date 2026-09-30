@@ -1,7 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
-import { useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../lib/cn'
@@ -11,7 +11,6 @@ import { useNotificationClicks } from '../notifications/use-notification-clicks'
 import { DndProvider } from '../tasks/dnd-provider'
 import { GroupDialog, ListDialog } from '../tasks/list-dialogs'
 import { TaskDetailHost } from '../tasks/task-detail-host'
-import { CommandPalette } from './command-palette'
 import { useLiveUpdates } from './live-updates'
 import { OfflineBanner } from './offline-banner'
 import { ShellContext, type ShellState } from './shell-context'
@@ -20,6 +19,10 @@ import { ShortcutsDialog } from './shortcuts-dialog'
 import { Sidebar } from './sidebar'
 
 const COLLAPSED_KEY = 'crystal.sidebarCollapsed'
+
+const CommandPalette = lazy(() =>
+  import('./command-palette').then((module) => ({ default: module.CommandPalette })),
+)
 
 function readCollapsed(): boolean {
   try {
@@ -54,6 +57,8 @@ export function AppShell() {
   }, [isDesktop])
 
   const [overlay, setOverlay] = useState<'palette' | 'shortcuts' | 'list' | 'group' | null>(null)
+  const [paletteUsed, setPaletteUsed] = useState(false)
+  if (overlay === 'palette' && !paletteUsed) setPaletteUsed(true)
   const openPalette = useCallback(() => setOverlay('palette'), [])
   const openShortcuts = useCallback(() => setOverlay('shortcuts'), [])
   // ⌘K / Ctrl+K opens the palette and closes it again.
@@ -82,16 +87,32 @@ export function AppShell() {
 
   return (
     <ShellContext.Provider value={shell}>
-      <CommandPalette
-        {...overlayProps('palette')}
-        onShowShortcuts={openShortcuts}
-        onNewList={() => setOverlay('list')}
-        onNewGroup={() => setOverlay('group')}
-      />
+      {/* Loaded the first time it opens; it stays mounted afterwards for its animations. */}
+      {paletteUsed && (
+        <Suspense fallback={null}>
+          <CommandPalette
+            {...overlayProps('palette')}
+            onShowShortcuts={openShortcuts}
+            onNewList={() => setOverlay('list')}
+            onNewGroup={() => setOverlay('group')}
+          />
+        </Suspense>
+      )}
       <ShortcutsDialog {...overlayProps('shortcuts')} />
       <ListDialog {...overlayProps('list')} />
       <GroupDialog {...overlayProps('group')} />
       <DndProvider>
+        {/* The first stop for keyboard users: past the sidebar, straight to the page. */}
+        <a
+          href="#main"
+          onClick={(event) => {
+            event.preventDefault()
+            document.getElementById('main')?.focus()
+          }}
+          className="fixed top-2 left-2 z-[60] -translate-y-20 rounded-lg bg-elevated px-3 py-2 text-callout font-medium text-accent-text shadow-lg transition-transform focus:translate-y-0 motion-reduce:transition-none"
+        >
+          {t('shell.skipToContent')}
+        </a>
         <div className="flex h-dvh overflow-hidden">
           {isDesktop ? (
             <aside
@@ -113,7 +134,7 @@ export function AppShell() {
                 {drawerOpen && (
                   <DialogPrimitive.Portal forceMount>
                     <DialogPrimitive.Overlay asChild forceMount>
-                      <motion.div
+                      <m.div
                         className="fixed inset-0 z-40 bg-overlay"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -133,7 +154,7 @@ export function AppShell() {
                         ;(current ?? drawer).focus()
                       }}
                     >
-                      <motion.div
+                      <m.div
                         className="fixed inset-y-0 left-0 z-50 flex w-80 max-w-[85vw] flex-col bg-sidebar-solid pt-[env(safe-area-inset-top)] shadow-lg outline-none"
                         initial={{ x: '-100%' }}
                         animate={{ x: 0 }}
@@ -145,14 +166,18 @@ export function AppShell() {
                         </DialogPrimitive.Title>
                         {/* Close the drawer once a destination was picked. */}
                         <Sidebar onNavigate={() => setDrawerOpen(false)} />
-                      </motion.div>
+                      </m.div>
                     </DialogPrimitive.Content>
                   </DialogPrimitive.Portal>
                 )}
               </AnimatePresence>
             </DialogPrimitive.Root>
           )}
-          <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
+          <main
+            id="main"
+            tabIndex={-1}
+            className="relative flex min-w-0 flex-1 flex-col bg-canvas outline-none"
+          >
             <OfflineBanner />
             <Outlet />
           </main>

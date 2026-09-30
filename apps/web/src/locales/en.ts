@@ -156,6 +156,7 @@ export const en = {
     toggleSidebar: 'Toggle sidebar',
     accountMenu: 'Account menu',
     mainNavigation: 'Main',
+    skipToContent: 'Skip to content',
   },
   views: {
     'my-day': 'My Day',

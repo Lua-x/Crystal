@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { m } from 'motion/react'
 import { Checkbox } from 'radix-ui'
 
 import { cn } from '../../lib/cn'
@@ -49,7 +49,7 @@ export function TaskCheckbox({
         )}
       >
         <svg viewBox="0 0 16 16" aria-hidden className={size === 'md' ? 'size-3.5' : 'size-3'}>
-          <motion.path
+          <m.path
             d="M3.5 8.5 6.5 11.5 12.5 4.5"
             fill="none"
             stroke="currentColor"

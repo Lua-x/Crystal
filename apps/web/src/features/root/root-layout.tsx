@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, Outlet, useRouter, type ErrorComponentProps } from '@tanstack/react-router'
 import { CircleAlert, Compass } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '../../components/ui/button'
 import { EmptyState } from '../../components/ui/empty-state'
 import { Spinner } from '../../components/ui/spinner'
 import { applyAppearance } from '../../lib/appearance'
+import { useCurrentTitle, useDocumentTitle } from '../../lib/document-title'
 import { errorMessage } from '../../lib/errors'
 import { setLocale } from '../../lib/i18n'
 import { meQuery } from '../../lib/queries'
@@ -23,10 +24,29 @@ function AppearanceSync() {
   return null
 }
 
+/**
+ * Screen readers do not notice that a single-page app shows another page, so
+ * the new page's title is announced (not on the first load, which they read anyway).
+ */
+function PageAnnouncer() {
+  const title = useCurrentTitle()
+  const [state, setState] = useState({ title, pages: 0, announcement: '' })
+  if (title !== state.title) {
+    // The first page replaces the placeholder title; later ones are announced.
+    setState({ title, pages: state.pages + 1, announcement: state.pages > 0 ? title : '' })
+  }
+  return (
+    <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+      {state.announcement}
+    </div>
+  )
+}
+
 export function RootLayout() {
   return (
     <>
       <AppearanceSync />
+      <PageAnnouncer />
       <Outlet />
     </>
   )
@@ -44,6 +64,7 @@ export function PendingScreen() {
 export function ErrorScreen({ error, reset }: ErrorComponentProps) {
   const { t } = useTranslation()
   const router = useRouter()
+  useDocumentTitle(t('errors.title'))
   return (
     <div className="flex h-full items-center justify-center bg-canvas">
       <EmptyState
@@ -68,6 +89,7 @@ export function ErrorScreen({ error, reset }: ErrorComponentProps) {
 
 export function NotFoundScreen() {
   const { t } = useTranslation()
+  useDocumentTitle(t('notFound.title'))
   return (
     <div className="flex h-full items-center justify-center bg-canvas">
       <EmptyState

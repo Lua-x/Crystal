@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { AlertDialog } from 'radix-ui'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -48,7 +48,7 @@ export function ConfirmDialog({
         {open && (
           <AlertDialog.Portal forceMount>
             <AlertDialog.Overlay asChild forceMount>
-              <motion.div
+              <m.div
                 className="fixed inset-0 z-40 bg-overlay"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -58,7 +58,7 @@ export function ConfirmDialog({
             </AlertDialog.Overlay>
             <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-6">
               <AlertDialog.Content asChild forceMount>
-                <motion.div
+                <m.div
                   className="pointer-events-auto w-full max-w-sm rounded-2xl bg-elevated p-5 text-center shadow-lg outline-none"
                   initial={{ opacity: 0, scale: 1.04 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -81,7 +81,7 @@ export function ConfirmDialog({
                       {confirmLabel}
                     </Button>
                   </div>
-                </motion.div>
+                </m.div>
               </AlertDialog.Content>
             </div>
           </AlertDialog.Portal>

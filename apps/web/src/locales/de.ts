@@ -160,6 +160,7 @@ export const de: Translation = {
     toggleSidebar: 'Seitenleiste ein- oder ausblenden',
     accountMenu: 'Kontomenü',
     mainNavigation: 'Hauptnavigation',
+    skipToContent: 'Zum Inhalt springen',
   },
   views: {
     'my-day': 'Mein Tag',

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 
 import { IconButton } from '../../components/ui/icon-button'
 import { cn } from '../../lib/cn'
+import { useDocumentTitle } from '../../lib/document-title'
 import { useShell } from './shell-context'
 
 interface PageProps {
@@ -43,6 +44,7 @@ export function Page({
 }: PageProps) {
   const { t } = useTranslation()
   const { isCompact, sidebarOpen, toggleSidebar } = useShell()
+  useDocumentTitle(title)
   const scrollRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const [titleHidden, setTitleHidden] = useState(false)

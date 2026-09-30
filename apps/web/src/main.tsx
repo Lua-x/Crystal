@@ -10,7 +10,7 @@ import {
 import { persistQueryClient } from '@tanstack/react-query-persist-client'
 import { RouterProvider } from '@tanstack/react-router'
 import i18next from 'i18next'
-import { MotionConfig } from 'motion/react'
+import { LazyMotion, MotionConfig } from 'motion/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -43,7 +43,10 @@ const OFFLINE_KEYS = new Set([
   'people',
 ])
 
-initI18n(cachedLocale() ?? detectLocale())
+const translations = initI18n(cachedLocale() ?? detectLocale())
+
+/** Animation features are a separate download; until they arrive, nothing animates. */
+const loadMotionFeatures = () => import('./lib/motion-features').then((module) => module.default)
 
 registerServiceWorker(() =>
   toast({
@@ -119,16 +122,18 @@ async function restoreOfflineCopy() {
   void queryClient.resumePausedMutations().then(() => refreshTaskData(queryClient))
 }
 
-void restoreOfflineCopy().finally(() => {
+void Promise.allSettled([translations, restoreOfflineCopy()]).then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <MotionConfig reducedMotion="user">
-          <TooltipProvider delayDuration={600}>
-            <RouterProvider router={router} />
-            <Toaster />
-          </TooltipProvider>
-        </MotionConfig>
+        <LazyMotion features={loadMotionFeatures} strict>
+          <MotionConfig reducedMotion="user">
+            <TooltipProvider delayDuration={600}>
+              <RouterProvider router={router} />
+              <Toaster />
+            </TooltipProvider>
+          </MotionConfig>
+        </LazyMotion>
       </QueryClientProvider>
     </StrictMode>,
   )

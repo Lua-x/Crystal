@@ -8,7 +8,7 @@ import {
 } from '@crystal/shared'
 import { useQuery, type QueryKey } from '@tanstack/react-query'
 import { CalendarDays, Clock, Flag, FolderInput, Hash, Plus, Repeat, Star, X } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -111,7 +111,7 @@ export function QuickAdd({ defaults, optimisticKeys }: QuickAddProps) {
 
       <AnimatePresence initial={false}>
         {tokens.length > 0 && (
-          <motion.ul
+          <m.ul
             id={chipsId}
             aria-label={t('quickEntry.recognized')}
             initial={{ opacity: 0, height: 0 }}
@@ -138,7 +138,7 @@ export function QuickAdd({ defaults, optimisticKeys }: QuickAddProps) {
                 </span>
               </li>
             ))}
-          </motion.ul>
+          </m.ul>
         )}
       </AnimatePresence>
       <p aria-live="polite" className="sr-only">

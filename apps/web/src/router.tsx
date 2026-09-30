@@ -10,9 +10,6 @@ import {
 import { z } from 'zod'
 
 import { AuthLayout } from './features/auth/auth-layout'
-import { LoginPage } from './features/auth/login-page'
-import { ForgotPasswordPage, ResetPasswordPage } from './features/auth/password-reset-pages'
-import { InvitePage, RegisterPage, SetupPage } from './features/auth/register-pages'
 import { ErrorScreen, NotFoundScreen, PendingScreen, RootLayout } from './features/root/root-layout'
 import { AppShell } from './features/shell/app-shell'
 import { ListPage } from './features/tasks/list-page'
@@ -32,6 +29,8 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 })
 
 /* ── Signed-out area ───────────────────────────────────────── */
+
+// The pages below are loaded on demand: people who are signed in never need them.
 
 const authRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -54,7 +53,7 @@ const loginRoute = createRoute({
   beforeLoad: ({ context }) => {
     if (context.authConfig.needsSetup) throw redirect({ to: '/setup' })
   },
-  component: LoginPage,
+  component: lazyRouteComponent(() => import('./features/auth/login-page'), 'LoginPage'),
 })
 
 const setupRoute = createRoute({
@@ -63,7 +62,7 @@ const setupRoute = createRoute({
   beforeLoad: ({ context }) => {
     if (!context.authConfig.needsSetup) throw redirect({ to: '/login' })
   },
-  component: SetupPage,
+  component: lazyRouteComponent(() => import('./features/auth/register-pages'), 'SetupPage'),
 })
 
 const registerRoute = createRoute({
@@ -73,13 +72,13 @@ const registerRoute = createRoute({
     if (context.authConfig.needsSetup) throw redirect({ to: '/setup' })
     if (context.authConfig.registration !== 'open') throw redirect({ to: '/login' })
   },
-  component: RegisterPage,
+  component: lazyRouteComponent(() => import('./features/auth/register-pages'), 'RegisterPage'),
 })
 
 const inviteRoute = createRoute({
   getParentRoute: () => authRoute,
   path: '/invite/$token',
-  component: InvitePage,
+  component: lazyRouteComponent(() => import('./features/auth/register-pages'), 'InvitePage'),
 })
 
 const forgotPasswordRoute = createRoute({
@@ -88,14 +87,20 @@ const forgotPasswordRoute = createRoute({
   beforeLoad: ({ context }) => {
     if (!context.authConfig.passwordReset) throw redirect({ to: '/login' })
   },
-  component: ForgotPasswordPage,
+  component: lazyRouteComponent(
+    () => import('./features/auth/password-reset-pages'),
+    'ForgotPasswordPage',
+  ),
 })
 
 const resetPasswordRoute = createRoute({
   getParentRoute: () => authRoute,
   path: '/reset-password',
   validateSearch: z.object({ token: z.string().optional() }),
-  component: ResetPasswordPage,
+  component: lazyRouteComponent(
+    () => import('./features/auth/password-reset-pages'),
+    'ResetPasswordPage',
+  ),
 })
 
 /* ── Signed-in area ────────────────────────────────────────── */

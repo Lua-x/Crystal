@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { m } from 'motion/react'
 import { RadioGroup } from 'radix-ui'
 import { useId, type ReactNode } from 'react'
 
@@ -54,7 +54,7 @@ export function SegmentedControl<T extends string>({
             )}
           >
             {selected && (
-              <motion.span
+              <m.span
                 layoutId={layoutId}
                 transition={springs.snappy}
                 className="absolute inset-0 rounded-md bg-segment shadow-sm"

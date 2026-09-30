@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useDragControls } from 'motion/react'
+import { AnimatePresence, m, useDragControls } from 'motion/react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import { useTranslation } from 'react-i18next'
 
@@ -26,7 +26,7 @@ export function TaskDetailHost() {
     return (
       <AnimatePresence initial={false}>
         {selectedId && (
-          <motion.aside
+          <m.aside
             key="task-detail"
             aria-label={t('detail.label')}
             initial={{ width: 0, opacity: 0 }}
@@ -41,7 +41,7 @@ export function TaskDetailHost() {
             <div className="h-full w-96">
               <TaskDetail taskId={selectedId} onClose={close} />
             </div>
-          </motion.aside>
+          </m.aside>
         )}
       </AnimatePresence>
     )
@@ -58,7 +58,7 @@ export function TaskDetailHost() {
         {selectedId && (
           <DialogPrimitive.Portal forceMount>
             <DialogPrimitive.Overlay asChild forceMount>
-              <motion.div
+              <m.div
                 className="fixed inset-0 z-40 bg-overlay"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -66,7 +66,7 @@ export function TaskDetailHost() {
               />
             </DialogPrimitive.Overlay>
             <DialogPrimitive.Content asChild forceMount aria-describedby={undefined}>
-              <motion.div
+              <m.div
                 className="fixed inset-x-0 bottom-0 z-50 flex h-[92dvh] flex-col rounded-t-3xl bg-grouped pb-[env(safe-area-inset-bottom)] shadow-lg outline-none md:inset-x-auto md:inset-y-0 md:right-0 md:h-full md:w-md md:rounded-none md:rounded-l-3xl"
                 initial={hidden}
                 animate={{ x: 0, y: 0 }}
@@ -96,7 +96,7 @@ export function TaskDetailHost() {
                 <div className="min-h-0 flex-1">
                   <TaskDetail taskId={selectedId} onClose={close} />
                 </div>
-              </motion.div>
+              </m.div>
             </DialogPrimitive.Content>
           </DialogPrimitive.Portal>
         )}
