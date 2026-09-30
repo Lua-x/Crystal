@@ -337,7 +337,6 @@ export const de: Translation = {
     overdue: '{{count}} überfällig',
     perWeek: 'Erledigt pro Woche',
     week: 'Woche ab {{date}}: {{count}} erledigt',
-    thisWeek: 'Diese Woche',
     hint: 'Zählt die Aufgaben, die du selbst erledigt hast, auch in geteilten Listen. Eine Serie sind Tage am Stück mit mindestens einer erledigten Aufgabe.',
   },
   attachments: {

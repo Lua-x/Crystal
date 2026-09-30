@@ -332,7 +332,6 @@ export const en = {
     overdue: '{{count}} overdue',
     perWeek: 'Completed per week',
     week: 'Week of {{date}}: {{count}} completed',
-    thisWeek: 'This week',
     hint: 'Counts the tasks you completed yourself, including shared lists. A streak is a run of days with at least one completed task.',
   },
   attachments: {

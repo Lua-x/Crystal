@@ -140,7 +140,7 @@ function WeekChart({ weeks }: { weeks: Stats['weeks'] }) {
                   current ? 'font-semibold text-text' : 'text-text-secondary',
                 )}
               >
-                {current ? t('stats.thisWeek') : date}
+                {date}
               </span>
             </li>
           )

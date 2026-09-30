@@ -30,15 +30,12 @@ Reminders per task independent of the due date, notifications through Web Push, 
 Apprise and email, a daily summary, notifications about assigned tasks, password reset by
 email.
 
-## 0.6 – Extras
+## ✅ 0.6 – Extras
 
-- Installable app (PWA), offline use with sync on reconnect
-- Import from Microsoft To Do and Todoist (CSV) and JSON; full JSON export
-- Automatic SQLite backups with configurable retention
-- iCal feed of due tasks (read-only, secret link)
-- Personal API tokens and interactive API documentation at `/api/docs`
-- Attachments (images, PDFs) with size limits
-- Simple statistics: completed tasks per week, streaks
+Installable app that works offline and sends queued changes on reconnect, import from
+Microsoft To Do (via Outlook) and Todoist plus JSON export, automatic database backups, a
+private iCal feed, personal API tokens with documentation at `/api/docs`, attachments,
+statistics.
 
 ## 0.7 → 1.0 – Polish
 
@@ -48,6 +45,13 @@ email.
 ## Later
 
 Ideas that were deliberately postponed:
+
+- **Offline changes to lists and sharing.** Offline, tasks and steps can be added and changed;
+  creating lists, sharing and settings still need a connection.
+- **Attachments in backups and exports.** Automatic backups and the JSON export contain the
+  database only; attachments are covered by backing up the data directory.
+- **Storage quotas** per person for attachments (today: a size limit per file and 20 files per
+  task).
 
 - **PostgreSQL** as an alternative to SQLite (SQLite is plenty for households; supporting two
   databases doubles schemas, migrations and tests).
