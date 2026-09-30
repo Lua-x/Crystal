@@ -109,7 +109,7 @@ export function AppShell() {
             event.preventDefault()
             document.getElementById('main')?.focus()
           }}
-          className="fixed top-2 left-2 z-[60] -translate-y-20 rounded-lg bg-elevated px-3 py-2 text-callout font-medium text-accent-text shadow-lg transition-transform focus:translate-y-0 motion-reduce:transition-none"
+          className="fixed top-2 left-2 z-[60] -translate-y-[calc(100%+1rem)] rounded-lg bg-elevated px-3 py-2 text-callout font-medium text-accent-text transition-transform focus:translate-y-0 focus:shadow-lg motion-reduce:transition-none"
         >
           {t('shell.skipToContent')}
         </a>

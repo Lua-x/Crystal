@@ -142,13 +142,13 @@ function MemberAvatars({ list, onClick }: { list: List; onClick: () => void }) {
       {shown.length === 0 ? (
         <Users aria-hidden className="size-4.5 text-text-secondary" />
       ) : (
-        <span className="flex -space-x-1.5">
+        <span className="flex -space-x-1">
           {shown.map((member) => (
             <Avatar
               key={member.userId}
               name={member.displayName}
               seed={member.userId}
-              className="size-6 text-caption ring-2 ring-canvas"
+              className="size-7 text-caption ring-2 ring-canvas"
             />
           ))}
         </span>
