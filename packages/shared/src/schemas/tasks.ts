@@ -15,6 +15,7 @@ import {
   TASK_TITLE_MAX_LENGTH,
 } from '../constants.js'
 import { idSchema, timestampSchema } from './common.js'
+import { pinSchema } from './maps.js'
 import { achievementSchema } from './steam.js'
 
 /**
@@ -124,6 +125,8 @@ export const taskSchema = z.object({
   attachments: z.array(attachmentSchema),
   /** Set for goals imported from a Steam achievement. */
   achievement: achievementSchema.nullable(),
+  /** Where the goal is on one of its game's maps. */
+  pin: pinSchema.nullable(),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 })
@@ -188,6 +191,8 @@ export const updateTaskSchema = z
     assigneeId: idSchema.nullable(),
     /** Sets (or with `null` removes) the reminder. */
     remindAt: timestampSchema.nullable(),
+    /** Puts the task on a map of its list, or with `null` takes it off. */
+    pin: pinSchema.nullable(),
   })
   .partial()
 export type UpdateTaskInput = z.input<typeof updateTaskSchema>

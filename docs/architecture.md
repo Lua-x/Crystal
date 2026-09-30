@@ -53,6 +53,8 @@ Tables:
 | `attachments`           | Files attached to tasks: name for display, type recognized from the content, size; the file itself is `DATA_DIR/attachments/<id>`                       |
 | `images`                | Pictures that belong to a list (game covers, achievement icons): type recognized from the content, size; the file itself is `DATA_DIR/images/<id>`      |
 | `achievements`          | Steam achievements of a game: Steam's name, the goal it became (empty once deleted), icon, share of players, hidden flag                                |
+| `maps`                  | Maps of a game: name, picture (`images`), its size when the header tells it, order                                                                      |
+| `map_pins`              | Where a goal is on a map: `x` and `y` from 0 to 1, so they fit any zoom; at most one place per goal                                                     |
 | `my_day`                | Which tasks a person added to My Day, and for which date                                                                                                |
 | `task_search`           | SQLite FTS5 index over titles, notes, steps and tags                                                                                                    |
 | `notification_channels` | A person's ntfy, Gotify, Apprise and email channels; settings encrypted with AES-GCM, last delivery and error                                           |
@@ -74,6 +76,12 @@ Design decisions for lists and tasks:
   every `STEAM_SYNC_HOURS` – completes goals whose achievement was unlocked since (at the
   unlock time) and adds new achievements. It never reopens goals, and a goal someone deleted
   keeps its `achievements` row without a task, so it does not come back.
+- **Maps** belong to a game; pins are set like any other task field (`pin` in
+  `PATCH /tasks/{id}`), so they work offline and are queued with other changes. A goal moved
+  to another game loses its pin, and removing a map removes its picture and pins. The map view
+  keeps the picture's own coordinates and draws pins on top, so they keep their size at every
+  zoom; it can be moved and zoomed with mouse, touch, trackpad and keyboard, and pins can be
+  placed with the keyboard (the middle of the view, Enter).
 
 - **Access** always goes through `list_members`. A list that does not exist and one you may
   not see both answer `404`, so IDs reveal nothing. Sharing (0.4) only adds rows there.

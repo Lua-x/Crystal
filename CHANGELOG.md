@@ -18,11 +18,16 @@ All notable changes to Crystal are documented in this file. The format follows
   with its icon and how many players unlocked it. Achievements unlocked on Steam are ticked
   off – right away, with **Sync with Steam**, and every `STEAM_SYNC_HOURS` (6) by themselves.
   See [docs/configuration.md](docs/configuration.md#steam-gaming-mode).
+- Maps: add pictures of a game's world (up to `MAP_MAX_MB`, 25 MiB, and 20 per game) and pin
+  goals to places on them. The map moves and zooms with mouse, touch, trackpad and keyboard;
+  a pin opens its goal, which can be completed, moved or taken off the map. Goals on a map
+  show a pin in their row.
 - API: `PUT` and `DELETE /lists/{id}/cover`, `GET /images/{id}`,
-  `POST /lists/{id}/steam-sync` and `/steam` for the Steam account and library; lists report
-  `coverImageId`, `deadline`, `completedCount`, `steamAppId` and `steamSyncedAt`, tasks their
-  `achievement`. The mode is part of `GET /auth/config`, and the first account chooses it with
-  `mode` when registering.
+  `POST /lists/{id}/steam-sync`, `/steam` for the Steam account and library, and
+  `/lists/{id}/maps` and `/maps/{id}` for maps; lists report `coverImageId`, `deadline`,
+  `completedCount`, `steamAppId` and `steamSyncedAt`, tasks their `achievement` and `pin` (set
+  with `PATCH /tasks/{id}`). The mode is part of `GET /auth/config`, and the first account
+  chooses it with `mode` when registering.
 
 ## [1.0.0] - 2026-09-30
 

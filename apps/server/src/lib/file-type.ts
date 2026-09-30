@@ -35,3 +35,74 @@ export function detectAttachmentType(bytes: Uint8Array): AttachmentType | null {
   }
   return null
 }
+
+/**
+ * Width and height of a PNG, JPEG, GIF or WebP picture, read from its header;
+ * `null` for other formats or broken files.
+ */
+export function imageSize(bytes: Uint8Array): { width: number; height: number } | null {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  const has = (length: number) => bytes.length >= length
+  const size = (width: number, height: number) =>
+    width > 0 && height > 0 ? { width, height } : null
+
+  switch (detectAttachmentType(bytes)) {
+    case 'image/png':
+      return has(24) ? size(view.getUint32(16), view.getUint32(20)) : null
+    case 'image/gif':
+      return has(10) ? size(view.getUint16(6, true), view.getUint16(8, true)) : null
+    case 'image/webp':
+      return webpSize(bytes, view)
+    case 'image/jpeg':
+      return jpegSize(bytes, view)
+    default:
+      return null
+  }
+}
+
+function webpSize(bytes: Uint8Array, view: DataView): { width: number; height: number } | null {
+  if (bytes.length < 30) return null
+  const chunk = String.fromCharCode(...bytes.subarray(12, 16))
+  if (chunk === 'VP8 ') {
+    return { width: view.getUint16(26, true) & 0x3fff, height: view.getUint16(28, true) & 0x3fff }
+  }
+  if (chunk === 'VP8L') {
+    const [b0, b1, b2, b3] = bytes.subarray(21, 25) as unknown as [number, number, number, number]
+    return {
+      width: 1 + (((b1 & 0x3f) << 8) | b0),
+      height: 1 + (((b3 & 0x0f) << 10) | (b2 << 2) | ((b1 & 0xc0) >> 6)),
+    }
+  }
+  if (chunk === 'VP8X') {
+    const uint24 = (offset: number) =>
+      view.getUint16(offset, true) | (view.getUint8(offset + 2) << 16)
+    return { width: 1 + uint24(24), height: 1 + uint24(27) }
+  }
+  return null
+}
+
+/** Walks the JPEG segments up to the frame header, which holds the size. */
+function jpegSize(bytes: Uint8Array, view: DataView): { width: number; height: number } | null {
+  let offset = 2
+  while (offset + 9 < bytes.length) {
+    if (bytes[offset] !== 0xff) return null
+    const marker = bytes[offset + 1]!
+    // Fill bytes and markers without a length.
+    if (marker === 0xff) {
+      offset++
+      continue
+    }
+    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) {
+      offset += 2
+      continue
+    }
+    // Start-of-frame markers, except DHT (C4), JPG (C8) and DAC (CC).
+    if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+      const height = view.getUint16(offset + 5)
+      const width = view.getUint16(offset + 7)
+      return width > 0 && height > 0 ? { width, height } : null
+    }
+    offset += 2 + view.getUint16(offset + 2)
+  }
+  return null
+}

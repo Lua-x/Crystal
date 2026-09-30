@@ -28,7 +28,8 @@ What tokens can do:
 - Read and (with “Read and change”) change lists, list groups, tasks and steps, smart lists,
   search, tags and the people you can share with, and follow live updates (`/api/v1/events`).
 - Load pictures of lists such as game covers (`GET /api/v1/images/{id}`) and, with “Read and
-  change”, set them (`PUT /api/v1/lists/{id}/cover`) and sync games with Steam
+  change”, set them (`PUT /api/v1/lists/{id}/cover`), add and change maps
+  (`/api/v1/lists/{id}/maps`, `/api/v1/maps/{id}`) and sync games with Steam
   (`POST /api/v1/lists/{id}/steam-sync`).
 - Export everything (`GET /api/v1/export`) and, with “Read and change”, import files
   (`POST /api/v1/import`).

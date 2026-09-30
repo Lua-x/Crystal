@@ -145,6 +145,12 @@ const listRoute = createRoute({
   component: ListPage,
 })
 
+const mapRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/lists/$listId/maps/$mapId',
+  component: lazyRouteComponent(() => import('./features/games/map-page'), 'MapPage'),
+})
+
 const tagRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/tags/$tag',
@@ -320,6 +326,7 @@ const routeTree = rootRoute.addChildren([
     homeRoute,
     ...smartViewRoutes,
     listRoute,
+    mapRoute,
     tagRoute,
     searchRoute,
     statsRoute,

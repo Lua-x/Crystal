@@ -79,6 +79,7 @@ const envSchema = z
     BACKUP_RETENTION: z.coerce.number().int().min(1).max(365).default(7),
     BACKUP_DIR: optionalString,
     ATTACHMENT_MAX_MB: z.coerce.number().int().min(1).max(100).default(10),
+    MAP_MAX_MB: z.coerce.number().int().min(1).max(100).default(25),
     /** Key for the Steam Web API; without it, Steam achievements cannot be imported. */
     STEAM_API_KEY: optionalString,
     /** 0 only compares achievements with Steam when someone asks for it. */
@@ -175,6 +176,8 @@ export interface Config {
   images: {
     /** Covers and other pictures of lists. */
     directory: string
+    /** Largest map picture. */
+    mapMaxBytes: number
   }
   /** Steam achievements; `undefined` without `STEAM_API_KEY`. */
   steam: SteamConfig | undefined
@@ -265,6 +268,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     },
     images: {
       directory: join(parsed.DATA_DIR, 'images'),
+      mapMaxBytes: parsed.MAP_MAX_MB * 1024 * 1024,
     },
     steam: parsed.STEAM_API_KEY
       ? {

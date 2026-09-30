@@ -21,6 +21,8 @@ import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 import type { Db } from '../db/client.js'
 import {
   achievements,
+  mapPins,
+  maps,
   myDay,
   subtasks,
   tasks,
@@ -59,6 +61,7 @@ const SHARED_FIELDS = [
   'tags',
   'assigneeId',
   'remindAt',
+  'pin',
 ] as const
 
 export class TaskService {
@@ -130,6 +133,14 @@ export class TaskService {
         : [],
     )
     const files = this.attachments.forTasks(ids, executor)
+    const pinsByTask = new Map(
+      executor
+        .select()
+        .from(mapPins)
+        .where(inArray(mapPins.taskId, ids))
+        .all()
+        .map((row) => [row.taskId, { mapId: row.mapId, x: row.x, y: row.y }]),
+    )
     const achievementsByTask = new Map(
       executor
         .select()
@@ -160,6 +171,7 @@ export class TaskService {
       subtasks: byTask.get(row.id) ?? [],
       attachments: files.get(row.id) ?? [],
       achievement: achievementsByTask.get(row.id) ?? null,
+      pin: pinsByTask.get(row.id) ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     }))
@@ -307,6 +319,12 @@ export class TaskService {
         }
 
         tx.update(tasks).set(changes).where(eq(tasks.id, taskId)).run()
+        if (input.pin !== undefined) {
+          this.setPin(taskId, listId, input.pin, tx)
+        } else if (changes.listId) {
+          // Maps belong to their game; in another one, the goal has no place.
+          this.setPin(taskId, listId, null, tx)
+        }
         if (input.tags !== undefined) this.setTags(taskId, input.tags, tx)
         // After the other changes, so the next occurrence inherits them.
         if (input.completed === true && !task.completedAt) this.complete(user, taskId, tx)
@@ -331,6 +349,29 @@ export class TaskService {
       this.notifications.taskAssigned(user, taskId, touched.newAssignee)
     }
     return this.get(user, taskId)
+  }
+
+  /** Puts a task on a map of its list, or takes it off with `null`. */
+  private setPin(
+    taskId: string,
+    listId: string,
+    pin: { mapId: string; x: number; y: number } | null,
+    tx: Executor,
+  ): void {
+    if (!pin) {
+      tx.delete(mapPins).where(eq(mapPins.taskId, taskId)).run()
+      return
+    }
+    const map = tx.select({ listId: maps.listId }).from(maps).where(eq(maps.id, pin.mapId)).get()
+    if (map?.listId !== listId) {
+      throw new AppError(400, 'validation_failed', 'The map belongs to another list.', [
+        { path: 'pin.mapId', code: 'custom', message: 'The map belongs to another list.' },
+      ])
+    }
+    tx.insert(mapPins)
+      .values({ taskId, ...pin })
+      .onConflictDoUpdate({ target: mapPins.taskId, set: { mapId: pin.mapId, x: pin.x, y: pin.y } })
+      .run()
   }
 
   /** Moves the task to the trash; it can be restored until the cleanup job runs. */

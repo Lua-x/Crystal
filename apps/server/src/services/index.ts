@@ -19,6 +19,7 @@ import { ImageService } from './images.js'
 import { InstanceService } from './instance.js'
 import { InviteService } from './invites.js'
 import { ListService } from './lists.js'
+import { MapService } from './maps.js'
 import { NotificationService } from './notifications.js'
 import { PasswordResetService } from './password-resets.js'
 import { ReminderService } from './reminders.js'
@@ -66,6 +67,8 @@ export interface Services {
   attachments: AttachmentService
   /** Pictures of lists, such as game covers. */
   images: ImageService
+  /** Maps of games, with goals pinned to them. */
+  maps: MapService
   lists: ListService
   tasks: TaskService
   views: ViewService
@@ -160,6 +163,7 @@ export function createServices(options: ServiceOptions): Services {
   const lists = new ListService(db, search, events, instance, now)
   const attachments = new AttachmentService(db, lists, events, config.attachments, now)
   const images = new ImageService(db, lists, events, config.images, now)
+  const maps = new MapService(db, lists, images, events, config.images, now)
   const tasks = new TaskService(db, lists, search, events, notifications, attachments, now)
   const views = new ViewService(db, tasks, search)
   const stats = new StatsService(db, views, now)
@@ -215,6 +219,7 @@ export function createServices(options: ServiceOptions): Services {
     backups,
     attachments,
     images,
+    maps,
     lists,
     tasks,
     views,

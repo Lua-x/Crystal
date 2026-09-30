@@ -215,11 +215,16 @@ function applyUpdate(task: Task, input: UpdateTaskInput, position?: string): Tas
   }
   if (input.tags !== undefined) next.tags = tagsSchema.parse(input.tags)
   if (input.remindAt !== undefined) next.remindAt = input.remindAt
+  if (input.pin !== undefined) next.pin = input.pin
   if (input.completed !== undefined) {
     next.completedAt = input.completed ? (task.completedAt ?? new Date().toISOString()) : null
   }
   if (input.myDay !== undefined) next.inMyDay = input.myDay
-  if (input.placement?.listId) next.listId = input.placement.listId
+  if (input.placement?.listId && input.placement.listId !== task.listId) {
+    next.listId = input.placement.listId
+    // Maps belong to their game; in another one, the goal has no place.
+    if (input.pin === undefined) next.pin = null
+  }
   if (position) next.position = position
   return next
 }
@@ -371,6 +376,7 @@ export function useCreateTask(optimisticKeys: QueryKey[] = []) {
               subtasks: [],
               attachments: [],
               achievement: null,
+              pin: null,
               createdAt: now,
               updatedAt: now,
             }

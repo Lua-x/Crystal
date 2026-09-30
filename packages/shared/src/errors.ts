@@ -48,6 +48,7 @@ export const ERROR_CODES = [
   'steam_already_imported',
   'steam_no_achievements',
   'steam_unavailable',
+  'too_many_maps',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]

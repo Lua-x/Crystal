@@ -126,6 +126,15 @@ See [backup.md](backup.md) for restoring.
 Images (PNG, JPEG, GIF, WebP, AVIF, HEIC) and PDFs can be attached, up to 20 per task. They are
 stored in `DATA_DIR/attachments`.
 
+## Maps (gaming mode)
+
+| Variable     | Default | Description                                                          |
+| ------------ | ------- | -------------------------------------------------------------------- |
+| `MAP_MAX_MB` | `25`    | Largest picture of a map that can be added to a game, in MiB (1–100) |
+
+Games can have up to 20 maps (PNG, JPEG, GIF, WebP or AVIF). They are stored in
+`DATA_DIR/images`, together with covers and achievement icons.
+
 ## Steam (gaming mode)
 
 On gaming instances, people can link their Steam account and import games with all their

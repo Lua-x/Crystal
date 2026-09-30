@@ -135,7 +135,7 @@ export const ATTACHMENTS_PER_TASK_MAX = 20
 export const ATTACHMENT_NAME_MAX_LENGTH = 200
 
 /** Images Crystal stores for lists, such as a game's cover. */
-export const IMAGE_KINDS = ['cover', 'icon'] as const
+export const IMAGE_KINDS = ['cover', 'icon', 'map'] as const
 export type ImageKind = (typeof IMAGE_KINDS)[number]
 /** Image formats every current browser can show. */
 export const IMAGE_TYPES = [
@@ -149,6 +149,9 @@ export type ImageType = (typeof IMAGE_TYPES)[number]
 export const COVER_MAX_BYTES = 5 * 1024 * 1024
 
 export const STEAM_PROFILE_INPUT_MAX_LENGTH = 200
+
+export const MAPS_PER_LIST_MAX = 20
+export const MAP_NAME_MAX_LENGTH = 100
 
 export const LIST_NAME_MAX_LENGTH = 100
 export const LIST_ICON_MAX_LENGTH = 16

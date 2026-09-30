@@ -85,6 +85,13 @@
       "when": 1790795258414,
       "tag": "0011_steam",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1790796565619,
+      "tag": "0012_maps",
+      "breakpoints": true
     }
   ]
 }

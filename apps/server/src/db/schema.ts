@@ -352,6 +352,44 @@ export const images = sqliteTable(
   (table) => [index('images_list_idx').on(table.listId)],
 )
 
+/** Pictures of a game's world; goals can be pinned to places on them. */
+export const maps = sqliteTable(
+  'maps',
+  {
+    id: text('id').primaryKey(),
+    listId: text('list_id')
+      .notNull()
+      .references(() => lists.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    imageId: text('image_id')
+      .notNull()
+      .references(() => images.id, { onDelete: 'cascade' }),
+    /** In pixels, when the picture's header told; the app measures it otherwise. */
+    width: integer('width'),
+    height: integer('height'),
+    position: text('position').notNull(),
+    createdAt: timestamp('created_at').notNull(),
+    updatedAt: timestamp('updated_at').notNull(),
+  },
+  (table) => [index('maps_list_position_idx').on(table.listId, table.position)],
+)
+
+/** Where a goal is on a map: `x` and `y` from 0 to 1, so they fit any zoom. */
+export const mapPins = sqliteTable(
+  'map_pins',
+  {
+    taskId: text('task_id')
+      .primaryKey()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    mapId: text('map_id')
+      .notNull()
+      .references(() => maps.id, { onDelete: 'cascade' }),
+    x: real('x').notNull(),
+    y: real('y').notNull(),
+  },
+  (table) => [index('map_pins_map_idx').on(table.mapId)],
+)
+
 /**
  * The Steam achievements of a game and the goals they became. A goal deleted by
  * someone leaves its row without a task, so syncing does not bring it back.
@@ -470,5 +508,6 @@ export type TaskTagRow = typeof taskTags.$inferSelect
 export type AttachmentRow = typeof attachments.$inferSelect
 export type ImageRow = typeof images.$inferSelect
 export type AchievementRow = typeof achievements.$inferSelect
+export type MapRow = typeof maps.$inferSelect
 export type NotificationChannelRow = typeof notificationChannels.$inferSelect
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect

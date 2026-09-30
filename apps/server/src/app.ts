@@ -19,6 +19,7 @@ import { eventRoutes } from './routes/events.js'
 import { imageRoutes } from './routes/images.js'
 import { inviteRoutes } from './routes/invites.js'
 import { listGroupRoutes, listRoutes } from './routes/lists.js'
+import { listMapRoutes, mapRoutes } from './routes/maps.js'
 import { meRoutes } from './routes/me.js'
 import { notificationRoutes } from './routes/notifications.js'
 import { peopleRoutes } from './routes/people.js'
@@ -64,6 +65,7 @@ export function createApp(services: Services, options: AppOptions = {}) {
       // The file plus room for the multipart framing.
       [/^\/api\/v1\/tasks\/[^/]+\/attachments$/, config.attachments.maxBytes + 64 * 1024],
       [/^\/api\/v1\/lists\/[^/]+\/cover$/, COVER_MAX_BYTES + 64 * 1024],
+      [/^\/api\/v1\/lists\/[^/]+\/maps$/, config.images.mapMaxBytes + 64 * 1024],
     ]),
   )
   v1.use('*', csrfProtection(config))
@@ -80,6 +82,8 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.route('/me', meRoutes(services))
   v1.route('/admin', adminRoutes(services))
   v1.route('/lists', listRoutes(services))
+  v1.route('/lists', listMapRoutes(services))
+  v1.route('/maps', mapRoutes(services))
   v1.route('/list-groups', listGroupRoutes(services))
   v1.route('/tasks', taskRoutes(services))
   v1.route('/tasks', taskAttachmentRoutes(services))

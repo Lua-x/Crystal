@@ -9,17 +9,18 @@ import { errorMessage } from '../../lib/errors'
 import { formatRelative } from '../../lib/format'
 import { LIST_BG_CLASS } from '../tasks/list-colors'
 import { GameCover } from './game-cover'
+import { GameMaps } from './game-maps'
 import { deadlineState, gameProgress, type GameProgress } from './game-logic'
 import { useSteamSync } from './steam-data'
 
-/** Cover, progress, finish-by date and Steam sync above a game's goals. */
+/** Cover, progress, finish-by date, Steam sync and maps above a game's goals. */
 export function GameHeader({ list, today }: { list: List; today: string }) {
   const progress = gameProgress(list)
-  if (!list.coverImageId && !progress && !list.deadline && !list.steamAppId) return null
   const finished = progress !== null && progress.done === progress.total
 
   return (
-    <div className="mb-6 flex flex-col gap-4">
+    // Hidden when there is nothing to show (e.g. a new game someone can only view).
+    <div className="mb-6 flex flex-col gap-4 empty:hidden">
       {list.coverImageId && (
         <GameCover
           imageId={list.coverImageId}
@@ -33,6 +34,7 @@ export function GameHeader({ list, today }: { list: List; today: string }) {
         </div>
       )}
       {list.steamAppId !== null && <SteamSync list={list} />}
+      <GameMaps list={list} />
     </div>
   )
 }

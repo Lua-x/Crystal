@@ -106,6 +106,9 @@
 - **Achievements from Steam:** link your Steam account, pick a game from your library and get
   every achievement as a goal – with its icon and how rare it is. What you unlock is ticked off
   automatically. [How to set it up](docs/configuration.md#steam-gaming-mode)
+- **Maps with pins:** add a picture of the game's world and pin goals to the spots where they
+  are – collectibles, bosses, secrets. Zoom and pan with mouse, touch or keyboard; open or tick
+  off a goal right from its pin.
 - Everything else works as usual: My Day for today's session, reminders, sharing a game with
   your co-op partner, statistics.
 

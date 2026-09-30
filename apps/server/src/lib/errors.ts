@@ -45,6 +45,7 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   steam_already_imported: 'This Steam game has already been imported.',
   steam_no_achievements: 'This game has no achievements on Steam.',
   steam_unavailable: 'Steam could not be reached. Please try again later.',
+  too_many_maps: 'This game already has as many maps as it can have.',
 }
 
 /** An expected failure that is reported to the client as `{ error: { code, message } }`. */

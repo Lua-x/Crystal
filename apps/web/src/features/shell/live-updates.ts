@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 
 import { CLIENT_ID } from '../../lib/api'
+import { mapKeys } from '../games/map-data'
 import { refresh, refreshTaskData, taskKeys } from '../tasks/data'
 
 /** Changes often come in bursts (e.g. completing several tasks); refresh once. */
@@ -28,6 +29,7 @@ export function useLiveUpdates(): void {
       timer = setTimeout(() => {
         refreshTaskData(queryClient)
         refresh(queryClient, taskKeys.groups)
+        refresh(queryClient, mapKeys.all)
       }, SETTLE_MS)
     }
 

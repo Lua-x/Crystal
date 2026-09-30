@@ -5,6 +5,7 @@ import {
   EyeOff,
   GripVertical,
   ListChecks,
+  MapPin,
   NotebookText,
   Paperclip,
   Repeat,
@@ -144,6 +145,13 @@ export function TaskRow({
     meta.push(
       <span key="reminder" className="inline-flex items-center">
         <Bell role="img" aria-label={t('reminder.row', { time: reminder })} className="size-3.5" />
+      </span>,
+    )
+  }
+  if (task.pin) {
+    meta.push(
+      <span key="pin" className="inline-flex items-center">
+        <MapPin role="img" aria-label={t('maps.pinned')} className="size-3.5" />
       </span>,
     )
   }
