@@ -8,6 +8,8 @@ test('a fresh instance asks to create the administrator account', async ({ page 
   await page.goto('/')
   await expect(page).toHaveURL(/\/setup$/)
   await expect(page.getByRole('heading', { name: 'Set up Crystal' })).toBeVisible()
+  // Everyday use is the default; gaming instances are set up in `gaming/`.
+  await expect(page.getByRole('radio', { name: 'Everyday' })).toBeChecked()
   await expectAccessible(page)
 
   // Validation happens before anything is sent.

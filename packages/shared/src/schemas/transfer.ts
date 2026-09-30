@@ -68,6 +68,8 @@ export const exportListSchema = z.object({
   role: z.enum(LIST_ROLES).optional(),
   /** Name of the sidebar group the list was in. */
   group: z.string().min(1).max(GROUP_NAME_MAX_LENGTH).nullable().default(null),
+  /** The day the list (or game) should be finished by. */
+  deadline: dateSchema.nullable().default(null),
   tasks: z.array(exportTaskSchema),
 })
 export type ExportList = z.infer<typeof exportListSchema>

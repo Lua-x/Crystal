@@ -1,3 +1,4 @@
+import { COVER_MAX_BYTES } from '@crystal/shared'
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { compress } from 'hono/compress'
 
@@ -15,6 +16,7 @@ import { authRoutes } from './routes/auth.js'
 import { calendarRoutes } from './routes/calendar.js'
 import { docsRoutes } from './routes/docs.js'
 import { eventRoutes } from './routes/events.js'
+import { imageRoutes } from './routes/images.js'
 import { inviteRoutes } from './routes/invites.js'
 import { listGroupRoutes, listRoutes } from './routes/lists.js'
 import { meRoutes } from './routes/me.js'
@@ -60,6 +62,7 @@ export function createApp(services: Services, options: AppOptions = {}) {
       [/^\/api\/v1\/import$/, 12 * MB],
       // The file plus room for the multipart framing.
       [/^\/api\/v1\/tasks\/[^/]+\/attachments$/, config.attachments.maxBytes + 64 * 1024],
+      [/^\/api\/v1\/lists\/[^/]+\/cover$/, COVER_MAX_BYTES + 64 * 1024],
     ]),
   )
   v1.use('*', csrfProtection(config))
@@ -80,6 +83,7 @@ export function createApp(services: Services, options: AppOptions = {}) {
   v1.route('/tasks', taskRoutes(services))
   v1.route('/tasks', taskAttachmentRoutes(services))
   v1.route('/attachments', attachmentRoutes(services))
+  v1.route('/images', imageRoutes(services))
   v1.route('/subtasks', subtaskRoutes(services))
   v1.route('/views', viewRoutes(services))
   v1.route('/search', searchRoutes(services))

@@ -9,12 +9,23 @@ import { Button } from '../../components/ui/button'
 import { Dialog } from '../../components/ui/dialog'
 import { Field } from '../../components/ui/field'
 import { Input } from '../../components/ui/input'
+import { toast } from '../../components/ui/toast-store'
 import { cn } from '../../lib/cn'
-import { useCreateGroup, useCreateList, useUpdateGroup, useUpdateList } from './data'
+import { errorMessage } from '../../lib/errors'
+import { useIsGaming } from '../../lib/instance-mode'
+import { CoverField, DeadlineField, type CoverDraft } from '../games/game-fields'
+import {
+  useCreateGroup,
+  useCreateList,
+  useRemoveCover,
+  useSetCover,
+  useUpdateGroup,
+  useUpdateList,
+} from './data'
 import { LIST_BG_CLASS } from './list-colors'
 
 /** A small set of emoji that work well as list icons. */
-const EMOJI = [
+const LIST_EMOJI = [
   '📋',
   '🏠',
   '🛒',
@@ -44,6 +55,40 @@ const EMOJI = [
   '🔧',
   '💊',
   '📞',
+  '⭐',
+]
+
+/** Emoji for games, for when a game has no cover. */
+const GAME_EMOJI = [
+  '🎮',
+  '🕹️',
+  '👾',
+  '🏆',
+  '⚔️',
+  '🛡️',
+  '🏹',
+  '🧙',
+  '🐉',
+  '👻',
+  '💀',
+  '🍄',
+  '🚀',
+  '🌌',
+  '🏰',
+  '🗺️',
+  '💎',
+  '🔮',
+  '🧪',
+  '🧩',
+  '♟️',
+  '🃏',
+  '🎲',
+  '🎯',
+  '🏎️',
+  '⚽',
+  '🤖',
+  '🔥',
+  '🌱',
   '⭐',
 ]
 
@@ -98,9 +143,16 @@ function ListForm({
   const navigate = useNavigate()
   const create = useCreateList()
   const update = useUpdateList()
+  const setCover = useSetCover()
+  const removeCover = useRemoveCover()
+  // Games have a cover and a finish-by date; the default list is no game.
+  const gameFields = useIsGaming() && !list?.isDefault
   const [name, setName] = useState(list?.name ?? '')
   const [color, setColor] = useState<ListColor>(list?.color ?? 'blue')
   const [icon, setIcon] = useState<string | null>(list?.icon ?? null)
+  const [deadline, setDeadline] = useState<string | null>(list?.deadline ?? null)
+  const [cover, setCoverDraft] = useState<CoverDraft>({ kind: 'keep' })
+  const [coverError, setCoverError] = useState<string | undefined>()
   const [error, setError] = useState<string | undefined>()
 
   const submit = async (event: FormEvent) => {
@@ -110,16 +162,35 @@ function ListForm({
       setError('validation.required')
       return
     }
+    const gameInput = gameFields ? { deadline } : {}
     if (list) {
-      update.mutate({ id: list.id, input: { name: trimmed, color, icon } })
+      if (gameFields && cover.kind === 'set') {
+        // A picture the server refuses keeps the dialog open, so another can be picked.
+        try {
+          await setCover.mutateAsync({ listId: list.id, file: cover.file })
+        } catch (coverFailure) {
+          setCoverError(t('games.coverFailed', { reason: errorMessage(coverFailure) }))
+          return
+        }
+      }
+      if (gameFields && cover.kind === 'remove') removeCover.mutate(list.id)
+      update.mutate({ id: list.id, input: { name: trimmed, color, icon, ...gameInput } })
       onDone()
       return
     }
     // A new list opens right away, so the dialog waits for its id.
     const created = await create
-      .mutateAsync({ name: trimmed, color, icon, groupId })
+      .mutateAsync({ name: trimmed, color, icon, groupId, ...gameInput })
       .catch(() => null) // The mutation shows the error; the dialog stays open.
     if (!created) return
+    if (gameFields && cover.kind === 'set') {
+      // The game exists either way; a refused picture can be set again from its menu.
+      await setCover
+        .mutateAsync({ listId: created.id, file: cover.file })
+        .catch((coverFailure: unknown) =>
+          toast.error(t('games.coverFailed', { reason: errorMessage(coverFailure) })),
+        )
+    }
     onDone()
     onCreated?.()
     await navigate({ to: '/lists/$listId', params: { listId: created.id } })
@@ -141,6 +212,19 @@ function ListForm({
           />
         )}
       </Field>
+
+      {gameFields && (
+        <>
+          <CoverField
+            currentId={list?.coverImageId ?? null}
+            draft={cover}
+            error={coverError}
+            onChange={setCoverDraft}
+            onError={setCoverError}
+          />
+          <DeadlineField value={deadline} onChange={setDeadline} />
+        </>
+      )}
 
       <div className="flex flex-col gap-2">
         <span id="list-color-label" className="text-subhead font-medium">
@@ -195,7 +279,7 @@ function ListForm({
           >
             <span aria-hidden className={cn('size-2.5 rounded-full', LIST_BG_CLASS[color])} />
           </RadioGroup.Item>
-          {EMOJI.map((emoji) => (
+          {(gameFields ? GAME_EMOJI : LIST_EMOJI).map((emoji) => (
             <RadioGroup.Item
               key={emoji}
               value={emoji}
@@ -213,7 +297,7 @@ function ListForm({
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button onClick={onDone}>{t('common.cancel')}</Button>
-        <Button type="submit" variant="primary" loading={create.isPending}>
+        <Button type="submit" variant="primary" loading={create.isPending || setCover.isPending}>
           {list ? t('common.save') : t('common.create')}
         </Button>
       </div>

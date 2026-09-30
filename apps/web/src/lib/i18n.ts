@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from '@crystal/shared'
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type InstanceMode, type Locale } from '@crystal/shared'
 // DEFAULT_LOCALE is the answer when the browser prefers no supported language.
 import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
@@ -23,19 +23,64 @@ export function detectLocale(languages: readonly string[] = navigator.languages)
   return DEFAULT_LOCALE
 }
 
+type DeepPartial<T> = { [Key in keyof T]?: T[Key] extends string ? string : DeepPartial<T[Key]> }
+
+/** Texts that differ in gaming mode; everything else comes from the base language. */
+export type TranslationOverlay = DeepPartial<Translation>
+
 /** Each language is its own chunk: only the one in use is downloaded. */
 const TRANSLATIONS: Record<Locale, () => Promise<Translation>> = {
   en: () => import('../locales/en').then((module) => module.en),
   de: () => import('../locales/de').then((module) => module.de),
 }
 
+/** Gaming words ("game", "goal"), only downloaded on gaming instances. */
+const GAMING_TRANSLATIONS: Record<Locale, () => Promise<TranslationOverlay>> = {
+  en: () => import('../locales/gaming-en').then((module) => module.enGaming),
+  de: () => import('../locales/gaming-de').then((module) => module.deGaming),
+}
+
+let activeMode: InstanceMode = 'standard'
+/** The mode each loaded language's texts are in. */
+const loadedModes = new Map<Locale, InstanceMode>()
+
 async function loadTranslation(locale: Locale): Promise<void> {
-  if (i18next.hasResourceBundle(locale, 'translation')) return
-  i18next.addResourceBundle(locale, 'translation', await TRANSLATIONS[locale]())
+  const mode = activeMode
+  if (loadedModes.get(locale) === mode) return
+  const [base, overlay] = await Promise.all([
+    TRANSLATIONS[locale](),
+    mode === 'gaming' ? GAMING_TRANSLATIONS[locale]() : undefined,
+  ])
+  // The mode changed while loading; the load for the new mode takes over.
+  if (mode !== activeMode) return
+  // The whole bundle is replaced, so no word of the other mode lingers.
+  i18next.addResourceBundle(locale, 'translation', applyOverlay(base, overlay), false, true)
+  loadedModes.set(locale, mode)
+}
+
+/** The base texts with the overlay's replacements; neither is changed. */
+export function applyOverlay(
+  base: Translation,
+  overlay: TranslationOverlay | undefined,
+): Translation {
+  return overlay ? (merge(base, overlay) as Translation) : base
+}
+
+type Texts = { [key: string]: string | Texts }
+
+function merge(base: Texts, overlay: Texts): Texts {
+  const merged = { ...base }
+  for (const [key, value] of Object.entries(overlay)) {
+    const current = merged[key]
+    merged[key] =
+      typeof value === 'object' && typeof current === 'object' ? merge(current, value) : value
+  }
+  return merged
 }
 
 /** Starts i18n with the given language; resolves once its texts are loaded. */
-export async function initI18n(initialLocale: Locale): Promise<void> {
+export async function initI18n(initialLocale: Locale, mode: InstanceMode): Promise<void> {
+  activeMode = mode
   await i18next.use(initReactI18next).init({
     resources: {},
     lng: initialLocale,
@@ -43,6 +88,8 @@ export async function initI18n(initialLocale: Locale): Promise<void> {
     fallbackLng: false,
     interpolation: { escapeValue: false }, // React escapes already.
     returnNull: false,
+    // Re-render when texts are replaced, e.g. once the gaming words have loaded.
+    react: { bindI18nStore: 'added' },
   })
   await loadTranslation(initialLocale)
   document.documentElement.lang = initialLocale
@@ -79,6 +126,13 @@ export async function setLocale(locale: Locale) {
   await loadTranslation(locale)
   if (i18next.language !== locale) await i18next.changeLanguage(locale)
   document.documentElement.lang = locale
+}
+
+/** Switches the words to the instance's mode (it is only known once the server answered). */
+export async function setInstanceMode(mode: InstanceMode) {
+  if (mode === activeMode) return
+  activeMode = mode
+  await loadTranslation(i18next.language as Locale)
 }
 
 /** Translates a message that may be a translation key (from shared Zod schemas). */

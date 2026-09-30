@@ -11,6 +11,13 @@ export type Role = (typeof ROLES)[number]
 export const REGISTRATION_MODES = ['open', 'invite', 'closed'] as const
 export type RegistrationMode = (typeof REGISTRATION_MODES)[number]
 
+/**
+ * What an instance is for, chosen once when the first account is created:
+ * everyday lists and tasks, or games with goals and achievements.
+ */
+export const INSTANCE_MODES = ['standard', 'gaming'] as const
+export type InstanceMode = (typeof INSTANCE_MODES)[number]
+
 export const THEMES = ['system', 'light', 'dark'] as const
 export type Theme = (typeof THEMES)[number]
 
@@ -126,6 +133,20 @@ export const PREVIEWABLE_IMAGE_TYPES: readonly AttachmentType[] = [
 ]
 export const ATTACHMENTS_PER_TASK_MAX = 20
 export const ATTACHMENT_NAME_MAX_LENGTH = 200
+
+/** Images Crystal stores for lists, such as a game's cover. */
+export const IMAGE_KINDS = ['cover'] as const
+export type ImageKind = (typeof IMAGE_KINDS)[number]
+/** Image formats every current browser can show. */
+export const IMAGE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+] as const satisfies readonly AttachmentType[]
+export type ImageType = (typeof IMAGE_TYPES)[number]
+export const COVER_MAX_BYTES = 5 * 1024 * 1024
 
 export const LIST_NAME_MAX_LENGTH = 100
 export const LIST_ICON_MAX_LENGTH = 16

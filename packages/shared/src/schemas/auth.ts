@@ -4,6 +4,7 @@ import { EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH, REGISTRATION_MODES } from '../co
 import {
   displayNameSchema,
   emailSchema,
+  instanceModeSchema,
   localeSchema,
   passwordSchema,
   roleSchema,
@@ -15,6 +16,8 @@ import {
 export const authConfigSchema = z.object({
   /** True until the first account (which becomes admin) has been created. */
   needsSetup: z.boolean(),
+  /** What the instance is for; `null` until it is chosen during setup. */
+  mode: instanceModeSchema.nullable(),
   registration: z.enum(REGISTRATION_MODES),
   passwordLogin: z.boolean(),
   oidc: z.object({
@@ -52,6 +55,11 @@ export const registerSchema = z.object({
   email: emailSchema.optional(),
   password: passwordSchema,
   inviteToken: z.string().min(1).max(128).optional(),
+  /**
+   * What the instance is for. Only the very first account chooses it (default
+   * `standard`); it cannot be changed later, and later accounts leave it out.
+   */
+  mode: instanceModeSchema.optional(),
   locale: localeSchema.optional(),
   timezone: timezoneSchema.optional(),
 })

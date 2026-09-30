@@ -1,4 +1,4 @@
-import type { Me } from '@crystal/shared'
+import type { AuthConfig, Me } from '@crystal/shared'
 import { Events, OAuth2Server, type MutableResponse, type MutableToken } from 'oauth2-mock-server'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
@@ -58,8 +58,12 @@ function nextLoginAs(profile: Profile) {
 }
 
 /** Runs the browser side of the authorization code flow and returns the final redirect. */
-async function signInThroughProvider(client: TestClient, intent: 'login' | 'link' = 'login') {
-  const start = await client.get(`/api/v1/auth/oidc/start?intent=${intent}`)
+async function signInThroughProvider(
+  client: TestClient,
+  intent: 'login' | 'link' = 'login',
+  extraQuery = '',
+) {
+  const start = await client.get(`/api/v1/auth/oidc/start?intent=${intent}${extraQuery}`)
   expect(start.status).toBe(302)
   const authorizeUrl = new URL(start.headers.get('location')!)
   expect(authorizeUrl.origin).toBe(new URL(provider.issuer.url!).origin)
@@ -159,6 +163,29 @@ describe('OIDC sign-in', () => {
     nextLoginAs({ sub: 'user-g1', preferred_username: 'ben', groups: [] })
     await signInThroughProvider(browser)
     expect((await browser.get<Me>('/api/v1/me')).body.role).toBe('user')
+  })
+
+  it('lets the first account through SSO choose what the instance is for', async () => {
+    createOidcContext({ REGISTRATION: 'open' })
+    const first = context.client()
+    nextLoginAs({ sub: 'user-m1', preferred_username: 'anna' })
+    expect(await signInThroughProvider(first, 'login', '&mode=gaming')).toBe('/')
+    const config = await context.client().get<AuthConfig>('/api/v1/auth/config')
+    expect(config.body.mode).toBe('gaming')
+
+    // Later sign-ups cannot change it.
+    nextLoginAs({ sub: 'user-m2', preferred_username: 'ben' })
+    expect(await signInThroughProvider(context.client(), 'login', '&mode=standard')).toBe('/')
+    const again = await context.client().get<AuthConfig>('/api/v1/auth/config')
+    expect(again.body.mode).toBe('gaming')
+  })
+
+  it('ignores a mode it does not know', async () => {
+    createOidcContext()
+    nextLoginAs({ sub: 'user-m3', preferred_username: 'anna' })
+    expect(await signInThroughProvider(context.client(), 'login', '&mode=arcade')).toBe('/')
+    const config = await context.client().get<AuthConfig>('/api/v1/auth/config')
+    expect(config.body.mode).toBe('standard')
   })
 
   it('rejects unknown identities when auto-registration is off', async () => {

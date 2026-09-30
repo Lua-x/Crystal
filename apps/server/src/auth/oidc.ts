@@ -1,3 +1,4 @@
+import { INSTANCE_MODES, type InstanceMode } from '@crystal/shared'
 import * as client from 'openid-client'
 import { z } from 'zod'
 
@@ -18,6 +19,8 @@ const flowStateSchema = z.object({
   verifier: z.string(),
   intent: z.enum(OIDC_INTENTS),
   userId: z.string().optional(),
+  /** The mode picked on the setup page, for when this creates the first account. */
+  mode: z.enum(INSTANCE_MODES).optional(),
   expiresAt: z.number(),
 })
 type FlowState = z.infer<typeof flowStateSchema>
@@ -36,6 +39,7 @@ export interface OidcResult {
   claims: OidcClaims
   intent: OidcIntent
   userId: string | undefined
+  mode: InstanceMode | undefined
 }
 
 /**
@@ -60,6 +64,7 @@ export class OidcService {
   async createAuthorizationRequest(
     intent: OidcIntent,
     userId: string | undefined,
+    mode?: InstanceMode,
   ): Promise<{ url: URL; flowCookie: string }> {
     const configuration = await this.discover()
     const flow: FlowState = {
@@ -68,6 +73,7 @@ export class OidcService {
       verifier: client.randomPKCECodeVerifier(),
       intent,
       userId,
+      mode,
       expiresAt: this.now() + FLOW_TTL_MS,
     }
     const url = client.buildAuthorizationUrl(configuration, {
@@ -115,6 +121,7 @@ export class OidcService {
     return {
       intent: flow.intent,
       userId: flow.userId,
+      mode: flow.mode,
       claims: {
         issuer: idClaims.iss,
         subject: idClaims.sub,

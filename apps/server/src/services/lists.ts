@@ -7,6 +7,7 @@ import {
   type ListGroup,
   type ListMember,
   type ListPlacement,
+  type InstanceMode,
   type ListRole,
   type Locale,
   type UpdateListGroupInput,
@@ -27,10 +28,15 @@ import {
   type Ordered,
 } from '../lib/ordering.js'
 import type { EventHub } from './events.js'
+import type { InstanceService } from './instance.js'
 import type { SearchService } from './search.js'
 
 const ROLE_RANK: Record<ListRole, number> = { viewer: 0, editor: 1, owner: 2 }
-const DEFAULT_LIST_NAME: Record<Locale, string> = { de: 'Aufgaben', en: 'Tasks' }
+const DEFAULT_LIST_NAME: Record<InstanceMode, Record<Locale, string>> = {
+  standard: { de: 'Aufgaben', en: 'Tasks' },
+  // Goals that belong to no particular game.
+  gaming: { de: 'Allgemein', en: 'General' },
+}
 
 interface SidebarItem extends Ordered {
   kind: 'list' | 'group'
@@ -46,6 +52,7 @@ export class ListService {
     private readonly db: Db,
     private readonly search: SearchService,
     private readonly events: EventHub,
+    private readonly instance: InstanceService,
     private readonly now: () => Date,
   ) {}
 
@@ -90,7 +97,7 @@ export class ListService {
       const id = uuidv7(this.now().getTime())
       this.insertList(tx, user.id, {
         id,
-        name: DEFAULT_LIST_NAME[user.locale],
+        name: DEFAULT_LIST_NAME[this.instance.mode() ?? 'standard'][user.locale],
         color: 'blue',
         icon: null,
         isDefault: true,
@@ -129,6 +136,7 @@ export class ListService {
         name: input.name,
         color: input.color ?? 'blue',
         icon: input.icon ?? null,
+        deadline: input.deadline ?? null,
         isDefault: false,
         groupId,
         position: positionAtEnd(container),
@@ -140,7 +148,10 @@ export class ListService {
 
   update(user: UserRow, listId: string, input: UpdateListInput): List {
     const changesList =
-      input.name !== undefined || input.color !== undefined || input.icon !== undefined
+      input.name !== undefined ||
+      input.color !== undefined ||
+      input.icon !== undefined ||
+      input.deadline !== undefined
     this.db.transaction((tx) => {
       const role = this.requireRole(user.id, listId, 'viewer', tx)
       if (changesList) {
@@ -150,6 +161,7 @@ export class ListService {
             ...(input.name !== undefined ? { name: input.name } : {}),
             ...(input.color !== undefined ? { color: input.color } : {}),
             ...(input.icon !== undefined ? { icon: input.icon } : {}),
+            ...(input.deadline !== undefined ? { deadline: input.deadline } : {}),
             updatedAt: this.now(),
           })
           .where(eq(lists.id, listId))
@@ -157,7 +169,7 @@ export class ListService {
       }
       if (input.placement) this.placeList(user.id, listId, input.placement, tx)
     })
-    // Name, color and icon are the same for everyone; the placement is personal.
+    // Name, color, icon and deadline are the same for everyone; the placement is personal.
     if (changesList) this.events.listsChanged([listId])
     else this.events.personalChange(user.id)
     return this.get(user, listId)
@@ -396,7 +408,13 @@ export class ListService {
   addOwnedList(
     tx: Executor,
     userId: string,
-    input: { name: string; color: List['color']; icon: string | null; groupId: string | null },
+    input: {
+      name: string
+      color: List['color']
+      icon: string | null
+      deadline?: string | null
+      groupId: string | null
+    },
   ): string {
     const id = uuidv7(this.now().getTime())
     const container = input.groupId
@@ -437,6 +455,7 @@ export class ListService {
       name: string
       color: List['color']
       icon: string | null
+      deadline?: string | null
       isDefault: boolean
       groupId: string | null
       position: string
@@ -449,6 +468,7 @@ export class ListService {
         name: list.name,
         color: list.color,
         icon: list.icon,
+        deadline: list.deadline ?? null,
         isDefault: list.isDefault,
         createdBy: userId,
         createdAt: now,
@@ -474,11 +494,17 @@ export class ListService {
         and ${tasks.deletedAt} is null
         and ${tasks.completedAt} is null
     )`
+    const completedCount = sql<number>`(
+      select count(*) from ${tasks}
+      where ${tasks.listId} = ${lists.id}
+        and ${tasks.deletedAt} is null
+        and ${tasks.completedAt} is not null
+    )`
     const memberCount = sql<number>`(
       select count(*) from ${listMembers} as "others" where "others"."list_id" = ${lists.id}
     )`
     return this.db
-      .select({ list: lists, member: listMembers, openCount, memberCount })
+      .select({ list: lists, member: listMembers, openCount, completedCount, memberCount })
       .from(listMembers)
       .innerJoin(lists, eq(lists.id, listMembers.listId))
       .where(
@@ -490,7 +516,7 @@ export class ListService {
       )
       .orderBy(asc(listMembers.position))
       .all()
-      .map(({ list, member, openCount, memberCount }) => ({
+      .map(({ list, member, openCount, completedCount, memberCount }) => ({
         id: list.id,
         name: list.name,
         color: list.color,
@@ -499,7 +525,10 @@ export class ListService {
         groupId: member.groupId,
         position: member.position,
         isDefault: list.isDefault && list.createdBy === userId,
+        coverImageId: list.coverImageId,
+        deadline: list.deadline,
         openCount: Number(openCount),
+        completedCount: Number(completedCount),
         memberCount: Number(memberCount),
         createdAt: list.createdAt.toISOString(),
         updatedAt: list.updatedAt.toISOString(),

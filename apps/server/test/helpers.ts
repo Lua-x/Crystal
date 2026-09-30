@@ -192,14 +192,19 @@ export class TestClient {
     return this.request<T>('DELETE', path, undefined, headers)
   }
 
-  /** Posts `multipart/form-data`, like a file upload from the browser. */
-  upload<T = unknown>(path: string, fields: Record<string, Blob | string>, fileName = 'file') {
+  /** Sends `multipart/form-data`, like a file upload from the browser. */
+  upload<T = unknown>(
+    path: string,
+    fields: Record<string, Blob | string>,
+    fileName = 'file',
+    method: 'POST' | 'PUT' = 'POST',
+  ) {
     const form = new FormData()
     for (const [name, value] of Object.entries(fields)) {
       if (typeof value === 'string') form.append(name, value)
       else form.append(name, value, fileName)
     }
-    return this.request<T>('POST', path, form)
+    return this.request<T>(method, path, form)
   }
 
   /** Downloads raw bytes. */

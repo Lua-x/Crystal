@@ -63,11 +63,15 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 }
 
 /** Uploads `multipart/form-data` (files) to `/api/v1{path}`. */
-export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+export async function apiUpload<T>(
+  path: string,
+  form: FormData,
+  method: 'POST' | 'PUT' = 'POST',
+): Promise<T> {
   let response: Response
   try {
     response = await fetch(`/api/v1${path}`, {
-      method: 'POST',
+      method,
       credentials: 'same-origin',
       headers: { 'X-Crystal-Client': CLIENT_ID },
       body: form,

@@ -63,7 +63,7 @@ export function securityHeaders(config: Config): MiddlewareHandler<AppEnv> {
 }
 
 /** Files people uploaded: they must never run anything, even when opened directly. */
-const UPLOADED_CONTENT = /^\/api\/v1\/attachments\/[^/]+$/
+const UPLOADED_CONTENT = /^\/api\/v1\/(attachments|images)\/[^/]+$/
 const UPLOAD_OPTIONS: SecureHeadersOptions = {
   ...BASE_OPTIONS,
   contentSecurityPolicy: {

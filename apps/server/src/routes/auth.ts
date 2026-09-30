@@ -1,6 +1,7 @@
 import {
   authConfigSchema,
   forgotPasswordSchema,
+  instanceModeSchema,
   loginSchema,
   meSchema,
   registerSchema,
@@ -161,6 +162,8 @@ export function authRoutes(services: Services) {
   // Browser navigations, not JSON endpoints, so they are not part of the OpenAPI document.
   router.get('/oidc/start', async (c) => {
     const intent: OidcIntent = c.req.query('intent') === 'link' ? 'link' : 'login'
+    // Only matters when this sign-in creates the very first account.
+    const mode = instanceModeSchema.safeParse(c.req.query('mode')).data
     const auth = c.get('auth')
     if (!services.oidc) return c.redirect(errorTarget(intent, 'oidc_not_configured'), 302)
     if (intent === 'link' && !auth) return c.redirect('/login', 302)
@@ -169,6 +172,7 @@ export function authRoutes(services: Services) {
       const { url, flowCookie } = await services.oidc.createAuthorizationRequest(
         intent,
         auth?.user.id,
+        mode,
       )
       setOidcFlowCookie(c, services.config, flowCookie)
       return c.redirect(url.href, 302)

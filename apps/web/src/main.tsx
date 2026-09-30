@@ -21,6 +21,7 @@ import { refreshTaskData, registerTaskWriteDefaults } from './features/tasks/dat
 import { ApiError } from './lib/api'
 import { cachedLocale } from './lib/appearance'
 import { detectLocale, initI18n } from './lib/i18n'
+import { cachedMode } from './lib/instance-mode'
 import { offlineCache } from './lib/offline-cache'
 import { queryKeys } from './lib/queries'
 import { registerServiceWorker } from './lib/service-worker'
@@ -43,7 +44,7 @@ const OFFLINE_KEYS = new Set([
   'people',
 ])
 
-const translations = initI18n(cachedLocale() ?? detectLocale())
+const translations = initI18n(cachedLocale() ?? detectLocale(), cachedMode() ?? 'standard')
 
 /** Animation features are a separate download; until they arrive, nothing animates. */
 const loadMotionFeatures = () => import('./lib/motion-features').then((module) => module.default)

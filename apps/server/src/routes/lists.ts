@@ -31,6 +31,11 @@ const tags = ['Lists']
 const security = sessionOrToken
 const idParams = z.object({ id: idSchema })
 const notFound = { 404: errorResponse('No such list, or no access to it') }
+const coverSchema = z.object({
+  file: z
+    .custom<File>((value) => value instanceof File, { error: 'validation.required' })
+    .openapi({ type: 'string', format: 'binary' }),
+})
 
 export function listRoutes(services: Services) {
   const router = createRouter()
@@ -115,6 +120,60 @@ export function listRoutes(services: Services) {
     (c) => {
       services.lists.delete(requireAuthState(c).user, c.req.valid('param').id)
       return c.body(null, 204)
+    },
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'put',
+      path: '/{id}/cover',
+      tags,
+      security,
+      summary: 'Set the cover picture',
+      description:
+        'Send a PNG, JPEG, GIF, WebP or AVIF image of up to 5 MiB as `multipart/form-data` in ' +
+        'the field `file`; it replaces the previous cover. Only the owner can change it. The ' +
+        'picture is shown for games and can be loaded from `/images/{coverImageId}`.',
+      request: {
+        params: idParams,
+        body: { content: { 'multipart/form-data': { schema: coverSchema } }, required: true },
+      },
+      responses: {
+        200: jsonResponse(listSchema, 'The list with its new cover'),
+        413: errorResponse('The image is too large'),
+        ...notFound,
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    async (c) => {
+      const { user } = requireAuthState(c)
+      const { id } = c.req.valid('param')
+      await services.images.setCover(user, id, c.req.valid('form').file)
+      return c.json(services.lists.get(user, id), 200)
+    },
+  )
+
+  router.openapi(
+    createRoute({
+      method: 'delete',
+      path: '/{id}/cover',
+      tags,
+      security,
+      summary: 'Remove the cover picture',
+      request: { params: idParams },
+      responses: {
+        200: jsonResponse(listSchema, 'The list without a cover'),
+        ...notFound,
+        ...authErrors,
+        ...commonErrors,
+      },
+    }),
+    async (c) => {
+      const { user } = requireAuthState(c)
+      const { id } = c.req.valid('param')
+      await services.images.removeCover(user, id)
+      return c.json(services.lists.get(user, id), 200)
     },
   )
 

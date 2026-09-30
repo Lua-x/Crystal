@@ -19,6 +19,7 @@ import { userIdentities, type UserRow } from '../db/schema.js'
 import type { Executor } from '../db/types.js'
 import { AppError } from '../lib/errors.js'
 import type { Logger } from '../lib/logger.js'
+import type { InstanceService } from './instance.js'
 import type { InviteService } from './invites.js'
 import type { PasswordResetService } from './password-resets.js'
 import type { SessionService } from './sessions.js'
@@ -29,6 +30,7 @@ export interface AuthServiceDeps {
   config: Config
   logger: Logger
   users: UserService
+  instance: InstanceService
   invites: InviteService
   sessions: SessionService
   passwordResets: PasswordResetService
@@ -41,9 +43,10 @@ export class AuthService {
   constructor(private readonly deps: AuthServiceDeps) {}
 
   getConfig(): AuthConfig {
-    const { config, users, passwordResets, version } = this.deps
+    const { config, users, instance, passwordResets, version } = this.deps
     return {
       needsSetup: users.count() === 0,
+      mode: instance.mode(),
       registration: config.registration,
       passwordLogin: config.passwordLogin,
       oidc: {
@@ -60,7 +63,7 @@ export class AuthService {
    * always allowed; afterwards the registration mode and invites decide.
    */
   async register(input: RegisterInput): Promise<UserRow> {
-    const { db, config, users, invites } = this.deps
+    const { db, config, users, instance, invites } = this.deps
     if (!config.passwordLogin) throw new AppError(403, 'password_login_disabled')
 
     // Hash outside the transaction: better-sqlite3 transactions must be synchronous.
@@ -70,6 +73,7 @@ export class AuthService {
       let role: Role = 'user'
       if (users.count(tx) === 0) {
         role = 'admin'
+        instance.initialize(tx, input.mode ?? 'standard')
       } else {
         if (config.registration === 'closed') throw new AppError(403, 'registration_closed')
         const invite = input.inviteToken ? invites.findUsable(tx, input.inviteToken) : undefined
@@ -151,7 +155,7 @@ export class AuthService {
         return user
       }
 
-      return this.registerFromOidc(tx, claims, localeHint)
+      return this.registerFromOidc(tx, result, localeHint)
     })
   }
 
@@ -182,10 +186,10 @@ export class AuthService {
 
   private registerFromOidc(
     tx: Executor,
-    claims: OidcClaims,
+    { claims, mode }: OidcResult,
     localeHint: string | undefined,
   ): UserRow {
-    const { config, users, logger } = this.deps
+    const { config, users, instance, logger } = this.deps
     if (!config.oidc?.autoRegister) throw new AppError(403, 'oidc_account_not_found')
     // Never attach an SSO login to an existing local account by email: the user
     // has to sign in with their password and link the identity explicitly.
@@ -194,6 +198,7 @@ export class AuthService {
     }
 
     const isFirstUser = users.count(tx) === 0
+    if (isFirstUser) instance.initialize(tx, mode ?? 'standard')
     const isInAdminGroup =
       config.oidc.adminGroup !== undefined && claims.groups.includes(config.oidc.adminGroup)
 

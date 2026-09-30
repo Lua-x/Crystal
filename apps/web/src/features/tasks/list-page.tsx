@@ -5,6 +5,7 @@ import {
   CircleCheck,
   Ellipsis,
   Eye,
+  Gamepad2,
   ListTodo,
   LogOut,
   Pencil,
@@ -27,6 +28,8 @@ import {
 import { EmptyState } from '../../components/ui/empty-state'
 import { toast } from '../../components/ui/toast-store'
 import { TaskListSkeleton } from '../../components/ui/task-skeleton'
+import { useIsGaming } from '../../lib/instance-mode'
+import { GameHeader } from '../games/game-header'
 import { Page } from '../shell/page'
 import { useMe } from '../shell/use-me'
 import {
@@ -59,6 +62,7 @@ export function ListPage() {
   const today = useToday()
   const actions = useTaskActions()
   const [dialog, setDialog] = useState<ListDialogName | null>(null)
+  const gaming = useIsGaming()
   const list = lists?.find((item) => item.id === listId)
 
   if (!list) {
@@ -91,6 +95,7 @@ export function ListPage() {
         </>
       }
     >
+      {gaming && !list.isDefault && <GameHeader list={list} today={today} />}
       {!canEdit && (
         <p className="mb-4 flex items-center gap-1.5 px-1 text-footnote text-text-secondary">
           <Eye aria-hidden className="size-4" />
@@ -102,7 +107,7 @@ export function ListPage() {
         <TaskListSkeleton />
       ) : open.length === 0 && completed.length === 0 ? (
         <EmptyState
-          icon={<ListTodo />}
+          icon={gaming ? <Gamepad2 /> : <ListTodo />}
           title={t('views.empty.list')}
           body={canEdit ? t('views.empty.list-body') : undefined}
         />

@@ -1,6 +1,9 @@
 import {
   API_TOKEN_SCOPES,
   ATTACHMENT_TYPES,
+  IMAGE_KINDS,
+  IMAGE_TYPES,
+  INSTANCE_MODES,
   LIST_COLORS,
   LIST_ROLES,
   NOTIFICATION_CHANNEL_TYPES,
@@ -30,6 +33,17 @@ import {
  */
 
 const timestamp = (name: string) => integer(name, { mode: 'timestamp_ms' })
+
+/**
+ * Settings of the instance as a whole, in a single row (`id = 1`). The row is
+ * written together with the first account; until then the instance is new.
+ */
+export const instance = sqliteTable('instance', {
+  id: integer('id').primaryKey(),
+  /** Chosen once during setup and never changed afterwards. */
+  mode: text('mode', { enum: INSTANCE_MODES }).notNull(),
+  createdAt: timestamp('created_at').notNull(),
+})
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -152,6 +166,10 @@ export const lists = sqliteTable(
     icon: text('icon'),
     /** The creator's default list ("Tasks"). Exactly one per user; cannot be deleted. */
     isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
+    /** An image of this list (`images.id`), e.g. a game's cover. */
+    coverImageId: text('cover_image_id'),
+    /** Calendar day `YYYY-MM-DD` the list should be finished by. */
+    deadline: text('deadline'),
     createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at').notNull(),
     updatedAt: timestamp('updated_at').notNull(),
@@ -307,6 +325,26 @@ export const attachments = sqliteTable(
   (table) => [index('attachments_task_idx').on(table.taskId)],
 )
 
+/**
+ * Pictures that belong to a list, such as a game's cover. The content lives in
+ * `DATA_DIR/images/<id>`; everyone with access to the list can see them.
+ */
+export const images = sqliteTable(
+  'images',
+  {
+    id: text('id').primaryKey(),
+    listId: text('list_id')
+      .notNull()
+      .references(() => lists.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: IMAGE_KINDS }).notNull(),
+    /** Detected from the content, never taken from the upload. */
+    mimeType: text('mime_type', { enum: IMAGE_TYPES }).notNull(),
+    size: integer('size').notNull(),
+    createdAt: timestamp('created_at').notNull(),
+  },
+  (table) => [index('images_list_idx').on(table.listId)],
+)
+
 /** Tasks a user picked for a day. Entries for past days are simply ignored. */
 export const myDay = sqliteTable(
   'my_day',
@@ -399,5 +437,6 @@ export type TaskRow = typeof tasks.$inferSelect
 export type SubtaskRow = typeof subtasks.$inferSelect
 export type TaskTagRow = typeof taskTags.$inferSelect
 export type AttachmentRow = typeof attachments.$inferSelect
+export type ImageRow = typeof images.$inferSelect
 export type NotificationChannelRow = typeof notificationChannels.$inferSelect
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect

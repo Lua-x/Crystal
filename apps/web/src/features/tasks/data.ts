@@ -603,6 +603,7 @@ export function useUpdateList() {
                 ...(input.name !== undefined ? { name: input.name } : {}),
                 ...(input.color !== undefined ? { color: input.color } : {}),
                 ...(input.icon !== undefined ? { icon: input.icon } : {}),
+                ...(input.deadline !== undefined ? { deadline: input.deadline } : {}),
                 ...(input.placement ? { groupId: input.placement.groupId } : {}),
                 ...(position ? { position } : {}),
               }
@@ -625,6 +626,37 @@ export function useDeleteList() {
       refresh(queryClient, taskKeys.counts)
     },
   )
+}
+
+/** Puts the list as the server returned it into the cache. */
+function replaceList(queryClient: QueryClient, updated: List) {
+  queryClient.setQueryData<List[]>(taskKeys.lists, (lists) =>
+    lists?.map((list) => (list.id === updated.id ? updated : list)),
+  )
+}
+
+/** Sets a game's cover picture. Errors are left to the caller, which knows the context. */
+export function useSetCover() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ listId, file }: { listId: string; file: File }) => {
+      const form = new FormData()
+      form.append('file', file)
+      return apiUpload<List>(`/lists/${listId}/cover`, form, 'PUT')
+    },
+    onSuccess: (list) => replaceList(queryClient, list),
+    onSettled: () => refresh(queryClient, taskKeys.lists),
+  })
+}
+
+export function useRemoveCover() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (listId: string) => api<List>(`/lists/${listId}/cover`, { method: 'DELETE' }),
+    onSuccess: (list) => replaceList(queryClient, list),
+    onError: (error) => toast.error(errorMessage(error)),
+    onSettled: () => refresh(queryClient, taskKeys.lists),
+  })
 }
 
 export function useDeleteCompleted() {

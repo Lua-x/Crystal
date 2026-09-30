@@ -14,6 +14,8 @@ import { BackupService } from './backups.js'
 import { CalendarService } from './calendar.js'
 import { CleanupService } from './cleanup.js'
 import { EventHub } from './events.js'
+import { ImageService } from './images.js'
+import { InstanceService } from './instance.js'
 import { InviteService } from './invites.js'
 import { ListService } from './lists.js'
 import { NotificationService } from './notifications.js'
@@ -36,6 +38,8 @@ export interface Services {
   db: Db
   now: () => Date
   version: string
+  /** What the instance is for (everyday or gaming). */
+  instance: InstanceService
   users: UserService
   sessions: SessionService
   /** Personal API tokens. */
@@ -58,6 +62,8 @@ export interface Services {
   backups: BackupService
   /** Images and PDFs attached to tasks. */
   attachments: AttachmentService
+  /** Pictures of lists, such as game covers. */
+  images: ImageService
   lists: ListService
   tasks: TaskService
   views: ViewService
@@ -115,6 +121,7 @@ export function createServices(options: ServiceOptions): Services {
     vapidPublicKey: vapidKeys.publicKey,
   })
 
+  const instance = new InstanceService(db, now)
   const users = new UserService(db, now)
   const invites = new InviteService(db, now)
   const sessions = new SessionService(db, config.sessionTtlDays, now)
@@ -133,6 +140,7 @@ export function createServices(options: ServiceOptions): Services {
     config,
     logger,
     users,
+    instance,
     invites,
     sessions,
     passwordResets,
@@ -141,8 +149,9 @@ export function createServices(options: ServiceOptions): Services {
   })
   const search = new SearchService(db)
   const events = new EventHub(db)
-  const lists = new ListService(db, search, events, now)
+  const lists = new ListService(db, search, events, instance, now)
   const attachments = new AttachmentService(db, lists, events, config.attachments, now)
+  const images = new ImageService(db, lists, events, config.images, now)
   const tasks = new TaskService(db, lists, search, events, notifications, attachments, now)
   const views = new ViewService(db, tasks, search)
   const stats = new StatsService(db, views, now)
@@ -169,6 +178,7 @@ export function createServices(options: ServiceOptions): Services {
     db,
     now,
     version,
+    instance,
     users,
     sessions,
     apiTokens,
@@ -185,6 +195,7 @@ export function createServices(options: ServiceOptions): Services {
     transfer,
     backups,
     attachments,
+    images,
     lists,
     tasks,
     views,

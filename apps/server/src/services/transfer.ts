@@ -120,6 +120,7 @@ export class TransferService {
         icon: list.icon,
         role,
         group,
+        deadline: list.deadline,
         tasks: taskRows
           .filter((task) => task.listId === list.id)
           .map((task) => ({
@@ -183,6 +184,7 @@ export class TransferService {
           name: list.name.trim().slice(0, LIST_NAME_MAX_LENGTH) || listName,
           color: list.color,
           icon: list.icon?.slice(0, LIST_ICON_MAX_LENGTH) || null,
+          deadline: list.deadline ?? null,
           groupId,
         })
         const positions = list.tasks.length > 0 ? keysBetween(null, null, list.tasks.length) : []

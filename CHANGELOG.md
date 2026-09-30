@@ -6,6 +6,17 @@ All notable changes to Crystal are documented in this file. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Gaming mode: when setting up Crystal, choose whether it is for everyday lists or for gaming.
+  The choice applies to the whole instance and cannot be changed later; existing instances
+  stay everyday instances. In gaming mode every list is a game and every task a goal.
+- Games can have a cover picture and a finish-by date. Above their goals, games show the
+  cover, how many goals are done, and how many days are left.
+- API: `PUT` and `DELETE /lists/{id}/cover`, `GET /images/{id}`; lists report
+  `coverImageId`, `deadline` and `completedCount`. The mode is part of `GET /auth/config`, and
+  the first account chooses it with `mode` when registering.
+
 ## [1.0.0] - 2026-09-30
 
 The first stable release: polish for speed, accessibility and the small moments.

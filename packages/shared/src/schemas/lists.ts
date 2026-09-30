@@ -16,6 +16,8 @@ export const listNameSchema = z.string().trim().min(1).max(LIST_NAME_MAX_LENGTH)
 /** An emoji (or other short symbol) shown instead of the default list icon. */
 export const listIconSchema = z.string().trim().min(1).max(LIST_ICON_MAX_LENGTH)
 export const groupNameSchema = z.string().trim().min(1).max(GROUP_NAME_MAX_LENGTH)
+/** The day a list (in gaming mode: a game) should be finished by. */
+export const listDeadlineSchema = z.iso.date()
 
 export const listSchema = z.object({
   id: idSchema,
@@ -29,7 +31,12 @@ export const listSchema = z.object({
   position: z.string(),
   /** The list new tasks from smart lists go to. It cannot be deleted or shared. */
   isDefault: z.boolean(),
+  /** Cover picture (shown for games); load it from `/images/{id}`. */
+  coverImageId: idSchema.nullable(),
+  /** The day the list should be finished by, if one was set. */
+  deadline: listDeadlineSchema.nullable(),
   openCount: z.int(),
+  completedCount: z.int(),
   /** People with access, the owner included; more than one means shared. */
   memberCount: z.int(),
   createdAt: timestampSchema,
@@ -72,6 +79,7 @@ export const createListSchema = z.object({
   name: listNameSchema,
   color: listColorSchema.optional(),
   icon: listIconSchema.nullable().optional(),
+  deadline: listDeadlineSchema.nullable().optional(),
   groupId: idSchema.nullable().optional(),
 })
 export type CreateListInput = z.infer<typeof createListSchema>
@@ -81,6 +89,7 @@ export const updateListSchema = z
     name: listNameSchema,
     color: listColorSchema,
     icon: listIconSchema.nullable(),
+    deadline: listDeadlineSchema.nullable(),
     placement: listPlacementSchema,
   })
   .partial()

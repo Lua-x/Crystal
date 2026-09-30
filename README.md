@@ -97,6 +97,15 @@
   scripts, shortcuts and home automation. [How to use it](docs/api.md)
 - **Automatic backups** of the database, with retention. [Backup and restore](docs/backup.md)
 
+**For gamers**
+
+- **Gaming mode**, chosen once when you set up Crystal: every list is a game, every task a
+  goal – an achievement, a boss, a collectible.
+- **Games with a cover and progress:** see at a glance how many goals are done, and give
+  yourself a finish-by date for the game and for each goal. Crystal counts the days for you.
+- Everything else works as usual: My Day for today's session, reminders, sharing a game with
+  your co-op partner, statistics.
+
 **For the whole household**
 
 - **Shared lists** for the family or the flat: people can edit or only view, and see each
@@ -131,7 +140,8 @@ docker compose up -d
 ```
 
 Open <http://localhost:3000> and create the first account – it becomes the administrator.
-Invite everyone else from **Settings → Invites**.
+Choose there whether this Crystal is for everyday lists or for gaming; the choice applies to
+everyone and cannot be changed later. Invite everyone else from **Settings → Invites**.
 
 Running Crystal on a domain? Set `BASE_URL` in `.env` (e.g. `https://todo.example.com`) and
 put it behind a reverse proxy with HTTPS – see [docs/reverse-proxy.md](docs/reverse-proxy.md).

@@ -37,19 +37,21 @@ Tables:
 
 | Table                   | Purpose                                                                                                                                                 |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `instance`              | One row: what the instance is for (`standard` or `gaming`), written together with the first account                                                     |
 | `users`                 | Accounts: username, display name, optional email, role, Argon2id password hash (null for SSO-only accounts), language, time zone, UI preferences (JSON) |
 | `user_identities`       | Linked OpenID Connect identities (issuer + subject)                                                                                                     |
 | `sessions`              | Server-side sessions: token hash, device, last activity, expiry                                                                                         |
 | `calendar_feeds`        | A person's private iCal link: token hash for lookup, the token sealed with AES-GCM so the link can be shown again                                       |
 | `api_tokens`            | Personal access tokens: hash, first characters for display, scope (`read`/`write`), last use, expiry                                                    |
 | `invites`               | Invite links: token hash, role, usage limit, expiry, revocation                                                                                         |
-| `lists`                 | Name, color, emoji, owner; one default list per account                                                                                                 |
+| `lists`                 | Name, color, emoji, cover picture, finish-by date, owner; one default list per account                                                                  |
 | `list_members`          | Who can see a list with which role (`owner`, `editor`, `viewer`), and each person's own group and position for it in the sidebar                        |
 | `list_groups`           | Per-person folders in the sidebar, collapsible                                                                                                          |
 | `tasks`                 | Title, notes, due date and time, priority, important flag, position, repeat rule (JSON), completion, soft deletion                                      |
 | `subtasks`              | Steps of a task, with their own order and completion                                                                                                    |
 | `task_tags`             | Tags of a task, in lower case                                                                                                                           |
 | `attachments`           | Files attached to tasks: name for display, type recognized from the content, size; the file itself is `DATA_DIR/attachments/<id>`                       |
+| `images`                | Pictures that belong to a list (game covers): type recognized from the content, size; the file itself is `DATA_DIR/images/<id>`                         |
 | `my_day`                | Which tasks a person added to My Day, and for which date                                                                                                |
 | `task_search`           | SQLite FTS5 index over titles, notes, steps and tags                                                                                                    |
 | `notification_channels` | A person's ntfy, Gotify, Apprise and email channels; settings encrypted with AES-GCM, last delivery and error                                           |
@@ -57,6 +59,15 @@ Tables:
 | `password_resets`       | Reset links sent by email: token hash, expiry, use                                                                                                      |
 
 Design decisions for lists and tasks:
+
+- **Modes.** An instance is either for everyday lists (`standard`) or for games (`gaming`).
+  The first account chooses – on the setup page, or through `?mode=` when it is created by
+  single sign-on, where the choice travels in the encrypted flow cookie – and the `instance`
+  row is written in the same transaction as that account. There is no way to change it
+  afterwards. Both modes share one data model: in gaming mode a list is a game (with an
+  optional cover and finish-by date) and a task is a goal. The web app loads the gaming words
+  as an overlay over the base language (`locales/gaming-*.ts`), so only differing texts are
+  translated twice.
 
 - **Access** always goes through `list_members`. A list that does not exist and one you may
   not see both answer `404`, so IDs reveal nothing. Sharing (0.4) only adds rows there.
@@ -187,10 +198,11 @@ Setting the new password signs the account out everywhere.
   `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, optional HSTS. API
   responses are `Cache-Control: no-store`.
 - **Uploads:** attachments are accepted only if their first bytes are an image or PDF format
-  (SVG and HTML never are), stored under their random id and served with `sandbox` in their
-  Content Security Policy and `nosniff`; PDFs are always downloaded, not shown inline.
-- **Request size:** bodies are capped at 1 MiB, imports at 12 MiB and uploads at
-  `ATTACHMENT_MAX_MB`.
+  (SVG and HTML never are), covers only if they are an image; both are stored under their
+  random id and served with `sandbox` in their Content Security Policy and `nosniff`; PDFs are
+  always downloaded, not shown inline.
+- **Request size:** bodies are capped at 1 MiB, imports at 12 MiB, covers at 5 MiB and
+  attachments at `ATTACHMENT_MAX_MB`.
 - **Container:** distroless base image without shell or package manager, running as user
   `65532`, read-only root filesystem in the provided Compose file.
 - **Privacy:** no telemetry. Crystal only contacts other servers for notifications a person

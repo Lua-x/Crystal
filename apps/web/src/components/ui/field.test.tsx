@@ -6,7 +6,7 @@ import { initI18n } from '../../lib/i18n'
 import { Field } from './field'
 import { Input, PasswordInput } from './input'
 
-beforeAll(() => initI18n('en'))
+beforeAll(() => initI18n('en', 'standard'))
 afterEach(cleanup)
 
 describe('Field', () => {

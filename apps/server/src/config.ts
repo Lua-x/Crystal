@@ -157,6 +157,10 @@ export interface Config {
     directory: string
     maxBytes: number
   }
+  images: {
+    /** Covers and other pictures of lists. */
+    directory: string
+  }
   backups: {
     /** 0 when automatic backups are off. */
     intervalHours: number
@@ -241,6 +245,9 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     attachments: {
       directory: join(parsed.DATA_DIR, 'attachments'),
       maxBytes: parsed.ATTACHMENT_MAX_MB * 1024 * 1024,
+    },
+    images: {
+      directory: join(parsed.DATA_DIR, 'images'),
     },
     backups: {
       intervalHours: parsed.BACKUP_INTERVAL_HOURS,

@@ -10,8 +10,9 @@ import { Spinner } from '../../components/ui/spinner'
 import { applyAppearance } from '../../lib/appearance'
 import { useCurrentTitle, useDocumentTitle } from '../../lib/document-title'
 import { errorMessage } from '../../lib/errors'
-import { setLocale } from '../../lib/i18n'
-import { meQuery } from '../../lib/queries'
+import { setInstanceMode, setLocale } from '../../lib/i18n'
+import { rememberMode } from '../../lib/instance-mode'
+import { authConfigQuery, meQuery } from '../../lib/queries'
 
 /** Keeps theme, accent color and language in sync with the signed-in user. */
 function AppearanceSync() {
@@ -21,6 +22,18 @@ function AppearanceSync() {
     applyAppearance(me.preferences, me.locale)
     void setLocale(me.locale)
   }, [me])
+  return null
+}
+
+/** Uses the gaming words on gaming instances, and remembers the mode for the next start. */
+function InstanceModeSync() {
+  const { data: config } = useQuery(authConfigQuery)
+  const mode = config?.mode
+  useEffect(() => {
+    if (!mode) return
+    rememberMode(mode)
+    void setInstanceMode(mode)
+  }, [mode])
   return null
 }
 
@@ -46,6 +59,7 @@ export function RootLayout() {
   return (
     <>
       <AppearanceSync />
+      <InstanceModeSync />
       <PageAnnouncer />
       <Outlet />
     </>

@@ -21,6 +21,7 @@ export function parseCrystalExport(content: string): ImportedList[] {
     name: list.name,
     color: LIST_COLORS.find((color) => color === list.color) ?? 'blue',
     icon: list.icon,
+    deadline: list.deadline,
     group: list.group,
     tasks: list.tasks.map((task) => ({
       title: task.title,

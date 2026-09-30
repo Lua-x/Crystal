@@ -70,6 +70,11 @@ function main(): void {
       (removed) => logger.debug({ removed }, 'Attachment cleanup finished'),
       (error: unknown) => logger.error({ err: error }, 'Attachment cleanup failed'),
     )
+    // Pictures of lists that were deleted for good, and replaced covers.
+    services.images.removeOrphans().then(
+      (removed) => logger.debug({ removed }, 'Image cleanup finished'),
+      (error: unknown) => logger.error({ err: error }, 'Image cleanup failed'),
+    )
   }, HOUR_MS)
   cleanup.unref()
 

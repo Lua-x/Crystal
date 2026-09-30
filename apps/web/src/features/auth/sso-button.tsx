@@ -1,3 +1,4 @@
+import type { InstanceMode } from '@crystal/shared'
 import { KeyRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -7,14 +8,21 @@ import { Button } from '../../components/ui/button'
 export function SsoButton({
   provider,
   intent = 'login',
+  mode,
 }: {
   provider: string
   intent?: 'login' | 'link'
+  /** Chosen on the setup page; applies if this sign-in creates the first account. */
+  mode?: InstanceMode
 }) {
   const { t } = useTranslation()
+  const query = new URLSearchParams({
+    ...(intent === 'link' ? { intent } : {}),
+    ...(mode ? { mode } : {}),
+  }).toString()
   return (
     <Button asChild variant="secondary" size="lg" className="w-full">
-      <a href={`/api/v1/auth/oidc/start${intent === 'link' ? '?intent=link' : ''}`}>
+      <a href={`/api/v1/auth/oidc/start${query ? `?${query}` : ''}`}>
         <KeyRound aria-hidden />
         {intent === 'login'
           ? t('auth.continueWith', { provider })

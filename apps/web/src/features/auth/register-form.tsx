@@ -1,4 +1,4 @@
-import { emailSchema, registerSchema, type Locale } from '@crystal/shared'
+import { emailSchema, registerSchema, type InstanceMode, type Locale } from '@crystal/shared'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
@@ -26,9 +26,11 @@ const FIELDS = ['username', 'displayName', 'email', 'password'] as const
 interface RegisterFormProps {
   submitLabel: string
   inviteToken?: string
+  /** What the instance is for; only sent when creating the first account. */
+  mode?: InstanceMode
 }
 
-export function RegisterForm({ submitLabel, inviteToken }: RegisterFormProps) {
+export function RegisterForm({ submitLabel, inviteToken, mode }: RegisterFormProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const register = useRegister()
@@ -47,6 +49,7 @@ export function RegisterForm({ submitLabel, inviteToken }: RegisterFormProps) {
         password: values.password,
         ...(values.email ? { email: values.email } : {}),
         ...(inviteToken ? { inviteToken } : {}),
+        ...(mode ? { mode } : {}),
         locale: i18n.language as Locale,
         timezone: deviceTimeZone(),
       })

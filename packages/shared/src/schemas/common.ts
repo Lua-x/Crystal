@@ -4,6 +4,7 @@ import {
   ACCENT_PRESETS,
   DISPLAY_NAME_MAX_LENGTH,
   EMAIL_MAX_LENGTH,
+  INSTANCE_MODES,
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   ROLES,
@@ -38,6 +39,7 @@ export const emailSchema = z.string().trim().toLowerCase().max(EMAIL_MAX_LENGTH)
 export const passwordSchema = z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH)
 
 export const roleSchema = z.enum(ROLES)
+export const instanceModeSchema = z.enum(INSTANCE_MODES)
 export const localeSchema = z.enum(SUPPORTED_LOCALES)
 export const themeSchema = z.enum(THEMES)
 

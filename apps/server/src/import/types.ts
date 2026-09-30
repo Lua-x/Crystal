@@ -19,6 +19,8 @@ export interface ImportedList {
   name: string
   color: ListColor
   icon: string | null
+  /** Calendar day `YYYY-MM-DD` the list should be finished by. */
+  deadline?: string | null
   /** Name of the sidebar group to put the list in. */
   group: string | null
   tasks: ImportedTask[]
