@@ -13,6 +13,7 @@ import { GroupDialog, ListDialog } from '../tasks/list-dialogs'
 import { TaskDetailHost } from '../tasks/task-detail-host'
 import { CommandPalette } from './command-palette'
 import { useLiveUpdates } from './live-updates'
+import { OfflineBanner } from './offline-banner'
 import { ShellContext, type ShellState } from './shell-context'
 import { useGlobalShortcuts } from './shortcuts'
 import { ShortcutsDialog } from './shortcuts-dialog'
@@ -152,6 +153,7 @@ export function AppShell() {
             </DialogPrimitive.Root>
           )}
           <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
+            <OfflineBanner />
             <Outlet />
           </main>
           <TaskDetailHost />

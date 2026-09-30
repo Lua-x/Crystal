@@ -15,9 +15,8 @@
 </p>
 
 > [!NOTE]
-> **Crystal is in early development.** Lists, tasks, repeats, tags, quick entry, sharing and
-> reminders are ready to use; offline use and import follow. See the
-> [roadmap](ROADMAP.md) for what comes next.
+> **Crystal is in early development.** Everything below is ready to use; the road to 1.0 is
+> about polish. See the [roadmap](ROADMAP.md).
 
 <p align="center">
   <picture>
@@ -78,6 +77,18 @@
   when someone assigns a task to you.
 - **Forgot your password?** A reset link by email, once SMTP is configured.
 
+**Yours, everywhere**
+
+- **Install it as an app** on phone, tablet or desktop. It opens without a connection, and
+  tasks you add offline are saved as soon as you are back online.
+- **Attach images and PDFs** to tasks – receipts, plans, photos.
+- **Import** from Microsoft To Do (via Outlook) and Todoist, and **export** everything as a file.
+- **Subscribe to your due tasks** in Apple Calendar, Google Calendar, Outlook or Thunderbird.
+- **Statistics:** what you got done per week, and your streak.
+- **An API** with personal access tokens and interactive documentation at `/api/docs` – for
+  scripts, shortcuts and home automation. [How to use it](docs/api.md)
+- **Automatic backups** of the database, with retention. [Backup and restore](docs/backup.md)
+
 **For the whole household**
 
 - **Shared lists** for the family or the flat: people can edit or only view, and see each
@@ -98,8 +109,8 @@
 - **Secure defaults.** Argon2id passwords, HttpOnly session cookies, CSRF protection,
   rate limiting, strict Content Security Policy, a non-root container without a shell.
 
-**Coming next** – an installable app with offline support, import from Microsoft To Do and
-Todoist, automatic backups, an iCal feed and API tokens. Details in the [roadmap](ROADMAP.md).
+**Coming next** – polish for 1.0: animations, accessibility and performance reviews, and
+documentation with screenshots. Details in the [roadmap](ROADMAP.md).
 
 ## Quick start
 

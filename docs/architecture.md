@@ -110,6 +110,25 @@ On the client, TanStack Query caches lists, tasks and the smart lists. Changes a
 optimistically and rolled back with an error message when the server rejects them; the
 affected queries are refetched afterwards, so counts and smart lists stay consistent.
 
+## Installable app and offline use
+
+Crystal is a progressive web app: it has a web app manifest and a service worker
+(`apps/web/public/sw.js`), so browsers offer to install it.
+
+- **The app itself** – HTML, scripts, styles and icons – is cached by the service worker. The
+  build writes `precache.json` with every file and a version; each build registers the worker
+  under a new URL (`/sw.js?build=…`), which caches the new files. Page loads ask the network
+  first and fall back to the cached app; the previous version stays cached, so pages opened
+  before an update keep working. Open pages then offer to reload.
+- **Data** never comes from the service worker. The app keeps a copy of the account, lists and
+  tasks (the TanStack Query cache) in IndexedDB for up to seven days and shows it while there
+  is no connection. Signing out, or the session ending, deletes it.
+- **Changes made offline** to tasks and steps wait in a queue that survives reloads. They are
+  sent in the order they were made once the connection is back (one scope, so they never
+  overtake each other), and the app then loads the current state. Changes to lists, sharing
+  and settings need a connection.
+- If two people change the same task, the change that reaches the server last wins.
+
 ## Reminders and notifications
 
 ```

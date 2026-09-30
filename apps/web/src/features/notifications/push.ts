@@ -3,10 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
 
 import { api } from '../../lib/api'
+import { SERVICE_WORKER_URL } from '../../lib/service-worker'
 import { notificationKeys, pushStatusQuery } from './data'
-
-/** The service worker that shows notifications (served from `public/`). */
-const SERVICE_WORKER_URL = '/sw.js'
 
 export type PushSupport = 'supported' | 'unsupported' | 'insecure'
 

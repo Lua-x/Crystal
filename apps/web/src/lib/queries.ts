@@ -16,6 +16,7 @@ import type {
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { api, ApiError } from './api'
+import { offlineCache } from './offline-cache'
 
 export const queryKeys = {
   authConfig: ['auth-config'] as const,
@@ -103,8 +104,10 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => api<void>('/auth/logout', { method: 'POST' }),
     onSettled: () => {
-      // Drop every cached query so nothing of this account survives the logout.
+      // Drop every cached query so nothing of this account survives the logout,
+      // including the copy kept for offline use.
       queryClient.clear()
+      void offlineCache.removeClient()
       queryClient.setQueryData(queryKeys.me, null)
     },
   })

@@ -249,11 +249,65 @@ export interface UpdateTaskVariables {
   position?: string | undefined
 }
 
+export interface CreateTaskVariables extends CreateTaskInput {
+  id: string
+}
+
+/**
+ * Changes to tasks and steps. They are sent one after another in the order
+ * they were made – also when they were made offline and are sent later, even
+ * after a reload (then without the callbacks of the hook that started them).
+ */
+const taskWrites = {
+  createTask: {
+    key: ['tasks', 'create'],
+    request: (input: CreateTaskVariables) => api<Task>('/tasks', { method: 'POST', body: input }),
+  },
+  updateTask: {
+    key: ['tasks', 'update'],
+    request: ({ id, input }: UpdateTaskVariables) =>
+      api<Task>(`/tasks/${id}`, { method: 'PATCH', body: input }),
+  },
+  deleteTask: {
+    key: ['tasks', 'delete'],
+    request: (task: Pick<Task, 'id'>) => api<void>(`/tasks/${task.id}`, { method: 'DELETE' }),
+  },
+  addSubtask: {
+    key: ['subtasks', 'add'],
+    request: ({ taskId, id, title }: { taskId: string; id: string; title: string }) =>
+      api<Task>(`/tasks/${taskId}/subtasks`, { method: 'POST', body: { id, title } }),
+  },
+  updateSubtask: {
+    key: ['subtasks', 'update'],
+    request: ({ id, input }: { taskId: string; id: string; input: UpdateSubtaskInput }) =>
+      api<Task>(`/subtasks/${id}`, { method: 'PATCH', body: input }),
+  },
+  deleteSubtask: {
+    key: ['subtasks', 'delete'],
+    request: ({ id }: { taskId: string; id: string }) =>
+      api<Task>(`/subtasks/${id}`, { method: 'DELETE' }),
+  },
+} as const
+
+const TASK_WRITES = { id: 'task-writes' }
+
+/** Lets queued task changes run after a reload, when only their key survived. */
+export function registerTaskWriteDefaults(queryClient: QueryClient): void {
+  for (const write of Object.values(taskWrites)) {
+    queryClient.setMutationDefaults(write.key, {
+      mutationFn: write.request as (variables: unknown) => Promise<unknown>,
+      scope: TASK_WRITES,
+      onSettled: () => refreshTaskData(queryClient),
+    })
+  }
+}
+
 export function useUpdateTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: UpdateTaskVariables) =>
-      api<Task>(`/tasks/${id}`, { method: 'PATCH', body: input }),
+    mutationKey: taskWrites.updateTask.key,
+    mutationFn: taskWrites.updateTask.request,
+    scope: TASK_WRITES,
     onMutate: async ({ id, input, position }) => {
       const snapshot = await snapshotTasks(queryClient)
       patchCachedTask(queryClient, id, (task) => {
@@ -279,16 +333,13 @@ export function useUpdateTask() {
   })
 }
 
-export interface CreateTaskVariables extends CreateTaskInput {
-  id: string
-}
-
 /** Creates a task; it appears immediately in `optimisticKeys` (e.g. the current list). */
 export function useCreateTask(optimisticKeys: QueryKey[] = []) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: CreateTaskVariables) =>
-      api<Task>('/tasks', { method: 'POST', body: input }),
+    mutationKey: taskWrites.createTask.key,
+    mutationFn: taskWrites.createTask.request,
+    scope: TASK_WRITES,
     onMutate: async (input) => {
       const snapshot = await snapshotTasks(queryClient)
       const lists = queryClient.getQueryData<List[]>(taskKeys.lists)
@@ -349,7 +400,9 @@ export function useDeleteTask() {
     onSettled: () => refreshTaskData(queryClient),
   })
   return useMutation({
-    mutationFn: (task: Task) => api<void>(`/tasks/${task.id}`, { method: 'DELETE' }),
+    mutationKey: taskWrites.deleteTask.key,
+    mutationFn: (task: Task) => taskWrites.deleteTask.request(task),
+    scope: TASK_WRITES,
     onMutate: async (task) => {
       const snapshot = await snapshotTasks(queryClient)
       patchCachedTask(queryClient, task.id, () => null)
@@ -375,13 +428,15 @@ export function useDeleteTask() {
 /* ── Subtask mutations (the server answers with the parent task) ── */
 
 function useSubtaskMutation<T>(
-  request: (variables: T) => Promise<Task>,
+  write: { key: readonly string[]; request: (variables: T) => Promise<Task> },
   optimistic?: (task: Task, variables: T) => Task,
   taskIdOf?: (variables: T) => string,
 ) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: request,
+    mutationKey: write.key,
+    mutationFn: write.request,
+    scope: TASK_WRITES,
     onMutate: async (variables: T) => {
       const snapshot = await snapshotTasks(queryClient)
       if (optimistic && taskIdOf) {
@@ -400,8 +455,7 @@ function useSubtaskMutation<T>(
 
 export function useAddSubtask() {
   return useSubtaskMutation(
-    ({ taskId, id, title }: { taskId: string; id: string; title: string }) =>
-      api<Task>(`/tasks/${taskId}/subtasks`, { method: 'POST', body: { id, title } }),
+    taskWrites.addSubtask,
     (task, { id, title }) => {
       const last = task.subtasks.at(-1)
       const subtask: Subtask = {
@@ -418,8 +472,7 @@ export function useAddSubtask() {
 
 export function useUpdateSubtask() {
   return useSubtaskMutation(
-    ({ id, input }: { taskId: string; id: string; input: UpdateSubtaskInput }) =>
-      api<Task>(`/subtasks/${id}`, { method: 'PATCH', body: input }),
+    taskWrites.updateSubtask,
     (task, { id, input }) => ({
       ...task,
       subtasks: task.subtasks.map((subtask) =>
@@ -440,7 +493,7 @@ export function useUpdateSubtask() {
 
 export function useDeleteSubtask() {
   return useSubtaskMutation(
-    ({ id }: { taskId: string; id: string }) => api<Task>(`/subtasks/${id}`, { method: 'DELETE' }),
+    taskWrites.deleteSubtask,
     (task, { id }) => ({ ...task, subtasks: task.subtasks.filter((subtask) => subtask.id !== id) }),
     ({ taskId }) => taskId,
   )

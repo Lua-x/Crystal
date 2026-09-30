@@ -1,14 +1,78 @@
 /*
- * Crystal's service worker: shows Web Push notifications and opens the right
- * page when one is clicked. It does not cache anything.
+ * Crystal's service worker:
+ * - keeps the app itself (HTML, scripts, styles, icons) available offline,
+ * - shows Web Push notifications and opens the right page when one is clicked.
+ * Data never comes from here: the API is always asked directly, and the app
+ * keeps its own copy of lists and tasks for offline use.
  */
 
-self.addEventListener('install', () => {
-  void self.skipWaiting()
+const APP_CACHE_PREFIX = 'crystal-app-'
+const META_CACHE = 'crystal-meta'
+const VERSIONS_KEY = '/versions'
+/** Files outside the build output that the app shell needs. */
+const PUBLIC_FILES = [
+  '/',
+  '/theme-init.js',
+  '/favicon.svg',
+  '/manifest.webmanifest',
+  '/icons/icon-192.png',
+  '/icons/apple-touch-icon.png',
+]
+
+async function readVersions() {
+  const response = await (await caches.open(META_CACHE)).match(VERSIONS_KEY)
+  return response ? response.json() : []
+}
+
+async function writeVersions(versions) {
+  await (await caches.open(META_CACHE)).put(VERSIONS_KEY, Response.json(versions))
+}
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    (async () => {
+      // The build writes precache.json; without it (development) nothing is cached.
+      const response = await fetch('/precache.json', { cache: 'no-store' }).catch(() => null)
+      if (response && response.ok) {
+        const { version, files } = await response.json()
+        const cache = await caches.open(APP_CACHE_PREFIX + version)
+        await cache.addAll([...PUBLIC_FILES, ...files])
+        const versions = (await readVersions()).filter((known) => known !== version)
+        await writeVersions([...versions, version])
+      }
+      await self.skipWaiting()
+    })(),
+  )
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim())
+  event.waitUntil(
+    (async () => {
+      // Keep the previous version too: pages opened before the update may still load its files.
+      const keep = new Set((await readVersions()).slice(-2).map((v) => APP_CACHE_PREFIX + v))
+      for (const name of await caches.keys()) {
+        if (name.startsWith(APP_CACHE_PREFIX) && !keep.has(name)) await caches.delete(name)
+      }
+      await writeVersions([...keep].map((name) => name.slice(APP_CACHE_PREFIX.length)))
+      await self.clients.claim()
+    })(),
+  )
+})
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+  if (request.method !== 'GET') return
+  const url = new URL(request.url)
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return
+
+  if (request.mode === 'navigate') {
+    // Fresh when online; the cached app when offline (every route is the same page).
+    event.respondWith(
+      fetch(request).catch(async () => (await caches.match('/')) || Response.error()),
+    )
+    return
+  }
+  event.respondWith((async () => (await caches.match(request)) || fetch(request))())
 })
 
 /** The message the server sent: `{ title, body, path, tag }`. */
@@ -29,7 +93,7 @@ self.addEventListener('push', (event) => {
       body: message.body || '',
       tag: message.tag,
       renotify: Boolean(message.tag),
-      icon: '/favicon.svg',
+      icon: '/icons/icon-192.png',
       data: { path },
     }),
   )

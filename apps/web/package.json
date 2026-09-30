@@ -19,6 +19,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.9.1",
     "@tanstack/react-query": "^5.104.0",
+    "@tanstack/react-query-persist-client": "^5.104.0",
     "@tanstack/react-router": "^1.170.39",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

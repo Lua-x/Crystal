@@ -82,7 +82,8 @@ someone.
 Web Push needs no configuration, but browsers only offer it over HTTPS (or on `localhost`).
 The keys are derived from `SECRET_KEY`; if the key changes, everyone has to turn notifications
 on again for their devices. On iPhone and iPad, Safari offers Web Push only to web apps added to
-the Home Screen, which becomes possible with the installable app in a later release.
+the Home Screen: open Crystal in Safari, tap Share → Add to Home Screen, and turn notifications
+on in the installed app.
 
 Crystal never follows redirects of notification services, stops waiting after ten seconds and
 never shows what a service answered. Link-local addresses (such as cloud metadata services) are

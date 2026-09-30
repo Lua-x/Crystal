@@ -26,6 +26,10 @@ All notable changes to Crystal are documented in this file. The format follows
   paperclip.
 - Statistics (account menu or command palette): tasks completed per week over the last 12
   weeks, today, in total, and your streak of days with something done.
+- Crystal can be installed as an app (on phones via “Add to Home Screen”). It opens without a
+  connection and shows your lists and tasks; tasks you add or change offline are saved once
+  you are back online, even after closing the app. A banner shows when you are offline.
+- Web Push on iPhone and iPad works once Crystal is added to the Home Screen.
 
 ### Security
 
