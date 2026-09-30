@@ -172,6 +172,8 @@ export const en = {
     empty: {
       'my-day': 'Focus on your day',
       'my-day-body': 'Add what you want to get done today. Suggestions help you pick.',
+      allDone: 'All done for today',
+      'allDone-body': 'Everything you planned for today is ticked off. Enjoy the rest of it.',
       important: 'Nothing important right now',
       'important-body': 'Star a task to find it here.',
       planned: 'Nothing planned',

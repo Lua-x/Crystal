@@ -4,7 +4,7 @@ import { Hash } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '../../components/ui/empty-state'
-import { Spinner } from '../../components/ui/spinner'
+import { TaskListSkeleton } from '../../components/ui/task-skeleton'
 import { Page } from '../shell/page'
 import { tagsQuery, tagTasksQuery, taskKeys } from './data'
 import { useListsById, useToday } from './hooks'
@@ -32,9 +32,7 @@ export function TagPage() {
     <Page title={`#${tag}`}>
       <QuickAdd defaults={{ tags: [tag] }} optimisticKeys={[taskKeys.tagTasks(tag)]} />
       {query.isPending ? (
-        <div className="flex justify-center py-10">
-          <Spinner className="size-5" label={t('common.loading')} />
-        </div>
+        <TaskListSkeleton />
       ) : open.length === 0 && completed.length === 0 ? (
         <EmptyState icon={<Hash />} title={t('tags.empty')} body={t('tags.emptyBody', { tag })} />
       ) : (

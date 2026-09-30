@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-import { ADMIN, expectAccessible, sidebar, signIn } from './helpers'
+import { ADMIN, expectAccessible, sidebar, signIn, task } from './helpers'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -73,6 +73,25 @@ test('screen readers hear which page opened', async ({ page }) => {
     .getByRole('link', { name: /^Planned/ })
     .click()
   await expect(page.getByRole('status').filter({ hasText: 'Planned · Crystal' })).toBeAttached()
+})
+
+test('a finished day says so', async ({ page }) => {
+  await signIn(page, ADMIN)
+  const field = page.getByLabel('Add task')
+  await field.fill('Final check')
+  await field.press('Enter')
+  const open = page
+    .getByRole('list', { name: 'My Day', exact: true })
+    .getByRole('checkbox', { name: /as completed$/ })
+  await expect(task(page, 'Final check')).toBeVisible()
+  // Tick off everything that is still open in My Day.
+  await expect(async () => {
+    if ((await open.count()) > 0) await open.first().click()
+    await expect(open).toHaveCount(0, { timeout: 1000 })
+  }).toPass({ timeout: 15_000 })
+  await expect(page.getByText('All done for today')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Completed' })).toContainText('Final check')
+  await expectAccessible(page)
 })
 
 test('pages fit a 320 pixel wide screen without scrolling sideways', async ({ page }) => {

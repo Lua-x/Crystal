@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '../../components/ui/empty-state'
-import { Spinner } from '../../components/ui/spinner'
+import { TaskListSkeleton } from '../../components/ui/task-skeleton'
 import { cn } from '../../lib/cn'
 import { Page } from '../shell/page'
 import { searchQuery } from './data'
@@ -93,9 +93,7 @@ export function SearchPage() {
       {!query ? (
         <EmptyState icon={<Search />} title={t('search.label')} body={t('search.hint')} />
       ) : results.isPending ? (
-        <div className="flex justify-center py-10">
-          <Spinner className="size-5" label={t('common.loading')} />
-        </div>
+        <TaskListSkeleton />
       ) : (results.data ?? []).length === 0 ? (
         <EmptyState
           icon={<SearchX />}

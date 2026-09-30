@@ -6,6 +6,7 @@ import {
   CircleCheck,
   Inbox,
   Lightbulb,
+  PartyPopper,
   Plus,
   Star,
   Sun,
@@ -18,6 +19,7 @@ import { Badge } from '../../components/ui/badge'
 import { EmptyState } from '../../components/ui/empty-state'
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { Spinner } from '../../components/ui/spinner'
+import { TaskListSkeleton } from '../../components/ui/task-skeleton'
 import { formatLongDate } from '../../lib/format'
 import { Page } from '../shell/page'
 import { useMe } from '../shell/use-me'
@@ -86,11 +88,7 @@ export function SmartViewPage({ view }: { view: SmartView }) {
   const common = { today, actions, listsById }
   let content: ReactNode
   if (query.isPending) {
-    content = (
-      <div className="flex justify-center py-10">
-        <Spinner className="size-5" label={t('common.loading')} />
-      </div>
-    )
+    content = <TaskListSkeleton />
   } else if (tasks.length === 0) {
     content = (
       <EmptyState
@@ -131,7 +129,17 @@ export function SmartViewPage({ view }: { view: SmartView }) {
   } else {
     content = (
       <>
-        <TaskList tasks={open} label={t(`views.${view}`)} {...common} />
+        {view === 'my-day' && open.length === 0 ? (
+          // Everything picked for today is done.
+          <EmptyState
+            icon={<PartyPopper />}
+            title={t('views.empty.allDone')}
+            body={t('views.empty.allDone-body')}
+            className="pb-6"
+          />
+        ) : (
+          <TaskList tasks={open} label={t(`views.${view}`)} {...common} />
+        )}
         {view === 'my-day' && (
           <CompletedSection tasks={completed} storageKey="my-day" {...common} />
         )}

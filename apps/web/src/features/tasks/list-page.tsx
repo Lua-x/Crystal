@@ -25,8 +25,8 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu'
 import { EmptyState } from '../../components/ui/empty-state'
-import { Spinner } from '../../components/ui/spinner'
 import { toast } from '../../components/ui/toast-store'
+import { TaskListSkeleton } from '../../components/ui/task-skeleton'
 import { Page } from '../shell/page'
 import { useMe } from '../shell/use-me'
 import {
@@ -65,9 +65,7 @@ export function ListPage() {
     return (
       <Page title={listsPending ? '' : t('errors.not_found')}>
         {listsPending ? (
-          <div className="flex justify-center py-10">
-            <Spinner className="size-5" label={t('common.loading')} />
-          </div>
+          <TaskListSkeleton />
         ) : (
           <EmptyState icon={<SearchX />} title={t('errors.not_found')} />
         )}
@@ -101,9 +99,7 @@ export function ListPage() {
       )}
       {canEdit && <QuickAdd defaults={{ listId }} optimisticKeys={[taskKeys.listTasks(listId)]} />}
       {tasksQuery.isPending ? (
-        <div className="flex justify-center py-10">
-          <Spinner className="size-5" label={t('common.loading')} />
-        </div>
+        <TaskListSkeleton />
       ) : open.length === 0 && completed.length === 0 ? (
         <EmptyState
           icon={<ListTodo />}

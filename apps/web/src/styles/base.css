@@ -52,6 +52,20 @@
   }
 }
 
+/* Loading placeholders appear only if loading takes a moment. */
+@keyframes skeleton-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@utility skeleton-appear {
+  animation: skeleton-appear 200ms ease-out 200ms both;
+}
+
 /* Honour "reduce motion": keep state changes, drop the movement. */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -177,6 +177,9 @@ export const de: Translation = {
       'my-day': 'Konzentrier dich auf deinen Tag',
       'my-day-body':
         'Füge hinzu, was du heute erledigen willst. Vorschläge helfen bei der Auswahl.',
+      allDone: 'Alles erledigt für heute',
+      'allDone-body':
+        'Alles, was du dir für heute vorgenommen hast, ist abgehakt. Genieß den Rest.',
       important: 'Gerade ist nichts wichtig',
       'important-body': 'Markiere eine Aufgabe mit dem Stern, um sie hier zu finden.',
       planned: 'Nichts geplant',
