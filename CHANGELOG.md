@@ -6,6 +6,32 @@ All notable changes to Crystal are documented in this file. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-30
+
+The first stable release: polish for speed, accessibility and the small moments.
+
+### Added
+
+- Every page has its own browser tab title (e.g. “Work · Crystal”), and screen readers
+  announce which page opened.
+- A “Skip to content” link as the first stop for keyboard users.
+- My Day shows “All done for today” once everything in it is ticked off.
+- New screenshots in the README, in light and dark mode.
+
+### Changed
+
+- Crystal starts with about a quarter less JavaScript. The Markdown renderer, the second
+  language, the sign-in pages, the command palette and the animation engine now load only
+  when they are needed.
+- Lists show placeholder rows while they load instead of a spinner – only if loading takes
+  a moment, so fast loads don't flicker.
+- Empty lists and views fade in gently.
+
+### Fixed
+
+- The shadow of the hidden skip link showed at the top edge of the page on phones.
+- The avatars above a shared list overlapped so much that the second initial was hidden.
+
 ## [0.6.0] - 2026-09-30
 
 Extras: offline, import and export, backups, calendar, API, attachments, statistics.
@@ -165,7 +191,8 @@ and tasks follow in 0.2.
 - Security: Argon2id password hashing, hashed session tokens, CSRF protection, rate limiting,
   strict Content Security Policy.
 
-[Unreleased]: https://github.com/Lua-x/Crystal/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Lua-x/Crystal/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Lua-x/Crystal/compare/v0.6.0...v1.0.0
 [0.6.0]: https://github.com/Lua-x/Crystal/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Lua-x/Crystal/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Lua-x/Crystal/compare/v0.3.0...v0.4.0

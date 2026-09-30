@@ -1,6 +1,7 @@
 # Roadmap
 
-Crystal is built in phases. Each phase ends with a release; 0.7 becomes 1.0.
+Crystal was built in phases, each ending with a release; the seventh became 1.0. What comes
+next is collected under [Later](#later).
 
 ## ✅ 0.1 – Foundation
 
@@ -37,10 +38,11 @@ Microsoft To Do (via Outlook) and Todoist plus JSON export, automatic database b
 private iCal feed, personal API tokens with documentation at `/api/docs`, attachments,
 statistics.
 
-## 0.7 → 1.0 – Polish
+## ✅ 1.0 – Polish
 
-- Animation and empty-state polish, accessibility review, performance (bundle size, lazy
-  loading), documentation with screenshots in light and dark mode
+A faster start through loading parts of the app on demand, page titles, a skip link and
+page announcements for screen readers, placeholder rows while loading, gentler empty states,
+and screenshots in light and dark mode.
 
 ## Later
 
@@ -52,7 +54,6 @@ Ideas that were deliberately postponed:
   database only; attachments are covered by backing up the data directory.
 - **Storage quotas** per person for attachments (today: a size limit per file and 20 files per
   task).
-
 - **PostgreSQL** as an alternative to SQLite (SQLite is plenty for households; supporting two
   databases doubles schemas, migrations and tests).
 - **Serving from a sub-path** (e.g. `https://example.com/todo/`); currently Crystal needs the
